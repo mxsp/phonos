@@ -5843,7 +5843,7 @@ window.NotebookModule = {
         }
         if (this._splitCM) {
             var cm = this._splitCM;
-            cm.toTextArea();
+            if (typeof cm.toTextArea === 'function') cm.toTextArea();
             this._splitCM = null;
         }
         this._splitFileId = null;

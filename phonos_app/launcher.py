@@ -250,6 +250,7 @@ def _configure_env_before_import(mode: Literal["playground", "production"], data
             flask_app.config["DATABASE_FILE"] = str(db_file)
         flask_app.config["JOB_OUTPUT_DIR"] = str(job_dir)
         flask_app.config["JOB_OUTPUT_DIR_FALLBACK"] = str(fallback_dir)
+        flask_app.config["SESSION_COOKIE_NAME"] = f"phonos_{mode}_session"
 
 
 def _seed_playground_demo_project(db, admin_id: int, scientist_id: int, team_id: int | None, data_dir: Path) -> None:
@@ -333,6 +334,37 @@ def _seed_playground_demo_project(db, admin_id: int, scientist_id: int, team_id:
             """,
             (project_id, admin_id, fname, str(fpath), fpath.stat().st_size, note),
         )
+
+    starter_cells = [
+        {
+            "id": "cell-welcome-md",
+            "type": "markdown",
+            "source": "# Phonos Playground — Zero-Docker Molecular Notebook\nRun Python, RDKit, and 3D structure helpers directly in the built-in local kernel.",
+        },
+        {
+            "id": "cell-rdkit-3d",
+            "type": "code",
+            "source": f"# Render a 2D ligand + compute Lipinski descriptors\nshow_smiles('CC(=O)Oc1ccccc1C(=O)O', width=360, height=220)\n\n# Render the pre-seeded mini-protein in interactive 3D\nshow_structure(r'{pdb_path.as_posix()}', fmt='pdb')",
+            "outputs": [],
+        },
+    ]
+    try:
+        db.execute(
+            """
+            INSERT INTO notebooks (project_id, user_id, creator_id, name, description, kernel_type, cells)
+            VALUES (%s, %s, %s, %s, %s, 'python3', %s)
+            """,
+            (
+                project_id,
+                admin_id,
+                admin_id,
+                "Trp-Cage 3D & RDKit Starter",
+                "Pre-seeded interactive molecular discovery notebook",
+                json.dumps(starter_cells),
+            ),
+        )
+    except Exception:
+        pass
     db.commit()
 
 
@@ -557,6 +589,7 @@ def run_single(
     from phonos_app.database_updater import start_job_update_listener
     import phonos_app.routes  # noqa: F401
 
+    app.config["SESSION_COOKIE_NAME"] = f"phonos_{mode}_session"
     start_job_update_listener()
 
     if not no_browser and os.environ.get("PHONOS_NO_BROWSER") != "1":
@@ -586,6 +619,13 @@ def run_both(
     admin_name: str = "",
 ) -> int:
     _ensure_valid_stdio(base_dir)
+    # Stop any APScheduler started when phonos_app was imported in this supervisor process
+    app_mod = sys.modules.get("phonos_app.app")
+    if app_mod and hasattr(app_mod, "scheduler"):
+        try:
+            app_mod.scheduler.shutdown(wait=False)
+        except Exception:
+            pass
     if getattr(sys, "frozen", False):
         base_cmd = [sys.executable]
     else:

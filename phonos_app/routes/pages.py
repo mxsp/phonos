@@ -1264,6 +1264,7 @@ def profile_settings():
 
 
 @app.route('/custom_models')
+@app.route('/custom-models')
 @login_required
 def custom_models():
     """Custom user models management page"""

@@ -55,7 +55,7 @@ def _make_helpers(workspace: Path) -> Dict[str, Any]:
                 return
         _ACTIVE_COLLECTOR.push_html(f"<pre>{html.escape(repr(obj))}</pre>")
 
-    def show_smiles(smiles: str, title: str = "") -> None:
+    def show_smiles(smiles: str, title: str = "", width: int = 320, height: int = 200, **_kwargs: Any) -> None:
         """Render an RDKit 2D depiction + Lipinski/QED summary directly in the notebook."""
         try:
             from rdkit import Chem
@@ -65,7 +65,7 @@ def _make_helpers(workspace: Path) -> Dict[str, Any]:
             if mol is None:
                 _ACTIVE_COLLECTOR.push_html(f"<div style='color:#f87171;'>Invalid SMILES: {html.escape(smiles)}</div>")
                 return
-            drawer = Draw.MolDraw2DSVG(320, 200)
+            drawer = Draw.MolDraw2DSVG(max(120, int(width or 320)), max(100, int(height or 200)))
             drawer.DrawMolecule(mol)
             drawer.FinishDrawing()
             svg = drawer.GetDrawingText()
@@ -89,12 +89,13 @@ def _make_helpers(workspace: Path) -> Dict[str, Any]:
         except Exception as exc:
             _ACTIVE_COLLECTOR.push_html(f"<div style='color:#f87171;'>show_smiles error: {html.escape(str(exc))}</div>")
 
-    def show_structure(pdb_or_path: str, title: str = "3D Molecular Structure") -> None:
+    def show_structure(pdb_or_path: str, title: str = "3D Molecular Structure", fmt: str = "pdb", **_kwargs: Any) -> None:
         """Render an interactive structure summary card in the notebook output."""
         content = str(pdb_or_path or "")
-        candidate = (workspace / content) if len(content) < 260 and "\n" not in content else None
-        if candidate and candidate.exists():
-            content = candidate.read_text(encoding="utf-8", errors="replace")
+        if len(content) < 400 and "\n" not in content:
+            candidate = Path(content) if os.path.isabs(content) else (workspace / content)
+            if candidate.exists():
+                content = candidate.read_text(encoding="utf-8", errors="replace")
         chains = set()
         ca_bfacs: list[float] = []
         atom_cnt = 0

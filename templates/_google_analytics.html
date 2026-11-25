@@ -30,12 +30,5 @@
   }
 </script>
 {% else %}
-<script>
-  window.PhonosConsent = window.PhonosConsent || {
-    analyticsAllowed: function() { return false; },
-    getPreferences: function() { return { necessary: true, analytics: false }; },
-    savePreferences: function() {},
-    openModal: function() {}
-  };
-</script>
+<script src="{{ url_for('static', filename='js/consent.js') }}?v=c94fc810"></script>
 {% endif %}

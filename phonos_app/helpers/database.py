@@ -65,7 +65,69 @@ def _normalize_sqlite_query(query: str) -> str:
         r"json_extract(\1, '$.\2')",
         normalized,
     )
+    # PostgreSQL type casts (e.g. id::text, col::integer, val::numeric(10,2))
+    normalized = re.sub(
+        r"::(?:text|varchar|character\s+varying|int|integer|bigint|smallint|numeric|decimal|real|float|double\s+precision|bool|boolean|timestamp|timestamptz|date|json|jsonb)(?:\(\d+(?:\s*,\s*\d+)?\))?(?:\[\])?",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    # PostgreSQL interval arithmetic -> SQLite datetime()
+    normalized = re.sub(
+        r"CURRENT_TIMESTAMP\s*-\s*INTERVAL\s*'([^']+)'",
+        r"datetime('now', '-\1')",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    normalized = re.sub(
+        r"CURRENT_TIMESTAMP\s*\+\s*INTERVAL\s*'([^']+)'",
+        r"datetime('now', '+\1')",
+        normalized,
+        flags=re.IGNORECASE,
+    )
     return normalized
+
+
+_ISO_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}")
+
+
+class _IsoCompatStr(str):
+    """String subclass for SQLite TIMESTAMP values that also supports .isoformat() and .strftime() like PostgreSQL datetime."""
+
+    def isoformat(self, sep: str = "T", timespec: str = "auto") -> str:
+        s = str(self).strip()
+        if len(s) >= 19 and s[10] == " ":
+            return s[:10] + sep + s[11:]
+        return s
+
+    def strftime(self, fmt: str) -> str:
+        from datetime import datetime as _dt
+        try:
+            return _dt.fromisoformat(str(self).strip().replace(" ", "T")).strftime(fmt)
+        except Exception:
+            return str(self)
+
+
+class SQLiteCompatRow(dict):
+    """Dict-backed SQLite row supporting both dict methods (.get, .items) and positional row[0] indexing."""
+
+    def __init__(self, cursor: sqlite3.Cursor, row: tuple):
+        cols = [col[0] for col in (cursor.description or ())]
+        coerced = []
+        for col_name, val in zip(cols, row):
+            if isinstance(val, str) and (
+                col_name.endswith(("_at", "_date", "_until", "timestamp"))
+                or _ISO_TS_RE.match(val)
+            ):
+                val = _IsoCompatStr(val)
+            coerced.append(val)
+        super().__init__(zip(cols, coerced))
+        self._values = tuple(coerced)
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, slice)):
+            return self._values[key]
+        return super().__getitem__(key)
 
 
 class SQLiteCompatCursor:
@@ -86,7 +148,7 @@ class SQLiteCompatCursor:
             return False
 
         pragma_rows = self._cursor.execute(f"PRAGMA table_info({table_name})").fetchall()
-        rows = [{'column_name': row['name'] if isinstance(row, sqlite3.Row) else row[1]} for row in pragma_rows]
+        rows = [{'column_name': row['name'] if isinstance(row, (sqlite3.Row, dict)) else row[1]} for row in pragma_rows]
 
         column_match = re.search(r"column_name\s*=\s*'([^']+)'", query, re.IGNORECASE)
         column_name = column_match.group(1) if column_match else None
@@ -253,7 +315,7 @@ def _use_sqlite() -> bool:
     if app.config.get("TESTING") and app.config.get("DATABASE_FILE"):
         return True
 
-    db_url = app.config.get("DATABASE_URL")
+    db_url = app.config.get("DATABASE_URL") or os.environ.get("DATABASE_URL") or ""
     return bool(db_url and db_url.startswith("sqlite"))
 
 
@@ -548,7 +610,9 @@ def _get_raw_connection():
             timeout=30.0,
             check_same_thread=False,
         )
-        conn.row_factory = sqlite3.Row
+        conn.row_factory = SQLiteCompatRow
+        conn.create_function("LEFT", 2, lambda s, n: None if s is None else str(s)[: max(0, int(n or 0))])
+        conn.create_function("RIGHT", 2, lambda s, n: None if s is None else (str(s)[-int(n):] if int(n or 0) > 0 else ""))
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")

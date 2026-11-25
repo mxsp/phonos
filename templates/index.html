@@ -238,6 +238,11 @@
                     <span style="color:var(--accent);">●</span>
                     <span>Interactive 3D Complex Preview (drag to rotate)</span>
                 </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" id="btn-hero-spin" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Toggle auto-spin">⏸ Pause Spin</button>
+                    <button type="button" id="btn-hero-pocket" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Zoom into ligand binding pocket">🔍 Pocket Zoom</button>
+                    <button type="button" id="btn-hero-reset" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Reset 3D camera">↺ Reset View</button>
+                </div>
                 <div class="hud-chip plddt-legend">
                     <span><i class="plddt-dot" style="background:#0053d6;"></i>&gt;90 Very High</span>
                     <span><i class="plddt-dot" style="background:#65cbf3;"></i>70–90</span>
@@ -346,7 +351,24 @@
             bonds.push([14, ligBase + 6, 'pocket']);
             bonds.push([51, ligBase + 7, 'pocket']);
 
-            var rotY = 0.4, rotX = 0.22, dragging = false, lx = 0, ly = 0;
+            var rotY = 0.4, rotX = 0.22, zoomMul = 1.0, autoSpin = true, dragging = false, lx = 0, ly = 0;
+            var spinBtn = document.getElementById('btn-hero-spin');
+            var pocketBtn = document.getElementById('btn-hero-pocket');
+            var resetBtn = document.getElementById('btn-hero-reset');
+            if (spinBtn) spinBtn.addEventListener('click', function () {
+                autoSpin = !autoSpin;
+                spinBtn.textContent = autoSpin ? '⏸ Pause Spin' : '▶ Auto Spin';
+            });
+            if (pocketBtn) pocketBtn.addEventListener('click', function () {
+                zoomMul = zoomMul > 1.2 ? 1.0 : 1.55;
+                rotX = 0.12;
+                pocketBtn.textContent = zoomMul > 1.2 ? '🔍 Full Complex' : '🔍 Pocket Zoom';
+            });
+            if (resetBtn) resetBtn.addEventListener('click', function () {
+                rotY = 0.4; rotX = 0.22; zoomMul = 1.0; autoSpin = true;
+                if (spinBtn) spinBtn.textContent = '⏸ Pause Spin';
+                if (pocketBtn) pocketBtn.textContent = '🔍 Pocket Zoom';
+            });
             function resize() {
                 var rect = canvas.parentElement.getBoundingClientRect();
                 var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -372,12 +394,12 @@
                 var y2 = n.y * cx - z1 * sx;
                 var z2 = n.y * sx + z1 * cx;
                 var scale = 290 / (290 + z2 + 120);
-                var zoom = Math.min(w, h) / 215;
+                var zoom = (Math.min(w, h) / 215) * zoomMul;
                 return { sx: w / 2 + x1 * scale * zoom, sy: h / 2 + y2 * scale * zoom, z: z2, s: scale * zoom };
             }
 
             function draw() {
-                if (!dragging) rotY += 0.0045;
+                if (!dragging && autoSpin) rotY += 0.0045;
                 var w = canvas.clientWidth || 500, h = canvas.clientHeight || 400;
                 ctx.clearRect(0, 0, w, h);
                 var cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);

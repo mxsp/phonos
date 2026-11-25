@@ -955,6 +955,28 @@
             });
             box.appendChild(grid);
         }
+        const rtBox = h('div', { class: 'pa-routines-inline', style: 'margin-top:16px;width:100%;max-width:760px;' });
+        rtBox.appendChild(h('h3', { class: 'pa-section-title', style: 'margin-bottom:8px;text-align:left;', text: 'Discovery Routines' }));
+        const rtGrid = h('div', { class: 'pa-suggestions' });
+        rtBox.appendChild(rtGrid);
+        box.appendChild(rtBox);
+        fetch('/api/agent/routines', { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (payload) {
+                const items = (payload && payload.routines) || [];
+                items.forEach(function (rt) {
+                    const btn = button('', 'pa-suggestion', function () {
+                        if (state.stageEls.input) {
+                            state.stageEls.input.value = rt.prompt;
+                            focusComposer();
+                        }
+                    });
+                    btn.appendChild(h('strong', { text: '[' + (rt.category || 'Bio') + '] ' + rt.title }));
+                    btn.appendChild(h('span', { text: rt.prompt.slice(0, 105) + '…' }));
+                    rtGrid.appendChild(btn);
+                });
+            })
+            .catch(function () {});
         list.appendChild(box);
     }
 

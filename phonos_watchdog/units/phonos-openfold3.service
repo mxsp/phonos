@@ -1,0 +1,22 @@
+[Unit]
+Description=Phonos OpenFold3 Worker (openfold3-worker-1)
+After=network.target redis6.service phonos-mrs.service
+Wants=redis6.service
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/phonos/production
+Environment=PYTHONPATH=/opt/phonos/production:/opt/phonos
+Environment=PHONOS_DIR=/opt/phonos
+EnvironmentFile=-/opt/phonos/.env
+ExecStart=/usr/bin/python3.11 /opt/phonos/production/openfold3_worker.py --worker-id openfold3-worker-1 --config /opt/phonos/production/node_config_openfold3.json
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=phonos-openfold3
+
+[Install]
+WantedBy=multi-user.target

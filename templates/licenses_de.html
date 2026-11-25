@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonos - Lizenzen & Attributionen</title>
+    <meta name="description" content="Lizenzen und Attributionen f&uuml;r die von der Phonos-Plattform genutzte Open-Source-Software und die wissenschaftlichen Modelle.">
+    {% include '_seo_hreflang.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <style>
+        .legal-doc-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .legal-section {
+            margin-bottom: var(--space-8);
+            padding-bottom: var(--space-8);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .legal-section:last-child {
+            border-bottom: none;
+        }
+        .legal-section h2 {
+            margin: var(--space-8) 0 var(--space-4);
+            color: var(--accent-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .legal-section h3 {
+            margin: var(--space-6) 0 var(--space-3);
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .legal-section p {
+            margin-bottom: var(--space-4);
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .legal-section strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .legal-section a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+        .legal-section a:hover {
+            text-decoration: underline;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-apache {
+            background-color: #d73027;
+            color: white;
+        }
+        .badge-mit {
+            background-color: #4285f4;
+            color: white;
+        }
+        .badge-bsd {
+            background-color: #f57c00;
+            color: white;
+        }
+        .badge-cc {
+            background-color: #2e7d32;
+            color: white;
+        }
+        .legal-footer-links {
+            margin-top: var(--space-10);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .legal-footer-links a {
+            color: var(--text-muted);
+            margin: 0 var(--space-3);
+            text-decoration: none;
+        }
+        .legal-footer-links a:hover {
+            color: var(--accent-primary);
+        }
+        .legal-lang-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: var(--space-6);
+            font-size: 0.875rem;
+            color: var(--text-muted, #a1a1aa);
+        }
+        .legal-lang-bar .legal-lang-opt {
+            color: var(--text-muted, #a1a1aa);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s ease;
+        }
+        .legal-lang-bar .legal-lang-opt:hover {
+            color: var(--text-primary, #fafafa);
+        }
+        .legal-lang-bar .legal-lang-opt.is-active {
+            color: var(--accent-primary, #137CBD);
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body data-theme="dark">
+        <div class="legal-lang-bar">
+            <a href="/licenses?lang=de" class="legal-lang-opt is-active">DE</a>
+            <span style="color:var(--text-muted,#a1a1aa);font-size:0.875rem;user-select:none;">|</span>
+            <a href="/licenses?lang=en" class="legal-lang-opt">EN</a>
+        </div>
+    <div class="legal-doc-container">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost" style="margin-bottom: var(--space-6);">
+            &larr; Zurück zur Startseite
+        </a>
+
+        <div class="card">
+            <div class="card-body">
+                <h1 style="margin-bottom: var(--space-4);">Drittanbieter-Lizenzen &amp; Attributionen</h1>
+                <p class="text-muted" style="margin-bottom: var(--space-8);">Stand: Oktober 2026</p>
+
+                <p class="text-secondary" style="margin-bottom: var(--space-6);">
+                    Phonos integriert und verwendet verschiedene Machine-Learning-Modelle, Bibliotheken und Softwarekomponenten von Drittanbietern.
+                    Wir sind den Forscherinnen und Forschern, Entwicklerinnen und Entwicklern sowie Organisationen dankbar, die ihre Arbeit der Community zur Verfügung gestellt haben.
+                    Diese Seite enthält Zuschreibungen und Lizenzinformationen für sämtliche in unserer Plattform verwendeten Komponenten von Drittanbietern.
+                </p>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">KI/ML-Modelle</h2>
+
+                <!-- ESMFold -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        ESMFold
+                        <span class="badge badge-apache">Apache 2.0</span>
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Vorhersage von Proteinstrukturen aus Aminosäuresequenzen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Meta Fundamental AI Research Protein Team (FAIR)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Der Code ist unter Apache 2.0 lizenziert; die Modellparameter sind unter CC BY 4.0 lizenziert
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Lin, Zeming et al. "Evolutionary-scale prediction of atomic-level protein structure with a language model." Science 379.6637 (2023): 1123-1130.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/facebookresearch/esm" target="_blank" rel="noopener noreferrer">https://github.com/facebookresearch/esm</a>
+                    </p>
+                </div>
+
+                <!-- DiffDock -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        DiffDock
+                        <span class="badge badge-mit">MIT</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Molekulares Docking zur Vorhersage von Protein-Ligand-Bindungsposen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Gabriele Corso, Hannes Stark, Bowen Jing, Regina Barzilay und Tommi Jaakkola (MIT)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> MIT-Lizenz
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Corso, Gabriele et al. "DiffDock: Diffusion Steps, Twists, and Turns for Molecular Docking." International Conference on Learning Representations (ICLR) 2023.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/gcorso/DiffDock" target="_blank" rel="noopener noreferrer">https://github.com/gcorso/DiffDock</a>
+                    </p>
+                </div>
+
+                <!-- AlphaFold2 -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        AlphaFold2
+                        <span class="badge badge-apache">Apache 2.0</span>
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Hochpräzise Vorhersage von Proteinstrukturen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> DeepMind (Google)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Der Code ist unter Apache-Lizenz 2.0 lizenziert; die Modellparameter sind unter CC BY 4.0 lizenziert (von CC BY-NC 4.0 geändert, um die kommerzielle Nutzung zu ermöglichen)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Jumper, John et al. "Highly accurate protein structure prediction with AlphaFold." Nature 596.7873 (2021): 583-589.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/google-deepmind/alphafold" target="_blank" rel="noopener noreferrer">https://github.com/google-deepmind/alphafold</a>
+                    </p>
+                </div>
+
+                <!-- ProteinMPNN -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        ProteinMPNN
+                        <span class="badge badge-mit">MIT</span>
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Deep-Learning-basierter Entwurf von Proteinsequenzen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Justas Dauparas et al., Baker Lab, University of Washington
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Der Code ist unter MIT-Lizenz lizenziert; die veröffentlichte Arbeit ist unter CC BY 4.0 lizenziert
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Dauparas, Justas et al. "Robust deep learning-based protein sequence design using ProteinMPNN." Science 378.6615 (2022): 49-56.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/dauparas/ProteinMPNN" target="_blank" rel="noopener noreferrer">https://github.com/dauparas/ProteinMPNN</a>
+                    </p>
+                </div>
+
+                <!-- Metal3D -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Metal3D
+                        <span class="badge badge-mit">MIT</span>
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Vorhersage von Metallionen-Bindungsstellen mittels 3D-Convolutional-Neural-Networks
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Laboratory of Computational Biology and Chemistry (LCBC), EPFL
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Der Code ist unter MIT-Lizenz lizenziert; die Netzwerkgewichte sind unter CC BY 4.0 lizenziert
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Torrisi, Mirko et al. "Metal3D: a general deep learning framework for accurate metal ion location prediction in proteins." Nature Communications 14 (2023): 2606.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/lcbc-epfl/metal-site-prediction" target="_blank" rel="noopener noreferrer">https://github.com/lcbc-epfl/metal-site-prediction</a>
+                    </p>
+                </div>
+
+                <!-- Boltz2 -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Boltz2
+                        <span class="badge badge-mit">MIT</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Biomolekulare Strukturvorhersage für Proteine, Nukleinsäuren und kleine Moleküle
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> MIT CSAIL (Computer Science and Artificial Intelligence Laboratory)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> MIT-Lizenz
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Wohlwend, Jeremy et al. "Boltz-1: Democratizing Biomolecular Interaction Modeling." bioRxiv (2024).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/jwohlwend/boltz" target="_blank" rel="noopener noreferrer">https://github.com/jwohlwend/boltz</a>
+                    </p>
+                </div>
+
+                <!-- Evo2 -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Evo2
+                        <span class="badge badge-apache">Apache 2.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Erzeugung und Analyse von DNA-Sequenzen mittels Foundation Models
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Arc Institute und Together AI
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Apache-Lizenz 2.0
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Nguyen, Eric et al. "Sequence modeling and design from molecular to genome scale with Evo." Science (2024).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/evo-design/evo" target="_blank" rel="noopener noreferrer">https://github.com/evo-design/evo</a>
+                    </p>
+                </div>
+
+                <!-- OpenFold3 -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        OpenFold3
+                        <span class="badge badge-apache">Apache 2.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Biomolekulare Strukturvorhersage für Proteine, DNA, RNA und Liganden
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> OpenFold-Konsortium
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Apache-Lizenz 2.0
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/aqlaboratory/openfold-3" target="_blank" rel="noopener noreferrer">https://github.com/aqlaboratory/openfold-3</a>
+                    </p>
+                </div>
+
+                <!-- RFdiffusion -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        RFdiffusion
+                        <span class="badge badge-bsd">BSD</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> De-novo-Generierung von Proteinstrukturen und Binder-Design
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Baker Lab, Institute for Protein Design (University of Washington)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> BSD-Lizenz
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Watson, J. L. et al. "De novo design of protein structure and function with RFdiffusion." Nature (2023).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Repository:</strong> <a href="https://github.com/RosettaCommons/RFdiffusion" target="_blank" rel="noopener noreferrer">https://github.com/RosettaCommons/RFdiffusion</a>
+                    </p>
+                </div>
+
+                <!-- GenMol -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        GenMol
+                        <span class="badge badge-apache">NVIDIA Open Model License</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Fragmentbasierte Molekülgenerierung
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> NVIDIA
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> NVIDIA Open Model License (Modell); laut NVIDIA für die kommerzielle Nutzung freigegeben
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Modellkarte:</strong> <a href="https://build.nvidia.com/nvidia/genmol-generate/modelcard" target="_blank" rel="noopener noreferrer">https://build.nvidia.com/nvidia/genmol-generate/modelcard</a>
+                    </p>
+                </div>
+
+                <!-- MolMIM -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        MolMIM
+                        <span class="badge badge-warning">Nur Research Preview</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Molekülgenerierung und -optimierung
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> NVIDIA
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> NVIDIA AI Foundation Models Community License, ausschließlich für Forschung und Entwicklung
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Hinweis:</strong> MolMIM steht in der Research Preview nur zum Testen bereit. Da NVIDIA es ausschließlich für Forschung und Entwicklung lizenziert, ist es nicht Teil bezahlter Tarife.
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Modellseite:</strong> <a href="https://catalog.ngc.nvidia.com/orgs/nvidia/clara/models/molmim" target="_blank" rel="noopener noreferrer">https://catalog.ngc.nvidia.com/orgs/nvidia/clara/models/molmim</a>
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Infrastrukturdienste</h2>
+
+                <!-- Cloudflare -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Cloudflare
+                        <span class="badge badge-apache">Netzzugang</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Netzwerk, über das der gesamte Zugriff auf Phonos läuft
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> Cloudflare, Inc.
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zweck:</strong> Beendet die verschlüsselte (TLS-)Verbindung, schützt den Dienst vor Angriffen und leitet die Anfragen an unseren Server in Deutschland weiter, auf dem Anwendung, Datenbanken und gespeicherte Dateien laufen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Standort:</strong> Globales Netzwerk, USA (EU-Standardvertragsklauseln + EU-US Data Privacy Framework)
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">https://www.cloudflare.com/</a>
+                    </p>
+                </div>
+
+                <!-- NVIDIA DGX Cloud -->
+                <div class="legal-section" id="research-preview">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        NVIDIA DGX Cloud / NVIDIA NIM
+                        <span class="badge badge-apache">Cloud-Infrastruktur</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> GPU-Inferenz-Infrastruktur (NVIDIA-NIM-APIs) für alle auf Phonos angebotenen KI/ML-Modelle
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> NVIDIA Corporation
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zweck:</strong> Führt die Inferenz für alle KI/ML-Modelle auf Phonos aus. An ein Modell übermittelte Eingaben (Sequenzen, Strukturen, Liganden, Parameter) werden zur Verarbeitung an NVIDIA NIM gesendet; die Ergebnisse werden an unseren Server in Deutschland zurückgegeben und dort gespeichert.
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Research Preview:</strong> Die bei NVIDIA gehosteten Modelle werden nur während der Research Preview zum Testen genutzt; NVIDIA stellt diese API zum Testen und Evaluieren bereit. Bezahlte Tarife führen die Modelle auf Rechnern aus, die FyreFly Systems betreibt. MolMIM steht in der Research Preview nur zum Testen bereit (siehe MolMIM oben).
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Standort:</strong> USA (EU-Standardvertragsklauseln + EU-US Data Privacy Framework)
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://www.nvidia.com/en-us/data-center/dgx-cloud/" target="_blank" rel="noopener noreferrer">https://www.nvidia.com/en-us/data-center/dgx-cloud/</a>
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Datenquellen</h2>
+
+                <!-- AlphaFold DB -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        AlphaFold Protein Structure Database
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Vorhergesagte Proteinstrukturen, abgerufen über die UniProt-Kennung
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> EMBL-EBI und Google DeepMind
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Creative Commons Namensnennung 4.0 (CC BY 4.0). Strukturen aus der AlphaFold DB, die Phonos anzeigt oder speichert, bleiben unter dieser Lizenz und sind bei Weiterverwendung zu nennen.
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Varadi, M. et al. "AlphaFold Protein Structure Database in 2024." Nucleic Acids Research (2024); Jumper, J. et al. "Highly accurate protein structure prediction with AlphaFold." Nature (2021).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener noreferrer">https://alphafold.ebi.ac.uk</a>
+                    </p>
+                </div>
+
+                <!-- UniProt -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        UniProt
+                        <span class="badge badge-cc">CC BY 4.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Proteinsequenzen und funktionelle Annotation
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> UniProt-Konsortium (EMBL-EBI, SIB, PIR)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Creative Commons Namensnennung 4.0 (CC BY 4.0). UniProt-Daten, die Phonos anzeigt oder speichert, bleiben unter dieser Lizenz und sind bei Weiterverwendung zu nennen.
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> The UniProt Consortium. "UniProt: the Universal Protein Knowledgebase in 2025." Nucleic Acids Research (2025).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://www.uniprot.org" target="_blank" rel="noopener noreferrer">https://www.uniprot.org</a>
+                    </p>
+                </div>
+
+                <!-- RCSB PDB -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        RCSB Protein Data Bank
+                        <span class="badge badge-cc">CC0 1.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Experimentell bestimmte 3D-Strukturen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> RCSB PDB / wwPDB
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> CC0 1.0 (gemeinfrei)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Zitation:</strong> Berman, H. M. et al. "The Protein Data Bank." Nucleic Acids Research (2000).
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://www.rcsb.org" target="_blank" rel="noopener noreferrer">https://www.rcsb.org</a>
+                    </p>
+                </div>
+
+                <!-- PubChem -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        PubChem
+                        <span class="badge badge-cc">Gemeinfrei</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Chemische Verbindungen und Substanzen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> National Center for Biotechnology Information (NCBI), U.S. National Library of Medicine
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> NCBI-Daten unterliegen in der Regel keinen urheberrechtlichen Beschränkungen; einzelne Einträge tragen eigene Bedingungen der Einreichenden
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://pubchem.ncbi.nlm.nih.gov" target="_blank" rel="noopener noreferrer">https://pubchem.ncbi.nlm.nih.gov</a>
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Externe Dienste &amp; Analytik</h2>
+
+                <!-- Google Analytics -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Google Analytics
+                        <span class="badge badge-apache">Analytik-Dienst</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Webseiten-Analytik zur Analyse des Nutzerverhaltens und zur Verbesserung des Dienstes (optional, erfordert eine Cookie-Einwilligung)
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Anbieter:</strong> Google LLC
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Datenschutzerklärung:</strong> <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">https://policies.google.com/privacy</a>
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Erhobene Daten:</strong> Anonymisierte IP-Adressen, Seitenaufrufe, Browser-Informationen, Sitzungsdaten
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Nutzerkontrolle:</strong> Google Analytics wird nur geladen, wenn Sie über das Cookie-Einwilligungsbanner Cookies akzeptieren. Sie können Ihre Einwilligung jederzeit widerrufen.
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Kernbibliotheken &amp; Frameworks</h2>
+
+                <!-- PyTorch -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        PyTorch
+                        <span class="badge badge-bsd">BSD 3-Clause</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Open-Source-Framework für maschinelles Lernen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Meta Platforms, PyTorch Foundation, The Linux Foundation
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Modifizierte BSD-Lizenz (BSD 3-Clause)
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://pytorch.org/" target="_blank" rel="noopener noreferrer">https://pytorch.org/</a> |
+                        <a href="https://github.com/pytorch/pytorch" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </p>
+                </div>
+
+                <!-- Transformers -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Transformers (Hugging Face)
+                        <span class="badge badge-apache">Apache 2.0</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Hochmoderne Bibliothek für natürliche Sprachverarbeitung und maschinelles Lernen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Hugging Face Team
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> Apache-Lizenz 2.0
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://huggingface.co/transformers" target="_blank" rel="noopener noreferrer">https://huggingface.co/transformers</a> |
+                        <a href="https://github.com/huggingface/transformers" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </p>
+                </div>
+
+                <!-- RDKit -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        RDKit
+                        <span class="badge badge-bsd">BSD 3-Clause</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Open-Source-Software für Chemoinformatik und maschinelles Lernen
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> RDKit Contributors
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> BSD 3-Clause-Lizenz
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://www.rdkit.org/" target="_blank" rel="noopener noreferrer">https://www.rdkit.org/</a> |
+                        <a href="https://github.com/rdkit/rdkit" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </p>
+                </div>
+
+                <!-- Flask -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Flask
+                        <span class="badge badge-bsd">BSD 3-Clause</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> Leichtgewichtiges WSGI-Webanwendungs-Framework
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Pallets Projects
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> BSD 3-Clause-Lizenz
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener noreferrer">https://flask.palletsprojects.com/</a>
+                    </p>
+                </div>
+
+                <!-- Redis -->
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">
+                        Redis
+                        <span class="badge badge-bsd">BSD 3-Clause</span>
+                    </h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Beschreibung:</strong> In-Memory-Datenstrukturspeicher, der als Datenbank, Cache und Message Broker eingesetzt wird
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Ersteller:</strong> Redis Ltd.
+                    </p>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                        <strong>Lizenz:</strong> BSD 3-Clause-Lizenz
+                    </p>
+                    <p class="text-secondary">
+                        <strong>Webseite:</strong> <a href="https://redis.io/" target="_blank" rel="noopener noreferrer">https://redis.io/</a>
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Lizenzzusammenfassungen</h2>
+
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">Apache-Lizenz 2.0</h3>
+                    <p class="text-secondary">
+                        Eine permissive Lizenz, die Ihnen die Nutzung, Modifikation und Verbreitung der Software sowohl für kommerzielle als auch für nicht-kommerzielle Zwecke gestattet.
+                        Sie beinhaltet eine ausdrückliche Gewährung von Patentrechten durch die Beitragenden. Eine Quellenangabe ist erforderlich.
+                    </p>
+                </div>
+
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">MIT-Lizenz</h3>
+                    <p class="text-secondary">
+                        Eine kurze und prägnante permissive Lizenz. Sie erlaubt es den Nutzenden, nahezu alles mit Ihrem Projekt anzustellen,
+                        einschließlich der Erstellung und Verbreitung von Closed-Source-Versionen, sofern der ursprüngliche Copyright- und Lizenzhinweis beigefügt wird.
+                    </p>
+                </div>
+
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">BSD 3-Clause-Lizenz</h3>
+                    <p class="text-secondary">
+                        Eine permissive Lizenz, die der MIT-Lizenz ähnelt, jedoch eine zusätzliche Klausel enthält, die es Dritten untersagt,
+                        den Namen des Projekts oder seiner Beitragenden ohne schriftliche Zustimmung zur Bewerbung abgeleiteter Produkte zu verwenden.
+                    </p>
+                </div>
+
+                <div class="legal-section">
+                    <h3 style="margin-bottom: var(--space-3);">Creative Commons Namensnennung 4.0 (CC BY 4.0)</h3>
+                    <p class="text-secondary">
+                        Diese Lizenz erlaubt es Dritten, das Werk zu verbreiten, zu remixen, anzupassen und darauf aufzubauen, auch kommerziell,
+                        sofern das ursprüngliche Werk angemessen creditiert wird. Dies ist die entgegenkommendste der für kreative Werke angebotenen Lizenzen.
+                    </p>
+                </div>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Nutzerverantwortlichkeiten</h2>
+
+                <p class="text-secondary" style="margin-bottom: var(--space-4);">
+                    <strong>Zitationsanforderungen:</strong> Wenn Sie Ergebnisse unseres Dienstes in akademischen Veröffentlichungen oder in der Forschung verwenden,
+                    sollten Sie zusätzlich zu einer etwaigen Zitation der Phonos-Plattform selbst auch die oben aufgeführten relevanten Modellpublikationen zitieren.
+                </p>
+
+                <p class="text-secondary" style="margin-bottom: var(--space-4);">
+                    <strong>Lizenzkonformität:</strong> Ihre Nutzung des Dienstes und seiner Ergebnisse muss allen geltenden
+                    Drittanbieter-Lizenzbedingungen entsprechen. Wir geben keine Zusicherungen oder Gewährleistungen in Bezug auf Modelle und Technologien von Drittanbietern ab.
+                </p>
+
+                <p class="text-secondary" style="margin-bottom: var(--space-4);">
+                    <strong>Kommerzielle Nutzung:</strong> Alle oben aufgeführten Modelle sind im Rahmen ihrer jeweiligen Lizenzen für die kommerzielle Nutzung verfügbar.
+                    Sie sind jedoch selbst dafür verantwortlich, die Einhaltung sämtlicher Lizenzbedingungen sicherzustellen.
+                </p>
+
+                <h2 style="margin: var(--space-6) 0 var(--space-4);">Kontakt</h2>
+
+                <p class="text-secondary" style="margin-bottom: var(--space-3);">
+                    Bei Fragen zu Lizenzen oder Attributionen kontaktieren Sie uns bitte unter: <a href="mailto:help@fyreflysystems.de">help@fyreflysystems.de</a>
+                </p>
+
+                <!-- Footer Links -->
+                <div class="legal-footer-links">
+                    <p class="text-muted"><a href="{{ url_for('index') }}">Startseite</a></p>
+                    {% set legal_lang = 'de' %}{% include 'partials/_legal_footer.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

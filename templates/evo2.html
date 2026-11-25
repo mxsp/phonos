@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include "_i18n_scripts.html" %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="phonos-model-id" content="evo2">
+    <script>
+        // Standalone page: provide the CSRF token the submit handler expects.
+        // (PHONOS_CONFIG is otherwise only defined inside the dashboard SPA.)
+        window.PHONOS_CONFIG = window.PHONOS_CONFIG || {};
+        window.PHONOS_CONFIG.csrfToken = "{{ csrf_token }}";
+    </script>
+    <title data-i18n="evo2.title">Phonos - Evo2 DNA Generation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/file-upload-preview.css') }}?v=54e85791">
+    <style>
+        :root {
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --panel-bg: rgba(24, 24, 27, 0.95);
+            --panel-border: rgba(63, 63, 70, 0.5);
+            --dna-green: #22c55e;
+            --dna-cyan: #06b6d4;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #09090b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #fafafa;
+            min-height: 100vh;
+        }
+
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 13px;
+            padding: 8px 12px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            color: #fafafa;
+            background: #27272a;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--dna-green), var(--dna-cyan));
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .title-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fafafa;
+            margin-bottom: 2px;
+        }
+
+        .title-text p {
+            font-size: 12px;
+            color: #71717a;
+        }
+
+        .model-badge {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: var(--r-ui, 0px);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--dna-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fafafa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-primary);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .label-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e4e4e7;
+        }
+
+        .label-hint {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            color: #fafafa;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .form-textarea {
+            min-height: 140px;
+            resize: vertical;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            line-height: 1.6;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: #52525b;
+        }
+
+        /* Slider Control */
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-input {
+            flex: 1;
+            height: 6px;
+            background: #27272a;
+            border-radius: var(--r-ui, 0px);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .slider-input:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.6);
+        }
+
+        .slider-input::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .slider-input:hover::-moz-range-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.6);
+        }
+
+        .slider-value {
+            min-width: 60px;
+            padding: 8px 12px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            color: #fafafa;
+            transition: all 0.2s ease;
+        }
+
+        .slider-value:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+        }
+
+        .slider-value:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #1f1f23;
+        }
+
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            color: #e4e4e7;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #27272a;
+            border-radius: var(--r-ui, 0px);
+            transition: 0.3s;
+        }
+
+        .toggle-slider::before {
+            position: absolute;
+            content: '';
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #71717a;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+            background: white;
+        }
+
+        /* Example Sequences */
+        .example-dropdown {
+            position: relative;
+        }
+
+        .example-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #27272a;
+            color: #fafafa;
+        }
+
+        .example-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            min-width: 220px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            display: none;
+        }
+
+        .example-menu.active {
+            display: block;
+        }
+
+        .example-item {
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .example-item:last-child {
+            border-bottom: none;
+        }
+
+        .example-item:hover {
+            background: #27272a;
+            color: #fafafa;
+        }
+
+        .example-item-name {
+            font-weight: 500;
+            color: #e4e4e7;
+            margin-bottom: 2px;
+        }
+
+        .example-item-desc {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        /* Action Buttons */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, var(--dna-green), var(--dna-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #27272a;
+            color: #e4e4e7;
+            border-color: #3f3f46;
+        }
+
+        .btn-secondary:hover {
+            background: #3f3f46;
+        }
+
+        /* Output Section */
+        .output-section {
+            margin-top: 24px;
+        }
+
+        .output-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .output-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            color: #71717a;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .output-tab:hover {
+            color: #a1a1aa;
+        }
+
+        .output-tab.active {
+            background: #27272a;
+            color: #fafafa;
+        }
+
+        .output-content {
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            padding: 16px;
+            min-height: 200px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .output-content:hover {
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .output-sequence {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            word-break: break-all;
+            color: #fafafa;
+        }
+
+        /* DNA Nucleotide Colors */
+        .dna-A { color: #22c55e; } /* Adenine - Green */
+        .dna-T { color: #ef4444; } /* Thymine - Red */
+        .dna-C { color: #3b82f6; } /* Cytosine - Blue */
+        .dna-G { color: #f59e0b; } /* Guanine - Orange/Amber */
+        .dna-N { color: #71717a; } /* Unknown - Gray */
+
+        /* Sequence Sections */
+        .sequence-section {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #0d0d0f;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .sequence-section:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(13, 13, 15, 0.95);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .sequence-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .sequence-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .sequence-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sequence-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--r-ui, 0px);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-input {
+            background: rgba(113, 113, 122, 0.2);
+            color: #a1a1aa;
+            border: 1px solid rgba(113, 113, 122, 0.3);
+        }
+
+        .badge-output {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .sequence-length {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        .sequence-copy-btn {
+            padding: 5px 10px;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .sequence-copy-btn:hover {
+            background: #3f3f46;
+            color: #fafafa;
+        }
+
+        .sequence-copy-btn.copied {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .sequence-body {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            word-break: break-all;
+            letter-spacing: 0.5px;
+        }
+
+        /* Confidence Header */
+        .confidence-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: var(--r-ui, 0px);
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .confidence-header:hover {
+            border-color: rgba(34, 197, 94, 0.4);
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .confidence-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .confidence-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(34, 197, 94, 0.2);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confidence-icon svg {
+            width: 18px;
+            height: 18px;
+            color: #22c55e;
+        }
+
+        .confidence-text {
+            font-size: 13px;
+            color: #e4e4e7;
+        }
+
+        .confidence-text strong {
+            color: #22c55e;
+        }
+
+        .confidence-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .confidence-stat {
+            text-align: right;
+        }
+
+        .confidence-stat-label {
+            font-size: 10px;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .confidence-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        /* DNA Legend */
+        .dna-legend {
+            display: flex;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #0d0d0f;
+            border: 1px solid #1f1f23;
+            border-radius: var(--r-ui, 0px);
+            margin-top: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .dna-legend:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: var(--r-ui, 0px);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .legend-A { background: #22c55e; }
+        .legend-T { background: #ef4444; }
+        .legend-C { background: #3b82f6; }
+        .legend-G { background: #f59e0b; }
+
+        .legend-label {
+            color: #71717a;
+        }
+
+        .output-json {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #a1a1aa;
+        }
+
+        .output-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #52525b;
+            text-align: center;
+        }
+
+        .output-placeholder svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px 10px;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #3f3f46;
+            color: #fafafa;
+        }
+
+        .copy-btn.copied {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        /* Stats Panel */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            padding: 14px;
+            background: #09090b;
+            border: 1px solid #1f1f23;
+            border-radius: var(--r-ui, 0px);
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(9, 9, 11, 0.95);
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fafafa;
+        }
+
+        .stat-value.highlight {
+            background: linear-gradient(135deg, var(--dna-green), var(--dna-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Probability Chart */
+        .prob-chart {
+            height: 80px;
+            background: #09090b;
+            border: 1px solid #1f1f23;
+            border-radius: var(--r-ui, 0px);
+            padding: 12px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            overflow: hidden;
+        }
+
+        .prob-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--dna-green), var(--dna-cyan));
+            border-radius: 2px 2px 0 0;
+            min-height: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .prob-bar:hover {
+            opacity: 1;
+            transform: scaleY(1.15) scaleX(1.3);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+            z-index: 10;
+        }
+
+        .prob-bar .prob-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: var(--r-ui, 0px);
+            padding: 8px 12px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 100;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .prob-bar:hover .prob-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        .prob-tooltip-position {
+            color: #a1a1aa;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .prob-tooltip-value {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .prob-tooltip-value.high { color: #10b981; }
+        .prob-tooltip-value.medium { color: #f59e0b; }
+        .prob-tooltip-value.low { color: #ef4444; }
+
+        .prob-tooltip-nucleotide {
+            display: inline-block;
+            font-weight: 700;
+            font-size: 12px;
+            margin-left: 4px;
+            padding: 2px 6px;
+            border-radius: var(--r-ui, 0px);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .prob-tooltip-nucleotide.A { color: #22c55e; }
+        .prob-tooltip-nucleotide.T { color: #ef4444; }
+        .prob-tooltip-nucleotide.C { color: #3b82f6; }
+        .prob-tooltip-nucleotide.G { color: #f59e0b; }
+
+        /* Nucleotide Tooltip Styles */
+        .nucleotide-with-tooltip {
+            display: inline-block;
+            transition: all 0.15s ease;
+        }
+
+        .nucleotide-with-tooltip:hover {
+            transform: scale(1.3);
+            text-shadow: 0 0 8px currentColor;
+            z-index: 10;
+        }
+
+        .nucleotide-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #18181b;
+            border: 1px solid #3f3f46;
+            border-radius: var(--r-ui, 0px);
+            padding: 12px 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 1000;
+            margin-bottom: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            min-width: 140px;
+        }
+
+        .nucleotide-with-tooltip:hover .nucleotide-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        .nt-tooltip-header {
+            font-size: 10px;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .nt-tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .nt-tooltip-label {
+            color: #a1a1aa;
+            font-size: 11px;
+        }
+
+        .nt-tooltip-nucleotide {
+            font-weight: 700;
+            font-size: 14px;
+            padding: 2px 8px;
+            border-radius: var(--r-ui, 0px);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nt-tooltip-nucleotide.A { color: #22c55e; background: rgba(34, 197, 94, 0.15); }
+        .nt-tooltip-nucleotide.T { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
+        .nt-tooltip-nucleotide.C { color: #3b82f6; background: rgba(59, 130, 246, 0.15); }
+        .nt-tooltip-nucleotide.G { color: #f59e0b; background: rgba(245, 158, 11, 0.15); }
+
+        .nt-tooltip-value {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .nt-tooltip-value.high { color: #10b981; }
+        .nt-tooltip-value.medium { color: #f59e0b; }
+        .nt-tooltip-value.low { color: #ef4444; }
+
+        .nt-tooltip-level {
+            font-weight: 600;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: var(--r-ui, 0px);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .nt-tooltip-level.high { color: #10b981; background: rgba(16, 185, 129, 0.15); }
+        .nt-tooltip-level.medium { color: #f59e0b; background: rgba(245, 158, 11, 0.15); }
+        .nt-tooltip-level.low { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
+
+        .nt-tooltip-bar-container {
+            margin-top: 8px;
+            height: 4px;
+            background: #27272a;
+            border-radius: var(--r-ui, 0px);
+            overflow: hidden;
+        }
+
+        .nt-tooltip-bar {
+            height: 100%;
+            border-radius: var(--r-ui, 0px);
+            transition: width 0.3s ease;
+        }
+
+        .nt-tooltip-bar.high { background: linear-gradient(90deg, #10b981, #22c55e); }
+        .nt-tooltip-bar.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .nt-tooltip-bar.low { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 9, 11, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .dna-helix {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #a1a1aa;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--r-ui, 0px);
+            padding: 14px;
+            margin-top: 16px;
+        }
+
+        .info-panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #818cf8;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-panel-text {
+            font-size: 12px;
+            color: #a1a1aa;
+            line-height: 1.5;
+        }
+
+        /* Credits Display */
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--r-ui, 0px);
+        }
+
+        .credits-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-primary);
+        }
+
+        .credits-text {
+            font-size: 12px;
+            color: #a1a1aa;
+        }
+
+        .credits-value {
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        /* Cloudflare Error Modal */
+        .cf-error-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 9, 11, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .cf-error-overlay.active {
+            display: flex;
+        }
+
+        .cf-error-modal {
+            background: #18181b;
+            border: 1px solid #ef4444;
+            border-radius: var(--r-ui, 0px);
+            max-width: 480px;
+            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(239, 68, 68, 0.2);
+        }
+
+        .cf-error-header {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cf-error-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cf-error-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+
+        .cf-error-title-wrap h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 2px 0;
+        }
+
+        .cf-error-title-wrap p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+
+        .cf-error-body {
+            padding: 24px;
+        }
+
+        .cf-error-message {
+            font-size: 14px;
+            color: #a1a1aa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .cf-error-details {
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            padding: 14px;
+        }
+
+        .cf-error-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 12px;
+        }
+
+        .cf-error-detail-row:not(:last-child) {
+            border-bottom: 1px solid #27272a;
+        }
+
+        .cf-error-detail-label {
+            color: #71717a;
+        }
+
+        .cf-error-detail-value {
+            color: #fafafa;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cf-error-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #27272a;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .cf-error-btn {
+            padding: 10px 20px;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            border-radius: var(--r-ui, 0px);
+            color: #fafafa;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cf-error-btn:hover {
+            background: #3f3f46;
+        }
+
+        /* Seed loader (project file / GenBank database) */
+        .is-hidden { display: none !important; }
+
+        .seed-source {
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            background: #0d0d0f;
+            overflow: hidden;
+        }
+
+        .seed-source-summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e4e4e7;
+            list-style: none;
+            transition: color 0.2s;
+        }
+
+        .seed-source-summary::-webkit-details-marker { display: none; }
+
+        .seed-source-summary svg {
+            width: 14px;
+            height: 14px;
+            color: var(--accent-primary);
+            flex-shrink: 0;
+        }
+
+        .seed-source-summary:hover { color: #fafafa; }
+
+        .seed-source[open] .seed-source-summary { border-bottom: 1px solid #27272a; }
+
+        .seed-source-body { padding: 14px; }
+
+        .seed-source-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .seed-tab {
+            flex: 1;
+            padding: 7px 10px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .seed-tab:hover { color: #fafafa; border-color: #3f3f46; }
+
+        .seed-tab.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+            color: #c7d2fe;
+        }
+
+        .seed-select-row { display: flex; gap: 6px; }
+
+        .seed-source-body .form-input { font-size: 12px; padding: 8px 10px; }
+
+        .seed-db-results {
+            margin-top: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .seed-db-item {
+            padding: 8px 10px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .seed-db-item:hover {
+            border-color: rgba(34, 197, 94, 0.4);
+            background: rgba(34, 197, 94, 0.06);
+        }
+
+        .seed-db-item-title {
+            font-size: 12px;
+            color: #e4e4e7;
+            margin-bottom: 2px;
+            line-height: 1.35;
+        }
+
+        .seed-db-item-meta {
+            font-size: 10px;
+            color: #71717a;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-left">
+                <a href="{{ url_for('dashboard') }}" class="back-link" data-i18n="evo2.dashboard">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <div class="page-title">
+                    <div class="title-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                    </div>
+                    <div class="title-text">
+                        <h1 data-i18n="evo2.heading">Evo2 DNA Generation</h1>
+                        <p data-i18n="evo2.subheading">Generate DNA from a seed sequence with Evo 2 (40B), with per-token probabilities</p>
+                    </div>
+                </div>
+            </div>
+            <div class="model-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                </svg>
+                <span data-i18n="evo2.modelBadge">Evo2-40B Model</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Left Column - Input -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title" data-i18n="evo2.inputSequence">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                            Input Sequence
+                        </span>
+                        <div class="example-dropdown">
+                            <button class="example-btn" onclick="toggleExamples()" data-i18n="evo2.examples">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                Examples
+                            </button>
+                            <div class="example-menu" id="example-menu">
+                                <div class="example-item" onclick="loadExample('promoter')">
+                                    <div class="example-item-name" data-i18n="evo2.examplePromoter">Promoter Region</div>
+                                    <div class="example-item-desc" data-i18n="evo2.examplePromoterDesc">TATA box and upstream elements</div>
+                                </div>
+                                <div class="example-item" onclick="loadExample('coding')">
+                                    <div class="example-item-name" data-i18n="evo2.exampleCoding">Coding Sequence</div>
+                                    <div class="example-item-desc" data-i18n="evo2.exampleCodingDesc">ATG start codon with exon</div>
+                                </div>
+                                <div class="example-item" onclick="loadExample('regulatory')">
+                                    <div class="example-item-name" data-i18n="evo2.exampleRegulatory">Regulatory Element</div>
+                                    <div class="example-item-desc" data-i18n="evo2.exampleRegulatoryDesc">Enhancer-like sequence</div>
+                                </div>
+                                <div class="example-item" onclick="loadExample('random')">
+                                    <div class="example-item-name" data-i18n="evo2.exampleRandom">Random Seed</div>
+                                    <div class="example-item-desc" data-i18n="evo2.exampleRandomDesc">Short random nucleotides</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.dnaSequenceLabel">DNA Sequence (Seed)</span>
+                                <span class="label-hint" id="sequence-length">0 <span data-i18n="evo2.nucleotides">nucleotides</span></span>
+                            </div>
+                            <div id="evo2-sequence-dropzone-container" style="margin-bottom: 12px;"></div>
+
+                            <!-- Load seed from a project file or a public database -->
+                            <details class="seed-source" style="margin-bottom: 12px;" open>
+                                <summary class="seed-source-summary">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                    </svg>
+                                    <span data-i18n="evo2.loadSeedTitle">Load seed from a project file or database</span>
+                                </summary>
+                                <div class="seed-source-body">
+                                    <div class="seed-source-tabs">
+                                        <button type="button" class="seed-tab active" data-seedsrc="project" data-i18n="evo2.seedProjectTab">Project file</button>
+                                        <button type="button" class="seed-tab" data-seedsrc="database" data-i18n="evo2.seedDatabaseTab">Database (GenBank)</button>
+                                    </div>
+
+                                    <!-- Project file panel -->
+                                    <div id="seed-project-panel">
+                                        <div class="seed-select-row">
+                                            <select id="evo2-seed-project" class="form-input" style="flex: 1; cursor: pointer;">
+                                                <option value="" data-i18n="evo2.seedSelectProject">Select project…</option>
+                                            </select>
+                                            <select id="evo2-seed-file" class="form-input" style="flex: 1; cursor: pointer;" disabled>
+                                                <option value="" data-i18n="evo2.seedSelectFile">Select file…</option>
+                                            </select>
+                                        </div>
+                                        <div id="evo2-seed-project-status" class="label-hint" style="margin-top: 6px;" data-i18n="evo2.seedProjectHint">FASTA / sequence files from your projects.</div>
+                                    </div>
+
+                                    <!-- GenBank database panel -->
+                                    <div id="seed-database-panel" class="is-hidden">
+                                        <div class="seed-select-row">
+                                            <input type="text" id="evo2-seed-db-query" class="form-input" style="flex: 1;" data-i18n-placeholder="evo2.seedDbPlaceholder" placeholder="Search GenBank nucleotide (e.g. human insulin)">
+                                            <button type="button" class="btn btn-secondary" id="evo2-seed-db-search" style="padding: 8px 16px;" data-i18n="evo2.seedDbSearch">Search</button>
+                                        </div>
+                                        <div id="evo2-seed-db-results" class="seed-db-results"></div>
+                                        <div id="evo2-seed-db-status" class="label-hint" style="margin-top: 6px;" data-i18n="evo2.seedDbHint">NCBI GenBank nucleotide database.</div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <textarea
+                                class="form-textarea"
+                                id="input-sequence"
+                                data-i18n-placeholder="evo2.dnaPlaceholder"
+                                placeholder="Enter your DNA sequence (A, T, C, G)... or drag-and-drop FASTA file above"
+                                oninput="updateSequenceLength()"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.generationType">Generation Type</span>
+                                <span class="label-hint" data-i18n="evo2.generationTypeHint">Sequence type to generate</span>
+                            </div>
+                            <select class="form-input" id="generation-type" style="cursor: pointer;">
+                                <option value="dna" data-i18n="evo2.typeDna">DNA Sequence</option>
+                                <option value="promoter" data-i18n="evo2.typePromoter">Promoter Region</option>
+                                <option value="enhancer" data-i18n="evo2.typeEnhancer">Enhancer Sequence</option>
+                                <option value="coding" data-i18n="evo2.typeCoding">Coding Sequence (CDS)</option>
+                                <option value="regulatory" data-i18n="evo2.typeRegulatory">Regulatory Element</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.tokensToGenerate">Tokens to Generate</span>
+                                <span class="label-hint">1 - 1200</span>
+                            </div>
+                            <div class="slider-control">
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    id="num-tokens"
+                                    min="1"
+                                    max="1200"
+                                    value="100"
+                                    oninput="updateSliderValue('num-tokens')"
+                                >
+                                <input type="number" class="slider-value" id="num-tokens-value" value="100" min="1" max="1200" onchange="syncSlider('num-tokens')">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.temperature">Temperature</span>
+                                <span class="label-hint" data-i18n="evo2.temperatureHint">Controls randomness</span>
+                            </div>
+                            <div class="slider-control">
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    id="temperature"
+                                    min="0"
+                                    max="130"
+                                    value="70"
+                                    oninput="updateSliderValue('temperature', 100)"
+                                >
+                                <input type="number" class="slider-value" id="temperature-value" value="0.70" min="0" max="1.3" step="0.01" onchange="syncSlider('temperature', 100)">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.topK">Top-K Sampling</span>
+                                <span class="label-hint">0 - 6</span>
+                            </div>
+                            <div class="slider-control">
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    id="top-k"
+                                    min="0"
+                                    max="6"
+                                    value="3"
+                                    oninput="updateSliderValue('top-k')"
+                                >
+                                <input type="number" class="slider-value" id="top-k-value" value="3" min="0" max="6" onchange="syncSlider('top-k')">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.topP">Top-P (Nucleus Sampling)</span>
+                                <span class="label-hint" data-i18n="evo2.topPHint">0 = disabled</span>
+                            </div>
+                            <div class="slider-control">
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    id="top-p"
+                                    min="0"
+                                    max="100"
+                                    value="0"
+                                    oninput="updateSliderValue('top-p', 100)"
+                                >
+                                <input type="number" class="slider-value" id="top-p-value" value="0.00" min="0" max="1" step="0.01" onchange="syncSlider('top-p', 100)">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.randomSeed">Random Seed</span>
+                                <span class="label-hint" data-i18n="evo2.randomSeedHint">Optional, for reproducibility</span>
+                            </div>
+                            <input type="number" class="form-input" id="random-seed" data-i18n-placeholder="evo2.randomSeedPlaceholder" placeholder="Leave empty for random" min="0" max="4294967295" style="font-variant-numeric: tabular-nums;">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.advancedOptions">Advanced Options</span>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="toggle-label" data-i18n="evo2.samplingProbs">Return sampling probabilities</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-probs">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="toggle-label" data-i18n="evo2.logits">Return logits</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-logits">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="toggle-label" data-i18n="evo2.latency">Return per-token latency</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-elapsed">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn btn-secondary" onclick="clearForm()" data-i18n="evo2.clear">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Clear
+                            </button>
+                            <button class="btn btn-primary" id="generate-btn" onclick="generateSequence()" data-i18n="evo2.generate">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                Generate DNA
+                            </button>
+                        </div>
+
+                        <div class="info-panel">
+                            <div class="info-panel-title" data-i18n="evo2.aboutTitle">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                About Evo2
+                            </div>
+                            <div class="info-panel-text" data-i18n="evo2.aboutText">
+                                Evo2-40B is a state-of-the-art genomic language model trained on DNA sequences.
+                                It can generate realistic, biologically plausible DNA sequences from a seed sequence.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Section -->
+                <div class="output-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title" data-i18n="evo2.outputTitle">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Generated Output
+                            </span>
+                            <div class="output-tabs">
+                                <button class="output-tab active" data-tab="sequence" onclick="switchTab('sequence')" data-i18n="evo2.tabSequence">Sequence</button>
+                                <button class="output-tab" data-tab="json" onclick="switchTab('json')" data-i18n="evo2.tabJson">JSON</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="output-content" id="output-content">
+                                <div class="output-placeholder" id="output-placeholder">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                    </svg>
+                                    <span data-i18n="evo2.outputPlaceholder">Generated DNA sequence will appear here</span>
+                                </div>
+
+                                <!-- Confidence Header -->
+                                <div class="confidence-header" id="confidence-header" style="display: none;">
+                                    <div class="confidence-left">
+                                        <div class="confidence-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="confidence-text" id="confidence-text-container" data-i18n="evo2.modelConfidence" data-i18n-html data-i18n-params='{"model": "Evo2-40B", "confidence": "-"}'>
+                                            Model: <strong>Evo2-40B</strong> • Avg Confidence: <strong id="avg-confidence">-</strong>
+                                        </div>
+                                    </div>
+                                    <div class="confidence-stats">
+                                        <div class="confidence-stat">
+                                            <div class="confidence-stat-label" data-i18n="evo2.minProb">Min Prob</div>
+                                            <div class="confidence-stat-value" id="min-prob">-</div>
+                                        </div>
+                                        <div class="confidence-stat">
+                                            <div class="confidence-stat-label" data-i18n="evo2.maxProb">Max Prob</div>
+                                            <div class="confidence-stat-value" id="max-prob">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sequence Output -->
+                                <div id="output-sequence" style="display: none;">
+                                    <!-- Input Sequence Section -->
+                                    <div class="sequence-section" id="input-section">
+                                        <div class="sequence-header">
+                                            <div class="sequence-label">
+                                                <span class="sequence-badge badge-input" data-i18n="evo2.inputBadge">Input</span>
+                                                <span class="sequence-length" id="input-length-display">0 bp</span>
+                                            </div>
+                                            <button class="sequence-copy-btn" onclick="copySequence('input')" data-i18n="evo2.copy">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="10" height="10">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                </svg>
+                                                Copy
+                                            </button>
+                                        </div>
+                                        <div class="sequence-body" id="input-sequence-display"></div>
+                                    </div>
+
+                                    <!-- Output Sequence Section -->
+                                    <div class="sequence-section" id="output-section">
+                                        <div class="sequence-header">
+                                            <div class="sequence-label">
+                                                <span class="sequence-badge badge-output" data-i18n="evo2.generatedBadge">Generated</span>
+                                                <span class="sequence-length" id="output-length-display">0 bp</span>
+                                            </div>
+                                            <button class="sequence-copy-btn" onclick="copySequence('output')" data-i18n="evo2.copy">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="10" height="10">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                </svg>
+                                                Copy
+                                            </button>
+                                        </div>
+                                        <div class="sequence-body" id="output-sequence-display"></div>
+                                    </div>
+
+                                    <!-- Full Sequence Section -->
+                                    <div class="sequence-section" id="full-section">
+                                        <div class="sequence-header">
+                                            <div class="sequence-label">
+                                                <span class="sequence-badge badge-input" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);" data-i18n="evo2.fullSequenceBadge">Full Sequence</span>
+                                                <span class="sequence-length" id="full-length-display">0 bp</span>
+                                            </div>
+                                            <button class="sequence-copy-btn" onclick="copySequence('full')" data-i18n="evo2.copyAll">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="10" height="10">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                </svg>
+                                                Copy All
+                                            </button>
+                                        </div>
+                                        <div class="sequence-body" id="full-sequence-display"></div>
+                                    </div>
+
+                                    <!-- DNA Legend -->
+                                    <div class="dna-legend">
+                                        <div class="legend-item">
+                                            <span class="legend-color legend-A">A</span>
+                                            <span class="legend-label" data-i18n="evo2.adenine">Adenine</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color legend-T">T</span>
+                                            <span class="legend-label" data-i18n="evo2.thymine">Thymine</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color legend-C">C</span>
+                                            <span class="legend-label" data-i18n="evo2.cytosine">Cytosine</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <span class="legend-color legend-G">G</span>
+                                            <span class="legend-label" data-i18n="evo2.guanine">Guanine</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="output-json" id="output-json" style="display: none;"></div>
+                                <button class="copy-btn" id="copy-btn" style="display: none;" onclick="copyOutput()" data-i18n="evo2.copyJson">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    Copy JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Stats & Info -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title" data-i18n="evo2.statistics">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Statistics
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label" data-i18n="evo2.inputLength">Input Length</div>
+                                <div class="stat-value" id="stat-input">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label" data-i18n="evo2.generated">Generated</div>
+                                <div class="stat-value highlight" id="stat-generated">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label" data-i18n="evo2.gcContent">GC Content</div>
+                                <div class="stat-value" id="stat-gc">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label" data-i18n="evo2.time">Time</div>
+                                <div class="stat-value" id="stat-time">-</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 20px;">
+                            <div class="form-label">
+                                <span class="label-text" data-i18n="evo2.samplingProbabilities">Sampling Probabilities</span>
+                            </div>
+                            <div class="prob-chart" id="prob-chart">
+                                <!-- Probability bars will be added dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-header">
+                        <span class="card-title" data-i18n="evo2.creditsTitle">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Credits
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="credits-display">
+                            <svg class="credits-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="credits-text"><span data-i18n="evo2.available">Available:</span> <span class="credits-value" id="user-credits">{{ user_credits if user_credits is defined else '–' }}</span> <span data-i18n="evo2.credits">credits</span></span>
+                        </div>
+                        <p style="font-size: 11px; color: #71717a; margin-top: 10px;" data-i18n="models.flatCost" data-i18n-options='{"count": {{ model_cost("evo2") }}}'>
+                            Flat price: {{ model_cost("evo2") }} credits per run, whatever the sequence length.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-header">
+                        <span class="card-title" data-i18n="evo2.modelInfo">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Model Info
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-item" style="margin-bottom: 10px;">
+                            <div class="stat-label" data-i18n="evo2.model">Model</div>
+                            <div class="stat-value" style="font-size: 14px;">Evo2-40B</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label" data-i18n="evo2.context">Context</div>
+                            <div class="stat-value" style="font-size: 14px;">1M+ tokens</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="dna-helix">
+                <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="30" cy="30" r="28" stroke="url(#grad)" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="140 40"/>
+                    <defs>
+                        <linearGradient id="grad" x1="0" y1="0" x2="60" y2="60">
+                            <stop offset="0%" stop-color="#22c55e"/>
+                            <stop offset="100%" stop-color="#06b6d4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="loading-text" id="loading-text" data-i18n="evo2.generatingDna">Generating DNA sequence...</span>
+        </div>
+    </div>
+
+    <!-- Cloudflare Error Modal -->
+    <div class="cf-error-overlay" id="cf-error-overlay">
+        <div class="cf-error-modal">
+            <div class="cf-error-header">
+                <div class="cf-error-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="cf-error-title-wrap">
+                    <h2 id="cf-error-title" data-i18n="evo2.error502">Error 502</h2>
+                    <p id="cf-error-subtitle" data-i18n="evo2.badGateway">Bad Gateway</p>
+                </div>
+            </div>
+            <div class="cf-error-body">
+                <p class="cf-error-message" id="cf-error-message" data-i18n="evo2.error502Msg">
+                    The web server reported a bad gateway error.
+                </p>
+                <div class="cf-error-details">
+                    <div class="cf-error-detail-row">
+                        <span class="cf-error-detail-label" data-i18n="evo2.errorCode">Error Code</span>
+                        <span class="cf-error-detail-value" id="cf-error-code">502</span>
+                    </div>
+                    <div class="cf-error-detail-row">
+                        <span class="cf-error-detail-label" data-i18n="evo2.rayId">Ray ID</span>
+                        <span class="cf-error-detail-value" id="cf-ray-id">-</span>
+                    </div>
+                    <div class="cf-error-detail-row">
+                        <span class="cf-error-detail-label" data-i18n="evo2.timestamp">Timestamp</span>
+                        <span class="cf-error-detail-value" id="cf-timestamp">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="cf-error-footer">
+                <button class="cf-error-btn" onclick="hideCloudflareError()" data-i18n="evo2.close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Example sequences
+        const EXAMPLES = {
+            promoter: 'TATAAAGGGCATGCTAAGCTAGCTAGCTAGCTAGCTAGCTA',
+            coding: 'ATGCGTAAAGCCGATCGATCGATCGATCGATCGATCGATCG',
+            regulatory: 'GCTAGCTAGCTAGCTACGATCGATCGATCGCGCGCGCGCGC',
+            random: 'ACTGACTGACTGACTG'
+        };
+
+        let currentResult = null;
+        let currentTab = 'sequence';
+
+        // Cloudflare error functions
+        function showCloudflareError(error) {
+            document.getElementById('cf-error-title').textContent = `Error ${error.code}`;
+            document.getElementById('cf-error-subtitle').textContent = error.title || 'Server Error';
+            document.getElementById('cf-error-message').textContent = error.message || 'An error occurred while processing your request.';
+            document.getElementById('cf-error-code').textContent = error.code;
+            document.getElementById('cf-ray-id').textContent = error.ray_id || '-';
+            document.getElementById('cf-timestamp').textContent = new Date().toISOString();
+            document.getElementById('cf-error-overlay').classList.add('active');
+            document.getElementById('loading-overlay').classList.remove('active');
+            document.getElementById('generate-btn').disabled = false;
+        }
+
+        function hideCloudflareError() {
+            document.getElementById('cf-error-overlay').classList.remove('active');
+        }
+
+        // Slider functions
+        function updateSliderValue(id, divisor = 1) {
+            const slider = document.getElementById(id);
+            const valueEl = document.getElementById(id + '-value');
+            const val = divisor > 1 ? (slider.value / divisor).toFixed(2) : slider.value;
+            valueEl.value = val;
+            // Update cost estimate when tokens change
+            if (id === 'num-tokens') updateCostEstimate();
+        }
+
+        function syncSlider(id, multiplier = 1) {
+            const slider = document.getElementById(id);
+            const valueEl = document.getElementById(id + '-value');
+            slider.value = parseFloat(valueEl.value) * multiplier;
+            // Update cost estimate when tokens change
+            if (id === 'num-tokens') updateCostEstimate();
+        }
+
+        // Sequence length and cost estimate
+        function updateSequenceLength() {
+            const input = document.getElementById('input-sequence').value;
+            const clean = input.replace(/[^ATCGatcgNn]/g, '');
+            document.getElementById('sequence-length').textContent = `${clean.length} nucleotides`;
+            updateCostEstimate();
+        }
+
+        // Cost is a flat per-run price from config (shown by model-cost.js); nothing to compute here.
+        function updateCostEstimate() {}
+
+        // Examples dropdown
+        function toggleExamples() {
+            document.getElementById('example-menu').classList.toggle('active');
+        }
+
+        function loadExample(type) {
+            document.getElementById('input-sequence').value = EXAMPLES[type];
+            updateSequenceLength();
+            toggleExamples();
+        }
+
+        // Close examples on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.example-dropdown')) {
+                document.getElementById('example-menu').classList.remove('active');
+            }
+        });
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('input-sequence').value = '';
+            document.getElementById('generation-type').value = 'dna';
+            document.getElementById('num-tokens').value = 100;
+            document.getElementById('num-tokens-value').value = 100;
+            document.getElementById('temperature').value = 70;
+            document.getElementById('temperature-value').value = '0.70';
+            document.getElementById('top-k').value = 3;
+            document.getElementById('top-k-value').value = 3;
+            document.getElementById('top-p').value = 0;
+            document.getElementById('top-p-value').value = '0.00';
+            document.getElementById('random-seed').value = '';
+            document.getElementById('enable-probs').checked = false;
+            document.getElementById('enable-logits').checked = false;
+            document.getElementById('enable-elapsed').checked = false;
+            updateSequenceLength();
+            resetOutput();
+        }
+
+        // Reset output
+        function resetOutput() {
+            document.getElementById('output-placeholder').style.display = 'flex';
+            document.getElementById('output-sequence').style.display = 'none';
+            document.getElementById('output-json').style.display = 'none';
+            document.getElementById('copy-btn').style.display = 'none';
+            document.getElementById('confidence-header').style.display = 'none';
+            document.getElementById('stat-input').textContent = '0';
+            document.getElementById('stat-generated').textContent = '0';
+            document.getElementById('stat-gc').textContent = '-';
+            document.getElementById('stat-time').textContent = '-';
+            document.getElementById('prob-chart').textContent = '';
+            document.getElementById('input-sequence-display').textContent = '';
+            document.getElementById('output-sequence-display').textContent = '';
+            document.getElementById('full-sequence-display').textContent = '';
+            storedInputSeq = '';
+            storedOutputSeq = '';
+            storedFullSeq = '';
+            currentResult = null;
+        }
+
+        // Generate sequence
+        async function generateSequence() {
+            const sequence = document.getElementById('input-sequence').value.trim();
+
+            if (!sequence) {
+                alert('Please enter an input sequence');
+                return;
+            }
+
+            // Validate sequence
+            const validChars = /^[ATCGNatcgn]+$/;
+            if (!validChars.test(sequence)) {
+                alert('Invalid sequence: must contain only A, T, C, G, N');
+                return;
+            }
+
+            const numTokens = parseInt(document.getElementById('num-tokens-value').value);
+            const temperature = parseFloat(document.getElementById('temperature-value').value);
+            const topK = parseInt(document.getElementById('top-k-value').value);
+            const topP = parseFloat(document.getElementById('top-p-value').value);
+            const enableProbs = document.getElementById('enable-probs').checked;
+            const enableLogits = document.getElementById('enable-logits').checked;
+            const enableElapsed = document.getElementById('enable-elapsed').checked;
+            const randomSeedVal = document.getElementById('random-seed').value.trim();
+            const generationType = document.getElementById('generation-type').value;
+
+            // Show loading
+            document.getElementById('loading-overlay').classList.add('active');
+            document.getElementById('generate-btn').disabled = true;
+
+            const startTime = Date.now();
+
+            try {
+                const payload = {
+                    sequence: sequence.toUpperCase(),
+                    num_tokens: numTokens,
+                    temperature: temperature,
+                    top_k: topK,
+                    top_p: topP,
+                    enable_sampled_probs: enableProbs,
+                    enable_logits: enableLogits,
+                    enable_elapsed_ms_per_token: enableElapsed,
+                    generation_type: generationType
+                };
+                if (randomSeedVal !== '') {
+                    payload.random_seed = parseInt(randomSeedVal);
+                }
+
+                const response = await fetch('/api/evo2/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || ''
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    // Handle Cloudflare-style errors
+                    if (error.cloudflare) {
+                        showCloudflareError(error);
+                        return;
+                    }
+                    throw new Error(error.message || 'Generation failed');
+                }
+
+                currentResult = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                // Display results
+                displayResults(sequence, currentResult, elapsed);
+
+            } catch (error) {
+                console.error('Generation error:', error);
+                showCloudflareError({
+                    code: 520,
+                    title: 'Connection Error',
+                    message: error.message || 'An unexpected error occurred',
+                    ray_id: Math.random().toString(16).slice(2, 18)
+                });
+            } finally {
+                document.getElementById('loading-overlay').classList.remove('active');
+                document.getElementById('generate-btn').disabled = false;
+            }
+        }
+
+        // Safely colorize DNA sequence using DOM methods (XSS-safe)
+        // Optionally adds probability tooltips for generated nucleotides
+        function colorizeDNASafe(container, sequence, probs = null, isOutput = false, inputLength = 0) {
+            container.textContent = ''; // Clear safely
+            const validChars = new Set(['A', 'T', 'C', 'G', 'N']);
+
+            for (let i = 0; i < sequence.length; i++) {
+                const char = sequence[i];
+                const span = document.createElement('span');
+                const upper = char.toUpperCase();
+                if (validChars.has(upper)) {
+                    span.className = 'dna-' + upper;
+                }
+                span.textContent = char;
+
+                // Add tooltip for output nucleotides with probability data
+                if (isOutput && probs && probs[i] !== undefined) {
+                    const prob = probs[i];
+                    const probPct = (prob * 100).toFixed(1);
+                    const confClass = prob > 0.8 ? 'high' : prob > 0.5 ? 'medium' : 'low';
+                    const confLabel = prob > 0.8 ? 'High' : prob > 0.5 ? 'Medium' : 'Low';
+
+                    span.classList.add('nucleotide-with-tooltip');
+                    span.style.cursor = 'pointer';
+                    span.style.position = 'relative';
+
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'nucleotide-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="nt-tooltip-header">Position ${i + 1}</div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Nucleotide:</span>
+                            <span class="nt-tooltip-nucleotide ${upper}">${upper}</span>
+                        </div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Confidence:</span>
+                            <span class="nt-tooltip-value ${confClass}">${probPct}%</span>
+                        </div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Level:</span>
+                            <span class="nt-tooltip-level ${confClass}">${confLabel}</span>
+                        </div>
+                        <div class="nt-tooltip-bar-container">
+                            <div class="nt-tooltip-bar ${confClass}" style="width: ${probPct}%"></div>
+                        </div>
+                    `;
+                    span.appendChild(tooltip);
+                }
+
+                container.appendChild(span);
+            }
+        }
+
+        // Colorize full sequence with input (no tooltips) + output (with tooltips)
+        function colorizeDNAWithMixed(container, inputSeq, outputSeq, probs) {
+            container.textContent = ''; // Clear safely
+            const validChars = new Set(['A', 'T', 'C', 'G', 'N']);
+
+            // First, add input sequence without tooltips (dimmed)
+            for (let i = 0; i < inputSeq.length; i++) {
+                const char = inputSeq[i];
+                const span = document.createElement('span');
+                const upper = char.toUpperCase();
+                if (validChars.has(upper)) {
+                    span.className = 'dna-' + upper;
+                }
+                span.textContent = char;
+                span.style.opacity = '0.5';
+                container.appendChild(span);
+            }
+
+            // Add a visual separator
+            if (inputSeq.length > 0 && outputSeq.length > 0) {
+                const sep = document.createElement('span');
+                sep.textContent = '│';
+                sep.style.color = '#6366f1';
+                sep.style.margin = '0 2px';
+                sep.style.fontWeight = 'bold';
+                container.appendChild(sep);
+            }
+
+            // Then, add output sequence with tooltips
+            for (let i = 0; i < outputSeq.length; i++) {
+                const char = outputSeq[i];
+                const span = document.createElement('span');
+                const upper = char.toUpperCase();
+                if (validChars.has(upper)) {
+                    span.className = 'dna-' + upper;
+                }
+                span.textContent = char;
+
+                // Add tooltip if probability data exists
+                if (probs && probs[i] !== undefined) {
+                    const prob = probs[i];
+                    const probPct = (prob * 100).toFixed(1);
+                    const confClass = prob > 0.8 ? 'high' : prob > 0.5 ? 'medium' : 'low';
+                    const confLabel = prob > 0.8 ? 'High' : prob > 0.5 ? 'Medium' : 'Low';
+
+                    span.classList.add('nucleotide-with-tooltip');
+                    span.style.cursor = 'pointer';
+                    span.style.position = 'relative';
+
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'nucleotide-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="nt-tooltip-header">Generated Position ${i + 1}</div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Nucleotide:</span>
+                            <span class="nt-tooltip-nucleotide ${upper}">${upper}</span>
+                        </div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Confidence:</span>
+                            <span class="nt-tooltip-value ${confClass}">${probPct}%</span>
+                        </div>
+                        <div class="nt-tooltip-row">
+                            <span class="nt-tooltip-label">Level:</span>
+                            <span class="nt-tooltip-level ${confClass}">${confLabel}</span>
+                        </div>
+                        <div class="nt-tooltip-bar-container">
+                            <div class="nt-tooltip-bar ${confClass}" style="width: ${probPct}%"></div>
+                        </div>
+                    `;
+                    span.appendChild(tooltip);
+                }
+
+                container.appendChild(span);
+            }
+        }
+
+        // Store sequences for copy functionality
+        let storedInputSeq = '';
+        let storedOutputSeq = '';
+        let storedFullSeq = '';
+
+        // Display results
+        function displayResults(inputSeq, result, elapsed) {
+            const generated = result.sequence || '';
+            const inputLen = inputSeq.length;
+
+            // Determine if the output includes the input as prefix
+            let outputSeq = '';
+            if (generated.length > inputLen && generated.toUpperCase().startsWith(inputSeq.toUpperCase())) {
+                outputSeq = generated.slice(inputLen);
+            } else {
+                outputSeq = generated;
+            }
+
+            const generatedLen = outputSeq.length;
+
+            // Store for copy functionality (sanitized)
+            storedInputSeq = inputSeq.toUpperCase().replace(/[^ATCGN]/g, '');
+            storedOutputSeq = outputSeq.toUpperCase().replace(/[^ATCGN]/g, '');
+            storedFullSeq = generated.toUpperCase().replace(/[^ATCGN]/g, '');
+
+            // Update stats
+            document.getElementById('stat-input').textContent = inputLen;
+            document.getElementById('stat-generated').textContent = generatedLen;
+            document.getElementById('stat-time').textContent = elapsed + 's';
+
+            // Calculate GC content for generated portion
+            if (outputSeq) {
+                const gc = (outputSeq.match(/[GC]/gi) || []).length;
+                const gcPercent = ((gc / outputSeq.length) * 100).toFixed(1);
+                document.getElementById('stat-gc').textContent = gcPercent + '%';
+            }
+
+            // Calculate confidence from probabilities
+            const probs = result.sampled_probs || [];
+            if (probs.length > 0) {
+                const avgProb = (probs.reduce((a, b) => a + b, 0) / probs.length * 100).toFixed(1);
+                const minProb = (Math.min(...probs) * 100).toFixed(1);
+                const maxProb = (Math.max(...probs) * 100).toFixed(1);
+
+                document.getElementById('avg-confidence').textContent = avgProb + '%';
+                document.getElementById('min-prob').textContent = minProb + '%';
+                document.getElementById('max-prob').textContent = maxProb + '%';
+                document.getElementById('confidence-header').style.display = 'flex';
+            } else {
+                document.getElementById('avg-confidence').textContent = 'N/A';
+                document.getElementById('min-prob').textContent = '-';
+                document.getElementById('max-prob').textContent = '-';
+                document.getElementById('confidence-header').style.display = 'flex';
+            }
+
+            // Display colorized sequences using safe DOM methods
+            // Input sequence - no tooltips
+            colorizeDNASafe(document.getElementById('input-sequence-display'), inputSeq, null, false);
+            document.getElementById('input-length-display').textContent = inputLen + ' bp';
+
+            // Output sequence - with probability tooltips
+            colorizeDNASafe(document.getElementById('output-sequence-display'), outputSeq, probs, true, inputLen);
+            document.getElementById('output-length-display').textContent = generatedLen + ' bp';
+
+            // Full sequence - with probability tooltips for generated portion only
+            colorizeDNAWithMixed(document.getElementById('full-sequence-display'), inputSeq, outputSeq, probs);
+            document.getElementById('full-length-display').textContent = generated.length + ' bp';
+
+            // Show JSON
+            document.getElementById('output-json').textContent = JSON.stringify(result, null, 2);
+
+            // Show probability chart with enhanced tooltips
+            const chart = document.getElementById('prob-chart');
+            chart.textContent = ''; // Clear safely
+            if (probs.length > 0) {
+                const maxBars = 50;
+                const step = Math.max(1, Math.floor(probs.length / maxBars));
+                for (let i = 0; i < probs.length && chart.children.length < maxBars; i += step) {
+                    const prob = probs[i];
+                    const probPct = (prob * 100).toFixed(1);
+                    const nucleotide = outputSeq[i] || 'N';
+                    const confClass = prob > 0.8 ? 'high' : prob > 0.5 ? 'medium' : 'low';
+
+                    // Color bar based on confidence
+                    const barColor = prob > 0.8 ? 'linear-gradient(to top, #10b981, #22c55e)' :
+                                     prob > 0.5 ? 'linear-gradient(to top, #f59e0b, #fbbf24)' :
+                                                  'linear-gradient(to top, #ef4444, #f87171)';
+
+                    const bar = document.createElement('div');
+                    bar.className = 'prob-bar';
+                    bar.style.height = (prob * 60) + 'px';
+                    bar.style.background = barColor;
+
+                    // Create tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'prob-tooltip';
+                    tooltip.innerHTML = `
+                        <div class="prob-tooltip-position">Position ${i + 1}</div>
+                        <div>
+                            <span class="prob-tooltip-value ${confClass}">${probPct}%</span>
+                            <span class="prob-tooltip-nucleotide ${nucleotide}">${nucleotide}</span>
+                        </div>
+                    `;
+                    bar.appendChild(tooltip);
+                    chart.appendChild(bar);
+                }
+            }
+
+            // Show output
+            document.getElementById('output-placeholder').style.display = 'none';
+            document.getElementById('copy-btn').style.display = 'flex';
+
+            switchTab(currentTab);
+        }
+
+        // Copy specific sequence section
+        function copySequence(type) {
+            let text = '';
+            let btn = null;
+
+            switch(type) {
+                case 'input':
+                    text = storedInputSeq;
+                    btn = document.querySelector('#input-section .sequence-copy-btn');
+                    break;
+                case 'output':
+                    text = storedOutputSeq;
+                    btn = document.querySelector('#output-section .sequence-copy-btn');
+                    break;
+                case 'full':
+                    text = storedFullSeq;
+                    btn = document.querySelector('#full-section .sequence-copy-btn');
+                    break;
+            }
+
+            if (!text || !btn) return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                const icon = btn.querySelector('svg');
+                const originalPath = icon ? icon.innerHTML : '';
+
+                // Update button text safely
+                btn.textContent = '';
+                const checkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                checkIcon.setAttribute('fill', 'none');
+                checkIcon.setAttribute('stroke', 'currentColor');
+                checkIcon.setAttribute('viewBox', '0 0 24 24');
+                checkIcon.setAttribute('width', '10');
+                checkIcon.setAttribute('height', '10');
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('d', 'M5 13l4 4L19 7');
+                checkIcon.appendChild(path);
+                btn.appendChild(checkIcon);
+                btn.appendChild(document.createTextNode(' Copied!'));
+
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.textContent = '';
+                    const copyIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    copyIcon.setAttribute('fill', 'none');
+                    copyIcon.setAttribute('stroke', 'currentColor');
+                    copyIcon.setAttribute('viewBox', '0 0 24 24');
+                    copyIcon.setAttribute('width', '10');
+                    copyIcon.setAttribute('height', '10');
+                    const copyPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    copyPath.setAttribute('stroke-linecap', 'round');
+                    copyPath.setAttribute('stroke-linejoin', 'round');
+                    copyPath.setAttribute('stroke-width', '2');
+                    copyPath.setAttribute('d', 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z');
+                    copyIcon.appendChild(copyPath);
+                    btn.appendChild(copyIcon);
+                    btn.appendChild(document.createTextNode(type === 'full' ? ' Copy All' : ' Copy'));
+                }, 1500);
+            });
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.output-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tab);
+            });
+
+            document.getElementById('output-sequence').style.display = tab === 'sequence' ? 'block' : 'none';
+            document.getElementById('output-json').style.display = tab === 'json' ? 'block' : 'none';
+        }
+
+        // Copy output
+        function copyOutput() {
+            if (!currentResult) return;
+
+            const text = currentTab === 'sequence'
+                ? currentResult.sequence
+                : JSON.stringify(currentResult, null, 2);
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.classList.add('copied');
+                btn.innerHTML = `
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Copied!
+                `;
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = `
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Copy
+                    `;
+                }, 2000);
+            });
+        }
+
+        // Initialize cost estimate on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force enable-probs to true on load to override browser cache
+            const enableProbs = document.getElementById('enable-probs');
+            if (enableProbs) enableProbs.checked = true;
+            
+            updateCostEstimate();
+
+            // Initialize FileUploadPreview for DNA sequence input
+            initializeFileUploadPreview();
+
+            // Initialize "load seed from project / GenBank" pickers
+            setupSeedSourceTabs();
+            setupEvo2ProjectPicker();
+            setupEvo2DatabasePicker();
+        });
+
+        // ====================================================================
+        // Load a seed sequence from a project file or a public database
+        // (parallels the ligand pickers on OpenFold3 / Boltz2). Both paths
+        // feed the parsed DNA into the seed textarea.
+        // ====================================================================
+        const SEED_MAX_NT = 8192;                       // cap loaded seeds
+        const SEED_SEQ_FILE_EXT = /\.(fasta|fa|fna|ffn|frn|txt|seq)$/i;
+
+        // Strip FASTA headers / whitespace and upper-case the body.
+        function parseSeedFasta(text) {
+            return String(text || '')
+                .split(/\r?\n/)
+                .filter(line => !line.startsWith('>') && !line.startsWith(';'))
+                .join('')
+                .replace(/\s+/g, '')
+                .toUpperCase();
+        }
+
+        // Put a loaded sequence into the seed textarea (DNA letters only).
+        function applySeedSequence(rawSeq, sourceLabel) {
+            const parsed = parseSeedFasta(rawSeq);
+            let clean = parsed.replace(/[^ATCGN]/g, '');
+            if (!clean) {
+                showNotification(`No DNA sequence found in ${sourceLabel}.`, 'error');
+                return false;
+            }
+            if (parsed.length && (clean.length / parsed.length) < 0.8) {
+                showNotification(`${sourceLabel} may not be a DNA sequence — non-ATCG characters were removed.`, 'warning');
+            }
+            let truncated = false;
+            if (clean.length > SEED_MAX_NT) {
+                clean = clean.slice(0, SEED_MAX_NT);
+                truncated = true;
+            }
+            document.getElementById('input-sequence').value = clean;
+            updateSequenceLength();
+            showNotification(
+                `Loaded ${clean.length} nucleotides from ${sourceLabel}` +
+                (truncated ? ` (truncated to ${SEED_MAX_NT} nt)` : '') + '.',
+                truncated ? 'warning' : 'success'
+            );
+            return true;
+        }
+
+        function setupSeedSourceTabs() {
+            const tabs = document.querySelectorAll('.seed-tab');
+            const projectPanel = document.getElementById('seed-project-panel');
+            const dbPanel = document.getElementById('seed-database-panel');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.toggle('active', t === tab));
+                    const src = tab.dataset.seedsrc;
+                    if (projectPanel) projectPanel.classList.toggle('is-hidden', src !== 'project');
+                    if (dbPanel) dbPanel.classList.toggle('is-hidden', src !== 'database');
+                });
+            });
+        }
+
+        // ---- Project file picker --------------------------------------------
+        function setupEvo2ProjectPicker() {
+            const projSel = document.getElementById('evo2-seed-project');
+            const fileSel = document.getElementById('evo2-seed-file');
+            const statusEl = document.getElementById('evo2-seed-project-status');
+            if (!projSel || !fileSel) return;
+
+            const setStatus = (msg, isErr) => {
+                if (!statusEl) return;
+                statusEl.textContent = msg;
+                statusEl.style.color = isErr ? '#fca5a5' : '';
+            };
+
+            fetch('/api/projects', { headers: { 'Accept': 'application/json' } })
+                .then(r => (r.ok ? r.json() : []))
+                .then(projects => {
+                    if (!Array.isArray(projects)) return;
+                    projects.forEach(p => {
+                        const o = document.createElement('option');
+                        o.value = p.id;
+                        o.textContent = p.name || ('Project ' + p.id);
+                        projSel.appendChild(o);
+                    });
+                })
+                .catch(() => {});
+
+            projSel.addEventListener('change', () => {
+                fileSel.innerHTML = '<option value="">Select file…</option>';
+                fileSel.disabled = true;
+                if (!projSel.value) { setStatus('FASTA / sequence files from your projects.'); return; }
+                setStatus('Loading files…');
+                fetch('/api/projects/' + encodeURIComponent(projSel.value) + '/files', { headers: { 'Accept': 'application/json' } })
+                    .then(r => (r.ok ? r.json() : null))
+                    .then(data => {
+                        let files = (data && (data.files || data.items || data)) || [];
+                        if (!Array.isArray(files)) files = [];
+                        const seqFiles = files.filter(f => {
+                            const nm = f.filename || f.name || '';
+                            return SEED_SEQ_FILE_EXT.test(nm) && (f.type === 'upload' || f.type === undefined);
+                        });
+                        if (!seqFiles.length) { setStatus('No FASTA / sequence files in this project.'); return; }
+                        seqFiles.forEach(f => {
+                            const o = document.createElement('option');
+                            o.value = f.id;
+                            o.textContent = f.filename || f.name;
+                            fileSel.appendChild(o);
+                        });
+                        fileSel.disabled = false;
+                        setStatus(seqFiles.length + ' sequence file(s) found.');
+                    })
+                    .catch(() => setStatus('Could not load project files.', true));
+            });
+
+            fileSel.addEventListener('change', () => {
+                if (!fileSel.value) return;
+                const label = fileSel.options[fileSel.selectedIndex].textContent;
+                setStatus('Loading ' + label + '…');
+                fetch('/api/files/' + encodeURIComponent(fileSel.value) + '/content', { headers: { 'Accept': 'application/json' } })
+                    .then(r => r.json().then(j => ({ ok: r.ok, body: j })))
+                    .then(res => {
+                        if (!res.ok || res.body.status !== 'success' || typeof res.body.content !== 'string') {
+                            setStatus((res.body && res.body.message) || 'Could not read file.', true);
+                            return;
+                        }
+                        if (applySeedSequence(res.body.content, label)) {
+                            setStatus('Loaded seed from ' + label + '.');
+                        } else {
+                            setStatus('No DNA found in ' + label + '.', true);
+                        }
+                    })
+                    .catch(() => setStatus('Could not read file.', true));
+            });
+        }
+
+        // ---- GenBank nucleotide picker --------------------------------------
+        function setupEvo2DatabasePicker() {
+            const queryInput = document.getElementById('evo2-seed-db-query');
+            const searchBtn = document.getElementById('evo2-seed-db-search');
+            const resultsEl = document.getElementById('evo2-seed-db-results');
+            const statusEl = document.getElementById('evo2-seed-db-status');
+            if (!queryInput || !searchBtn || !resultsEl) return;
+
+            const EUTILS = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+            const setStatus = (msg, isErr) => {
+                if (!statusEl) return;
+                statusEl.textContent = msg;
+                statusEl.style.color = isErr ? '#fca5a5' : '';
+            };
+            const clearResults = () => { while (resultsEl.firstChild) resultsEl.removeChild(resultsEl.firstChild); };
+
+            function renderResults(items) {
+                clearResults();
+                items.forEach(it => {
+                    const acc = it.accessionversion || it.caption || String(it.uid);
+                    const title = it.title || '(no title)';
+                    const len = it.slen ? (Number(it.slen).toLocaleString() + ' nt') : '';
+                    const row = document.createElement('div');
+                    row.className = 'seed-db-item';
+                    const t = document.createElement('div');
+                    t.className = 'seed-db-item-title';
+                    t.textContent = title;
+                    const m = document.createElement('div');
+                    m.className = 'seed-db-item-meta';
+                    m.textContent = acc + (len ? ' · ' + len : '');
+                    row.appendChild(t);
+                    row.appendChild(m);
+                    row.addEventListener('click', () => loadSequence(it.uid, acc));
+                    resultsEl.appendChild(row);
+                });
+            }
+
+            async function runSearch() {
+                const q = queryInput.value.trim();
+                if (q.length < 2) { setStatus('Enter at least 2 characters.', true); return; }
+                clearResults();
+                setStatus('Searching GenBank…');
+                searchBtn.disabled = true;
+                try {
+                    const esr = await fetch(EUTILS + '/esearch.fcgi?db=nucleotide&retmode=json&retmax=10&term=' + encodeURIComponent(q));
+                    const esj = await esr.json();
+                    const ids = (esj.esearchresult && esj.esearchresult.idlist) || [];
+                    if (!ids.length) { setStatus('No matches found.'); return; }
+                    const sumr = await fetch(EUTILS + '/esummary.fcgi?db=nucleotide&retmode=json&id=' + ids.join(','));
+                    const sumj = await sumr.json();
+                    const result = (sumj && sumj.result) || {};
+                    const uids = result.uids || ids;
+                    renderResults(uids.map(uid => result[uid]).filter(Boolean));
+                    setStatus(uids.length + ' result(s). Click one to load its sequence.');
+                } catch (e) {
+                    setStatus('GenBank search failed. Try again.', true);
+                } finally {
+                    searchBtn.disabled = false;
+                }
+            }
+
+            async function loadSequence(uid, acc) {
+                setStatus('Fetching ' + acc + '…');
+                try {
+                    const r = await fetch(EUTILS + '/efetch.fcgi?db=nucleotide&rettype=fasta&retmode=text&id=' + encodeURIComponent(uid));
+                    if (!r.ok) throw new Error('fetch failed');
+                    const fasta = await r.text();
+                    if (applySeedSequence(fasta, acc)) {
+                        setStatus('Loaded ' + acc + '.');
+                    } else {
+                        setStatus('No DNA found for ' + acc + '.', true);
+                    }
+                } catch (e) {
+                    setStatus('Could not fetch sequence for ' + acc + '.', true);
+                }
+            }
+
+            searchBtn.addEventListener('click', runSearch);
+            queryInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+            });
+        }
+
+        function initializeFileUploadPreview() {
+            const dropzoneContainer = document.getElementById('evo2-sequence-dropzone-container');
+            const sequenceTextarea = document.getElementById('input-sequence');
+
+            if (!dropzoneContainer || !sequenceTextarea || typeof FileUploadPreview === 'undefined') {
+                return;
+            }
+
+            FileUploadPreview.create(dropzoneContainer, {
+                accept: '.fasta,.fa,.fna,.txt,.seq',
+                maxSize: 10 * 1024 * 1024,
+                previewType: 'sequence',
+                validateSequenceType: 'dna',
+                onFileSelected: (file, parsedData) => {
+                    // Set the parsed sequence
+                    sequenceTextarea.value = parsedData.sequence;
+
+                    // Update sequence length counter
+                    updateSequenceLength();
+
+                    // Show success notification
+                    showNotification(`Loaded ${parsedData.length} nucleotides from ${file.name}`, 'success');
+
+                    // Show GC content info
+                    if (parsedData.gcContent && parsedData.gcContent !== 'NaN') {
+                        showNotification(`GC Content: ${parsedData.gcContent}%`, 'info');
+                    }
+                },
+                onError: (error) => {
+                    showNotification(error.message, 'error');
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                border-radius: var(--r-ui, 0px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                font-size: 14px;
+                font-weight: 500;
+                max-width: 400px;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/file-upload-preview.js') }}?v=76d1aae8"></script>
+    <script src="{{ url_for('static', filename='js/model-cost.js') }}?v=0057fbc2" defer></script>
+</body>
+</html>

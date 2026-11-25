@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Batch Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        pre { background: #0f0f1e; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .section { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 5px; }
+        button { padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Batch Form Debug Tool</h1>
+
+    <div class="section">
+        <h2>Step 1: Test API Access</h2>
+        <button onclick="testAPI()">Test /api/available_models</button>
+        <pre id="api-result">Click button to test...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Step 2: Test Model Filtering</h2>
+        <button onclick="testFiltering()">Test Batch Model Filtering</button>
+        <pre id="filter-result">Click button to test...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Step 3: Check Console</h2>
+        <p>Open browser console (F12) to see detailed logs</p>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('/api/available_models');
+                console.log('API Response status:', response.status);
+
+                if (!response.ok) {
+                    resultDiv.textContent = `Error: ${response.status} ${response.statusText}`;
+                    return;
+                }
+
+                const models = await response.json();
+                console.log('API Response:', models);
+
+                resultDiv.textContent = `Success! Received ${Array.isArray(models) ? models.length : 'non-array'} models\n\n` +
+                    JSON.stringify(models.slice(0, 3), null, 2);
+            } catch (error) {
+                console.error('API Error:', error);
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testFiltering() {
+            const resultDiv = document.getElementById('filter-result');
+            resultDiv.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('/api/available_models');
+                if (!response.ok) {
+                    resultDiv.textContent = `Error: ${response.status}`;
+                    return;
+                }
+
+                const models = await response.json();
+                console.log('All models:', models);
+
+                // Apply same filtering as batch form
+                let availableModels = models.filter(m => m.available !== false && m.id !== 'type-5');
+                console.log('After initial filter:', availableModels.length);
+
+                let sequenceCompatibleModels = availableModels.filter(model =>
+                    model.input_modes && Array.isArray(model.input_modes) && model.input_modes.includes('sequence')
+                );
+                console.log('Sequence compatible:', sequenceCompatibleModels.length);
+
+                if (sequenceCompatibleModels.length === 0) {
+                    sequenceCompatibleModels = availableModels.filter(model =>
+                        model.input_modes && typeof model.input_modes === 'string' && model.input_modes.includes('sequence')
+                    );
+                    console.log('String check:', sequenceCompatibleModels.length);
+                }
+
+                if (sequenceCompatibleModels.length === 0) {
+                    sequenceCompatibleModels = availableModels.filter(model =>
+                        model.input_modes || model.supports_batch || model.supports_sequences || !model.input_modes_required
+                    );
+                    console.log('Fallback 1:', sequenceCompatibleModels.length);
+                }
+
+                if (sequenceCompatibleModels.length === 0 && availableModels.length > 0) {
+                    sequenceCompatibleModels = availableModels.slice(0, 3);
+                    console.log('Fallback 2:', sequenceCompatibleModels.length);
+                }
+
+                resultDiv.textContent = `Total models: ${models.length}\n` +
+                    `After initial filter: ${availableModels.length}\n` +
+                    `Sequence compatible: ${sequenceCompatibleModels.length}\n\n` +
+                    `Compatible models:\n` +
+                    sequenceCompatibleModels.map(m =>
+                        `- ${m.id}: ${m.short_name || m.name} (input_modes: ${JSON.stringify(m.input_modes)})`
+                    ).join('\n');
+            } catch (error) {
+                console.error('Filtering Error:', error);
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

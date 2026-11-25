@@ -1,0 +1,50 @@
+# Phonos Notebook System - Docker Compose
+# Use this to build the kernel image and set up the network
+
+version: '3.8'
+
+services:
+  # Build the kernel base image
+  notebook-kernel-builder:
+    build:
+      context: ./services/notebook-kernel
+      dockerfile: Dockerfile
+    image: phonos/notebook-kernel:latest
+    profiles:
+      - build
+
+  # Wolfram Language evaluation service (wolfram-svc). Exposes POST /evaluate
+  # on port 5100 which the Notebook IDE's WolframServiceBackend talks to.
+  # Requires Wolfram Engine credentials either via Wolfram Cloud sign-in
+  # (WOLFRAM_USERNAME / WOLFRAM_PASSWORD) or a local license (WOLFRAM_LICENSE).
+  wolfram-svc:
+    build:
+      context: ./services/wolfram-service
+      dockerfile: Dockerfile
+    image: phonos/wolfram-svc:latest
+    container_name: phonos-wolfram-svc
+    restart: unless-stopped
+    ports:
+      - "5100:5100"
+    environment:
+      - WOLFRAM_USERNAME=${WOLFRAM_USERNAME:-}
+      - WOLFRAM_PASSWORD=${WOLFRAM_PASSWORD:-}
+      - WOLFRAM_LICENSE=${WOLFRAM_LICENSE:-}
+      - PORT=5100
+    networks:
+      - phonos-notebooks
+    profiles:
+      - wolfram
+
+networks:
+  phonos-notebooks:
+    name: phonos-notebooks
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
+
+# Build command: docker compose -f docker-compose.notebook.yml build
+# Create network: docker network create phonos-notebooks --subnet=172.28.0.0/16

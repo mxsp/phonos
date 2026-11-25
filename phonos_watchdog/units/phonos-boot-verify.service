@@ -1,0 +1,15 @@
+[Unit]
+Description=Phonos one-shot post-boot health verification
+After=phonos-watchdog.service phonos-mrs.service phonos.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ec2-user
+Group=ec2-user
+# Give workers time to register heartbeats and the watchdog to publish a cycle.
+ExecStartPre=/bin/sleep 60
+ExecStart=/bin/bash /opt/phonos/phonos_watchdog/boot_verify.sh
+
+[Install]
+WantedBy=multi-user.target

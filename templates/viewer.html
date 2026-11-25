@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include "_i18n_scripts.html" %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="viewer.title">Phonos — 3D Molecular Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_molstar_head.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/viewer.css') }}?v=f2878058">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="viewer-shell" id="viewer-shell">
+
+        <!-- ============================================================== -->
+        <!--  MAINFRAME  (top command strip)                                 -->
+        <!-- ============================================================== -->
+        <header class="mainframe" role="banner">
+            <div class="mainframe-brand">
+                <div class="mark">Φ</div>
+                <div>
+                    <div class="title" data-i18n="viewer.brandTitle">3D VIEWER</div>
+                    <div class="sub">v3 · MOL*</div>
+                </div>
+            </div>
+
+            <div class="mainframe-block">
+                <div class="breadcrumb">
+                    <span class="crumb" data-i18n="viewer.projects">PROJECTS</span>
+                    <span class="sep">/</span>
+                    <span class="crumb" id="mf-project-crumb">—</span>
+                    <span class="sep">/</span>
+                    <span class="crumb" id="mf-job-crumb">—</span>
+                    <span class="sep">›</span>
+                    <span class="name" id="mf-structure-name" data-i18n="viewer.noStructureLoaded">NO STRUCTURE LOADED</span>
+                </div>
+            </div>
+
+            <div class="mainframe-block">
+                <button class="mf-btn" id="split-toggle" onclick="toggleSplitScreen()" title="Split view (V)" data-i18n="[title]viewer.toggleSplitView">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="16" rx="1"/>
+                        <line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    <span data-i18n="viewer.split">Split</span><span class="kbd">V</span>
+                </button>
+                <button class="mf-btn" id="toggle-sequence-btn" onclick="toggleSequencePanel()" title="Sequence panel (Q)" data-i18n="[title]viewer.toggleSequence">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    <span data-i18n="viewer.sequence">Sequence</span><span class="kbd">Q</span>
+                </button>
+                <button class="mf-btn" id="toggle-right-sidebar" onclick="toggleInspector()" title="Toggle inspector" data-i18n="[title]viewer.toggleInspector">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="16" rx="1"/>
+                        <line x1="15" y1="4" x2="15" y2="20"/>
+                    </svg>
+                    <span data-i18n="viewer.inspector">Inspector</span><span class="kbd">I</span>
+                </button>
+            </div>
+
+            <div class="mainframe-block">
+                <span class="mf-seg" role="group" aria-label="Rendering quality" data-i18n="[aria-label]viewer.quality">
+                    <button class="seg-btn" data-quality="low" onclick="setQuality('low')" data-i18n="viewer.lo">LO</button>
+                    <button class="seg-btn active" data-quality="medium" onclick="setQuality('medium')" data-i18n="viewer.med">MED</button>
+                    <button class="seg-btn" data-quality="high" onclick="setQuality('high')" data-i18n="viewer.hi">HI</button>
+                </span>
+            </div>
+
+            <div class="mainframe-block">
+                <span class="mf-pill muted full-label" id="mf-frame-pill">
+                    <span class="dot"></span>
+                    <span>FPS 60 · FRAME 0</span>
+                </span>
+                <span class="mf-pill" id="mf-engine-pill">
+                    <span class="dot"></span>
+                    <span>MOL* · v3</span>
+                </span>
+            </div>
+
+            <div class="mainframe-block right">
+                <button class="mf-btn" onclick="resetView()" title="Reset view (R)" data-i18n="[title]viewer.resetView">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span data-i18n="viewer.reset">Reset</span><span class="kbd">R</span>
+                </button>
+                <button class="mf-btn" onclick="takeScreenshot()" title="Screenshot (S)" data-i18n="[title]viewer.takeScreenshot">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <circle cx="12" cy="13" r="3"/>
+                    </svg>
+                    <span data-i18n="viewer.shot">Shot</span><span class="kbd">S</span>
+                </button>
+                <button class="mf-btn" onclick="showShortcuts()" title="Keyboard shortcuts (?)" data-i18n="[title]viewer.keyboardShortcuts">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M9 9h.01M15 9h.01M9 15h.01M15 15h.01M9 12h6"/>
+                    </svg>
+                    <span data-i18n="viewer.help">Help</span><span class="kbd">?</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ============================================================== -->
+        <!--  LEFT RAIL  (slim icon tool rail)                               -->
+        <!-- ============================================================== -->
+        <nav class="rail" role="navigation" aria-label="Viewer tools" data-i18n="[aria-label]viewer.title">
+            <button class="rail-btn" data-rail="source" onclick="openDrawer('source')" aria-label="Source" data-i18n="[aria-label]viewer.source">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="files" onclick="openDrawer('files')" aria-label="Files" data-i18n="[aria-label]viewer.files">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="style" onclick="openDrawer('style')" aria-label="Style" data-i18n="[aria-label]viewer.style">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 3v9l6.5 3.5"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="color" onclick="openDrawer('color')" aria-label="Color" data-i18n="[aria-label]viewer.color">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a10 10 0 100 20 4 4 0 003.46-6L14 14a2 2 0 010-4h4a4 4 0 014-4 10 10 0 00-10-4z"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="view" onclick="openDrawer('view')" aria-label="View" data-i18n="[aria-label]viewer.view">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12l4-8 5 14 4-10 5 8"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="display" onclick="openDrawer('display')" aria-label="Display" data-i18n="[aria-label]viewer.display">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+            </button>
+
+            <div class="rail-spacer"></div>
+
+            <button class="rail-btn" data-rail="hand" onclick="window.location='{{ url_for('experimental_viewer') }}'" aria-label="Hand tracking mode" title="Hand tracking mode" data-i18n="[aria-label]viewer.handTracking;[title]viewer.handTracking">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+                </svg>
+            </button>
+            <button class="rail-btn" data-rail="home" onclick="window.location='{{ url_for('dashboard') }}'" aria-label="Back to dashboard" data-i18n="[aria-label]viewer.backToDashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </button>
+        </nav>
+
+        <!-- ============================================================== -->
+        <!--  DRAWER  (slides from left rail)                                 -->
+        <!-- ============================================================== -->
+        <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+
+        <aside class="drawer" id="drawer">
+            <div class="drawer-head">
+                <span class="title" id="drawer-title" data-i18n="viewer.source">SOURCE</span>
+                <button class="close" onclick="closeDrawer()" title="Close (Esc)" data-i18n="[title]viewer.close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 6l12 12M6 18L18 6"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="drawer-body" id="drawer-body"></div>
+        </aside>
+
+        <!-- ============================================================== -->
+        <!--  CANVAS WELL  (the viewer itself)                                -->
+        <!-- ============================================================== -->
+        <main class="canvas-well" id="canvas-well">
+
+            <div class="well-toolbar">
+                <span class="vlabel" data-i18n="viewer.viewer1">VIEWER 1</span>
+                <span class="vsep"></span>
+                <span class="vname" id="structure-name-1" data-i18n="viewer.noStructureLoaded">No structure loaded</span>
+                <span class="vt" id="well-toolbar-meta">— / — / —</span>
+            </div>
+
+            <div class="well-stage" id="well-stage">
+
+                <!-- Primary viewer -->
+                <div class="viewer-pane is-active" id="viewer-pane-1" data-viewer-num="1" data-has-structure="false">
+                    <div class="viewer-canvas-container">
+                        <div class="viewer-empty-state" id="viewer-empty-state-1">
+                            <div class="viewer-empty-panel">
+                                <span class="corner-tr"></span>
+                                <span class="corner-bl"></span>
+                                <div class="es-head"><span class="dot"></span><span data-i18n="viewer.viewer1">VIEWER 1</span> · <span data-i18n="viewer.standby">STANDBY</span></div>
+                                <h2 data-i18n="viewer.noStructureLoaded">NO STRUCTURE LOADED</h2>
+                                <p><span data-i18n="viewer.loadInstructions">Load PDB, CIF, mmCIF, SDF, MOL, MOL2, XYZ, or CUBE into the canvas.</span><br>
+                                <span data-i18n="viewer.dragInstructions">Drag a file directly onto the stage, or use the SOURCE panel.</span></p>
+                                <div class="es-actions">
+                                    <button class="btn primary" type="button" onclick="browseLocalStructure(1)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/>
+                                        </svg>
+                                        <span data-i18n="viewer.browseFile">Browse File</span>
+                                    </button>
+                                    <button class="btn" type="button" onclick="openDrawer('source')">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                            <path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"/>
+                                        </svg>
+                                        <span data-i18n="viewer.rcsbPdb">RCSB PDB</span>
+                                    </button>
+                                </div>
+                                <div class="es-hint" data-i18n="viewer.dragDropHint">or drag and drop here</div>
+                            </div>
+                        </div>
+                        <div class="viewer-loading" id="viewer-loading-1">
+                            <div class="loading-bar"></div>
+                            <div class="loading-text" data-i18n="viewer.loadingStructure">Loading structure…</div>
+                        </div>
+                        <div class="viewer-canvas" id="viewer-canvas-1" data-phonos-viewer></div>
+                    </div>
+                </div>
+
+                <!-- Split divider -->
+                <div class="split-divider" id="split-divider"></div>
+
+                <!-- Secondary viewer -->
+                <div class="viewer-pane hidden" id="viewer-pane-2" data-viewer-num="2" data-has-structure="false">
+                    <div class="viewer-canvas-container">
+                        <div class="viewer-empty-state" id="viewer-empty-state-2">
+                            <div class="viewer-empty-panel">
+                                <span class="corner-tr"></span>
+                                <span class="corner-bl"></span>
+                                <div class="es-head"><span class="dot"></span><span data-i18n="viewer.viewer2">VIEWER 2</span> · <span data-i18n="viewer.standby">STANDBY</span></div>
+                                <h2 data-i18n="viewer.noStructureLoaded">NO STRUCTURE LOADED</h2>
+                                <p data-i18n="viewer.compareHint">Compare a second model side by side once split view is enabled.</p>
+                                <div class="es-actions">
+                                    <button class="btn primary" type="button" onclick="browseLocalStructure(2)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 5v12"/>
+                                        </svg>
+                                        <span data-i18n="viewer.browseFile">Browse File</span>
+                                    </button>
+                                </div>
+                                <div class="es-hint" data-i18n="viewer.dragDropHint">or drag and drop here</div>
+                            </div>
+                        </div>
+                        <div class="viewer-loading" id="viewer-loading-2">
+                            <div class="loading-bar"></div>
+                            <div class="loading-text" data-i18n="viewer.loadingStructure">Loading structure…</div>
+                        </div>
+                        <div class="viewer-canvas" id="viewer-canvas-2" data-phonos-viewer></div>
+                    </div>
+                </div>
+
+                <div class="atom-tooltip" id="atom-tooltip"></div>
+            </div>
+        </main>
+
+        <!-- ============================================================== -->
+        <!--  INSPECTOR  (right panel — tabbed)                               -->
+        <!-- ============================================================== -->
+        <aside class="inspector-pane" id="sidebar-right" data-active-tab="structure">
+            <div class="inspector-tabs" role="tablist">
+                <button class="inspector-tab active" data-itab="structure" onclick="switchInspectorTab('structure')" data-i18n="viewer.structureTab">Structure</button>
+                <button class="inspector-tab" data-itab="confidence" onclick="switchInspectorTab('confidence')" data-i18n="viewer.confidenceTab">Confidence</button>
+                <button class="inspector-tab" data-itab="chains" onclick="switchInspectorTab('chains')" data-i18n="viewer.chainsTab">Chains</button>
+                <button class="inspector-tab" data-itab="log" onclick="switchInspectorTab('log')" data-i18n="viewer.logTab">Log</button>
+            </div>
+
+            <div class="inspector-body" id="sidebar-right-content">
+
+                <!-- ========== STRUCTURE TAB ========== -->
+                <div data-tab="structure">
+                    <div class="insp-section" id="info-empty-wrap">
+                        <div class="inspector-empty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                            </svg>
+                            <div data-i18n="viewer.noStructureLoaded">NO STRUCTURE LOADED</div>
+                            <div style="margin-top: 4px; color: var(--lab-text-mute);" data-i18n="viewer.loadPropsHint">Load a structure to view its properties</div>
+                        </div>
+                    </div>
+
+                    <div data-tab="structure-sections" id="info-sections" style="display: none;">
+                        <div class="insp-section">
+                            <div class="insp-section-head" onclick="toggleInspSection(this)">
+                                <span data-i18n="viewer.identification">Identification</span>
+                                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                            </div>
+                            <div class="insp-section-body">
+                                <div class="insp-row"><span class="k" data-i18n="viewer.name">Name</span><span class="v" id="info-name" title="">—</span></div>
+                                <div class="insp-row"><span class="k" data-i18n="viewer.format">Format</span><span class="v mono" id="info-format">—</span></div>
+                                <div class="insp-row"><span class="k" data-i18n="viewer.source">Source</span><span class="v" id="info-source">—</span></div>
+                                <div class="insp-row" id="info-project-row"><span class="k" data-i18n="viewer.project">Project</span><span class="v" id="info-project">—</span></div>
+                                <div class="insp-row" id="info-job-row"><span class="k" data-i18n="viewer.job">Job</span><span class="v" id="info-job">—</span></div>
+                                <div class="insp-row" id="info-model-type-row" style="display: none;"><span class="k" data-i18n="viewer.model">Model</span><span class="v" id="info-model-type">—</span></div>
+                            </div>
+                        </div>
+
+                        <div class="insp-section">
+                            <div class="insp-section-head" onclick="toggleInspSection(this)">
+                                <span data-i18n="viewer.composition">Composition</span>
+                                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                            </div>
+                            <div class="insp-section-body">
+                                <div class="insp-row"><span class="k" data-i18n="viewer.atoms">Atoms</span><span class="v mono accent" id="info-atoms">—</span></div>
+                                <div class="insp-row"><span class="k" data-i18n="viewer.residues">Residues</span><span class="v mono" id="info-residues">—</span></div>
+                                <div class="insp-row" id="info-ligand-row" style="display: none;"><span class="k" data-i18n="viewer.ligands">Ligands</span><span class="v mono" id="info-ligand-count">—</span></div>
+                            </div>
+                        </div>
+
+                        <div class="insp-section" id="pdb-info-section" style="display: none;">
+                            <div class="insp-section-head" onclick="toggleInspSection(this)" data-i18n="viewer.rcsbPdb">
+                                RCSB PDB
+                                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                            </div>
+                            <div class="insp-section-body" id="pdb-info">
+                                <div id="pdb-title" style="color: var(--lab-text-1); margin-bottom: 6px; font-size: 11.5px;"></div>
+                                <div id="pdb-details" style="color: var(--lab-text-3); font-size: 10.5px; line-height: 1.6;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== CONFIDENCE TAB ========== -->
+                <div data-tab="confidence" style="display: none;">
+                    <div class="insp-section" id="confidence-panel" style="display: none;">
+                        <div class="insp-section-head" onclick="toggleInspSection(this)" style="cursor: default;">
+                            <span data-i18n="viewer.modelConfidence">Model Confidence (pLDDT)</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div class="insp-section-body">
+                            <div class="confidence-hero">
+                                <div class="confidence-ring">
+                                    <svg viewBox="0 0 72 72">
+                                        <circle class="ring-bg" cx="36" cy="36" r="30"/>
+                                        <circle class="ring-fill" id="conf-ring-fill" cx="36" cy="36" r="30"
+                                                stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+                                    </svg>
+                                    <div class="ring-num"><span id="conf-avg-score">--</span><small>%</small></div>
+                                </div>
+                                <div class="confidence-meta">
+                                    <div class="confidence-level" id="conf-level-text" style="color: var(--lab-text-mute);" data-i18n="viewer.avgConfidence">AVG. CONFIDENCE</div>
+                                    <span class="confidence-level-band" id="conf-level-badge" style="display: none;">
+                                        <span class="dot"></span>
+                                        <span id="conf-level-badge-text">—</span>
+                                    </span>
+                                    <div class="confidence-sub" id="conf-model-hint" data-i18n="viewer.plddtHint">pLDDT per-residue confidence</div>
+                                </div>
+                            </div>
+                            <div class="confidence-bar" id="confidence-bar-stacked">
+                                <div id="conf-bar-vh" style="background: #0053D6;" title="Very High (>90)"></div>
+                                <div id="conf-bar-c" style="background: #65CBF3;" title="Confident (70-90)"></div>
+                                <div id="conf-bar-l" style="background: #FFDB13;" title="Low (50-70)"></div>
+                                <div id="conf-bar-vl" style="background: #FF7D45; flex: 1;" title="Very Low (<50)"></div>
+                            </div>
+                            <div class="confidence-legend">
+                                <div class="confidence-legend-row">
+                                    <span class="swatch" style="background: #0053D6;"></span>
+                                    <span data-i18n="viewer.veryHigh">Very High</span>
+                                    <span class="pct" id="conf-pct-vh" style="color: #60A5FA;">—</span>
+                                </div>
+                                <div class="confidence-legend-row">
+                                    <span class="swatch" style="background: #65CBF3;"></span>
+                                    <span data-i18n="viewer.confident">Confident</span>
+                                    <span class="pct" id="conf-pct-c" style="color: #65CBF3;">—</span>
+                                </div>
+                                <div class="confidence-legend-row">
+                                    <span class="swatch" style="background: #FFDB13;"></span>
+                                    <span data-i18n="viewer.low">Low</span>
+                                    <span class="pct" id="conf-pct-l" style="color: #FFDB13;">—</span>
+                                </div>
+                                <div class="confidence-legend-row">
+                                    <span class="swatch" style="background: #FF7D45;"></span>
+                                    <span data-i18n="viewer.veryLow">Very Low</span>
+                                    <span class="pct" id="conf-pct-vl" style="color: #FF7D45;">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insp-section" id="job-confidence-panel" style="display: none;">
+                        <div class="insp-section-head" onclick="toggleInspSection(this)">
+                            <span data-i18n="viewer.jobConfidence">Job Confidence</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div class="insp-section-body">
+                            <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin-bottom: 10px;">
+                                <div style="color: var(--lab-text-3); font-family: var(--lab-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;" id="job-confidence-source-label" data-i18n="viewer.metadata">METADATA</div>
+                                <div style="text-align: right; font-family: var(--lab-mono); font-size: 18px; font-weight: 700; color: var(--lab-text-1);" id="job-confidence-best">--</div>
+                            </div>
+                            <div class="job-confidence-bars" id="job-confidence-bars"></div>
+                            <div class="confidence-sub" id="job-confidence-subtext" style="margin-top: 8px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="inspector-empty" id="confidence-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M3 12l3-3 4 4 5-5 6 6"/>
+                        </svg>
+                        <div data-i18n="viewer.noConfidenceData">NO CONFIDENCE DATA</div>
+                        <div style="margin-top: 4px; color: var(--lab-text-mute);" data-i18n="viewer.plddtScoreHint">pLDDT scores appear here once a prediction is loaded</div>
+                    </div>
+                </div>
+
+                <!-- ========== CHAINS TAB ========== -->
+                <div data-tab="chains" style="display: none;">
+                    <div class="insp-section">
+                        <div class="insp-section-head" onclick="toggleInspSection(this)" style="cursor: default;">
+                            <span data-i18n="viewer.chainInventory">Chain Inventory</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div class="insp-section-body">
+                            <div id="chain-list" style="display: flex; flex-direction: column; gap: 0;">
+                                <span style="color: var(--lab-text-mute); font-size: 11px;" data-i18n="viewer.noneDetected">None detected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insp-section">
+                        <div class="insp-section-head" onclick="toggleInspSection(this)">
+                            <span data-i18n="viewer.detectedLigands">Detected Ligands</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                        <div class="insp-section-body">
+                            <div id="ligand-count-info" class="ligand-list" style="display: none;"></div>
+                            <div id="ligand-empty" style="color: var(--lab-text-mute); font-size: 11px;" data-i18n="viewer.noneDetected">None detected</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== LOG TAB ========== -->
+                <div data-tab="log" style="display: none;">
+                    <div class="log-stream" id="log-stream">
+                        <div class="log-line"><span class="t">--:--:--</span><span class="lvl info">SYS</span><span class="m" data-i18n="viewer.logAwaiting">Viewer initialized — awaiting input.</span></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================================== -->
+        <!--  STATUS STRIP  (bottom)                                          -->
+        <!-- ============================================================== -->
+        <footer class="status-strip" role="contentinfo">
+            <div class="status-cell">
+                <span class="status-led ok" id="status-indicator"></span>
+                <span class="k" data-i18n="viewer.status">STATUS</span>
+                <span class="v" id="status-text" data-i18n="viewer.ready">READY</span>
+            </div>
+            <div class="status-cell" id="atom-count" style="display: none;">
+                <span class="k" data-i18n="viewer.atoms">ATOMS</span>
+                <span class="v mono" id="atom-count-text">0</span>
+            </div>
+            <div class="status-cell" id="plddt-cell" style="display: none;">
+                <span class="k">pLDDT</span>
+                <span class="v mono accent" id="status-plddt">—</span>
+            </div>
+            <div class="status-cell flex">
+                <span class="k" data-i18n="viewer.style">STYLE</span>
+                <span class="v" id="status-style-tag">CARTOON</span>
+                <span style="color: var(--lab-text-mute); margin: 0 4px;">·</span>
+                <span class="k" data-i18n="viewer.color">COLOR</span>
+                <span class="v" id="status-color-tag">SPECTRUM</span>
+            </div>
+            <div class="status-cell">
+                <span class="status-kbd">
+                    <kbd>?</kbd> <span data-i18n="viewer.shortcuts">SHORTCUTS</span>
+                </span>
+            </div>
+            <div class="status-cell" onclick="showShortcuts()" style="cursor: pointer;">
+                <span class="v" id="status-version">v3.0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="local-structure-input" accept=".pdb,.cif,.mmcif,.mol,.mol2,.sdf,.xyz,.cube" multiple hidden>
+
+    <!-- Mobile rail toggle -->
+    <button class="mobile-rail-btn" id="mobile-rail-btn" onclick="toggleInspector()" aria-label="Toggle inspector">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+
+    <!-- ================================================================ -->
+    <!--  SHORTCUTS MODAL — deep rework                                    -->
+    <!-- ================================================================ -->
+    <div class="scrim" id="shortcuts-overlay" onclick="hideShortcuts(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <div class="mh-title" data-i18n="viewer.keyboardShortcuts">KEYBOARD SHORTCUTS</div>
+                <div class="mh-sub">v3.0</div>
+                <div class="mh-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="sc-search" placeholder="Filter shortcuts…" autocomplete="off" spellcheck="false" data-i18n="[placeholder]viewer.filterShortcuts">
+                </div>
+                <button class="mh-close" onclick="hideShortcuts()" title="Close (Esc)" data-i18n="[title]viewer.close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 6l12 12M6 18L18 6"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body" id="sc-body">
+                <div class="modal-cols">
+
+                    <!-- ============== LEFT COLUMN ============== -->
+                    <div class="modal-col">
+                        <div class="modal-group">
+                            <div class="mg-head"><span data-i18n="viewer.viewpoint">Viewpoint</span> <span class="count" id="sc-count-viewpoint">6</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.resetView">Reset view</td><td class="v"><span class="kbd-set"><span class="key">R</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.takeScreenshot">Take screenshot</td><td class="v"><span class="kbd-set"><span class="key">S</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.toggleSplitView">Toggle split view</td><td class="v"><span class="kbd-set"><span class="key">V</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.toggleSpin">Toggle spin</td><td class="v"><span class="kbd-set"><span class="key wide">SPACE</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.toggleSequence">Toggle sequence panel</td><td class="v"><span class="kbd-set"><span class="key">Q</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.toggleInspector">Toggle inspector</td><td class="v"><span class="kbd-set"><span class="key">I</span></span></td></tr>
+                            </table>
+                        </div>
+
+                        <div class="modal-group">
+                            <div class="mg-head"><span data-i18n="viewer.cameraPresets">Camera Presets</span> <span class="count">6</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.front">Front</td><td class="v"><span class="kbd-set"><span class="key">F</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.back">Back</td><td class="v"><span class="kbd-set"><span class="key">B</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.left">Left</td><td class="v"><span class="kbd-set"><span class="key">L</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.right">Right</td><td class="v"><span class="kbd-set"><span class="key">H</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.top">Top</td><td class="v"><span class="kbd-set"><span class="key">T</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.bottom">Bottom</td><td class="v"><span class="kbd-set"><span class="key">G</span></span></td></tr>
+                            </table>
+                        </div>
+
+                        <div class="modal-group">
+                            <div class="mg-head"><span data-i18n="viewer.file">File</span> <span class="count">2</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.browseLocal">Browse local file</td><td class="v"><span class="kbd-set"><span class="key">O</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.openSource">Open source drawer</td><td class="v"><span class="kbd-set"><span class="key">D</span></span></td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ============== RIGHT COLUMN ============== -->
+                    <div class="modal-col">
+                        <div class="modal-group">
+                            <div class="mg-head"><span data-i18n="viewer.representation">Representation</span> <span class="count">6</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.cartoon">Cartoon</td><td class="v"><span class="kbd-set"><span class="key">1</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.stick">Stick / Ball&amp;Stick</td><td class="v"><span class="kbd-set"><span class="key">2</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.sphere">Sphere / Spacefill</td><td class="v"><span class="kbd-set"><span class="key">3</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.surface">Surface</td><td class="v"><span class="kbd-set"><span class="key">4</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.line">Line</td><td class="v"><span class="kbd-set"><span class="key">5</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.cross">Cross</td><td class="v"><span class="kbd-set"><span class="key">6</span></span></td></tr>
+                            </table>
+                        </div>
+
+                        <div class="modal-group">
+                            <div class="mg-head"><span data-i18n="viewer.quality">Quality</span> <span class="count">3</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.lo">Low</td><td class="v"><span class="kbd-set"><span class="key">7</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.med">Medium</td><td class="v"><span class="kbd-set"><span class="key">8</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.hi">High</td><td class="v"><span class="kbd-set"><span class="key">9</span></span></td></tr>
+                            </table>
+                        </div>
+
+                        <div class="modal-group">
+                            <div class="mg-head" data-i18n="viewer.help">Help <span class="count">2</span></div>
+                            <table class="shortcut-table">
+                                <tr><td class="k" data-i18n="viewer.showHelp">Show this help</td><td class="v"><span class="kbd-set"><span class="key">?</span></span></td></tr>
+                                <tr><td class="k" data-i18n="viewer.closeDismiss">Close / dismiss</td><td class="v"><span class="kbd-set"><span class="key wide">ESC</span></span></td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-foot">
+                <span data-i18n="viewer.pressHelpHint">PRESS <kbd style="background:rgba(255,255,255,0.04);border:1px solid var(--lab-divider-strong);padding:0 4px;border-radius: var(--r-ui, 0px);font-family:var(--lab-mono);">?</kbd> ANY TIME TO REOPEN</span>
+                <span class="mf-spacer"></span>
+                <span id="sc-visible-count">23 <span data-i18n="viewer.shortcuts">SHORTCUTS</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!--  JAVASCRIPT  (preserved verbatim from original — only additions)   -->
+    <!-- ================================================================ -->
+    <script>
+    /* eslint-disable */
+        // State
+        let viewer1 = null;
+        let viewer2 = null;
+        let activeViewer = 1;
+        let isSplitScreen = false;
+        let currentStyle = 'cartoon';
+        let currentColorScheme = 'spectrum';
+        let isSpinning = false;
+        let currentQuality = 'medium';
+        let plddtScores = [];
+        let currentLigands = [];
+        let showLigands = true;
+        let highlightLigands = true;
+        let showLigandLabels = false;
+        const viewerDragDepth = { 1: 0, 2: 0 };
+        const viewerMetadataState = {
+            1: { plddtScores: [], jobMetadata: null, jobConfidenceScores: [], jobConfidenceData: null },
+            2: { plddtScores: [], jobMetadata: null, jobConfidenceScores: [], jobConfidenceData: null }
+        };
+
+        // Data cache
+        let projectsData = [];
+        let jobsCache = {};
+        let filesCache = {};
+
+        // Drawer state
+        let activeDrawer = null;
+        const drawerTemplates = {};
+
+        const MOLECULAR_EXTENSIONS = ['pdb', 'cif', 'mmcif', 'mol', 'mol2', 'sdf', 'xyz', 'cube'];
+        const LOCAL_FILE_FORMATS = {
+            pdb: 'pdb', cif: 'cif', mmcif: 'cif', mol: 'mol', mol2: 'mol2',
+            sdf: 'sdf', xyz: 'xyz', cube: 'cube'
+        };
+
+        // ===== Utilities =================================================
+        function hexToRgb(hex) {
+            const h = hex.replace('#', '');
+            const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+            return {
+                r: parseInt(full.substring(0, 2), 16),
+                g: parseInt(full.substring(2, 4), 16),
+                b: parseInt(full.substring(4, 6), 16)
+            };
+        }
+
+        function getViewerNumber(pv) { return pv === viewer2 ? 2 : 1; }
+        function getViewerMetadata(viewerNum) { return viewerMetadataState[viewerNum] || viewerMetadataState[1]; }
+        function cloneJsonData(value) { return value ? JSON.parse(JSON.stringify(value)) : value; }
+
+        function normalizeScorePercent(score) {
+            const numeric = Number(score);
+            if (!Number.isFinite(numeric)) return null;
+            const scaled = numeric <= 1.05 ? numeric * 100 : numeric;
+            return Math.max(0, Math.min(100, scaled));
+        }
+
+        function normalizeScorePercentList(scores) {
+            if (!Array.isArray(scores)) return [];
+            return scores.map(normalizeScorePercent).filter(score => score !== null);
+        }
+
+        function getConfidenceBandColor(score) {
+            if (score >= 90) return '#0053D6';
+            if (score >= 70) return '#65CBF3';
+            if (score >= 50) return '#FFDB13';
+            return '#FF7D45';
+        }
+
+        function setViewerPlddtScores(viewerNum, scores) {
+            const state = getViewerMetadata(viewerNum);
+            state.plddtScores = Array.isArray(scores) ? scores.slice() : [];
+            if (viewerNum === activeViewer) plddtScores = state.plddtScores.slice();
+        }
+
+        function extractJobConfidenceScores(metadata) {
+            if (!metadata || typeof metadata !== 'object') return [];
+            const sources = [
+                metadata.confidence_scores,
+                metadata.boltz2_output && metadata.boltz2_output.confidence_scores
+            ];
+            for (const source of sources) {
+                const normalized = normalizeScorePercentList(source);
+                if (normalized.length > 0) return normalized;
+            }
+            return [];
+        }
+
+        function buildUniformConfidenceData(baseConfidenceData, score) {
+            if (!baseConfidenceData || !Array.isArray(baseConfidenceData.scores) || baseConfidenceData.scores.length === 0) return null;
+            const normalizedScore = normalizeScorePercent(score);
+            if (normalizedScore === null) return null;
+            const scores = baseConfidenceData.scores.map(entry => ({ chain: entry.chain, resi: entry.resi, score: normalizedScore }));
+            const byChain = {};
+            scores.forEach(entry => {
+                if (!byChain[entry.chain]) byChain[entry.chain] = [];
+                byChain[entry.chain].push(entry);
+            });
+            return { scores, byChain };
+        }
+
+        function updateJobConfidencePanel(viewerNum = activeViewer) {
+            const panel = document.getElementById('job-confidence-panel');
+            const barsContainer = document.getElementById('job-confidence-bars');
+            const bestEl = document.getElementById('job-confidence-best');
+            const sourceLabelEl = document.getElementById('job-confidence-source-label');
+            const subtextEl = document.getElementById('job-confidence-subtext');
+            if (!panel || !barsContainer || !bestEl || !sourceLabelEl || !subtextEl) return;
+
+            const state = getViewerMetadata(viewerNum);
+            const scores = Array.isArray(state.jobConfidenceScores) ? state.jobConfidenceScores : [];
+            if (scores.length === 0) {
+                panel.style.display = 'none';
+                barsContainer.replaceChildren();
+                return;
+            }
+            panel.style.display = '';
+            const bestScore = Math.max(...scores);
+            const bestIndex = scores.indexOf(bestScore);
+            bestEl.textContent = bestScore.toFixed(1) + '%';
+            sourceLabelEl.textContent = scores.length > 1 ? `Best model: ${bestIndex + 1}` : 'Current model';
+            subtextEl.textContent = state.jobConfidenceData
+                ? 'Use "Job Confidence Score" in Color Scheme to color the structure by the stored job confidence.'
+                : 'The job exposes metadata scores, but this structure does not expose a residue map for direct coloring.';
+            barsContainer.replaceChildren();
+            scores.forEach((score, index) => {
+                const row = document.createElement('div');
+                row.className = 'job-confidence-bar-row';
+                const label = document.createElement('div');
+                label.className = 'job-confidence-bar-label';
+                label.textContent = 'Model ' + (index + 1);
+                const track = document.createElement('div');
+                track.className = 'job-confidence-bar-track';
+                const fill = document.createElement('div');
+                fill.className = 'job-confidence-bar-fill';
+                fill.style.width = score.toFixed(1) + '%';
+                fill.style.background = getConfidenceBandColor(score);
+                const value = document.createElement('div');
+                value.className = 'job-confidence-bar-value';
+                value.textContent = score.toFixed(1) + '%';
+                value.style.color = getConfidenceBandColor(score);
+                track.appendChild(fill);
+                row.appendChild(label);
+                row.appendChild(track);
+                row.appendChild(value);
+                barsContainer.appendChild(row);
+            });
+        }
+
+        function applyJobConfidenceMetadataToViewer(pv, viewerNum, metadata) {
+            const state = getViewerMetadata(viewerNum);
+            state.jobMetadata = metadata && typeof metadata === 'object' ? metadata : null;
+            state.jobConfidenceScores = extractJobConfidenceScores(state.jobMetadata);
+            state.jobConfidenceData = null;
+            if (pv && pv.confidenceData && state.jobConfidenceScores.length > 0) {
+                state.jobConfidenceData = buildUniformConfidenceData(cloneJsonData(pv.confidenceData), state.jobConfidenceScores[0]);
+            }
+            if (viewerNum === activeViewer) updateJobConfidencePanel(viewerNum);
+        }
+
+        function applyJobConfidenceColoringToViewer(pv) {
+            if (!pv) return Promise.resolve(false);
+            const viewerNum = getViewerNumber(pv);
+            const state = getViewerMetadata(viewerNum);
+            if (!state.jobConfidenceData) return pv.applyDefaultColoring();
+            const originalConfidenceData = pv.confidenceData;
+            pv.confidenceData = state.jobConfidenceData;
+            return Promise.resolve(pv.applyConfidenceColoring()).finally(() => { pv.confidenceData = originalConfidenceData; });
+        }
+
+        async function fetchJobDetails(jobId) {
+            if (!jobId) return null;
+            const response = await fetch(`/api/jobs/${jobId}`);
+            if (!response.ok) return null;
+            return await response.json();
+        }
+
+        function parseStructureCounts(data, format) {
+            let atomCount = 0;
+            const residues = new Set();
+            const chains = new Set();
+            if (format === 'sdf' || format === 'mol') {
+                const lines = data.split('\n');
+                for (let i = 3; i < Math.min(lines.length, 8); i++) {
+                    const match = lines[i].match(/^\s*(\d+)\s+(\d+)/);
+                    if (match) { atomCount = parseInt(match[1], 10) || 0; break; }
+                }
+                if (atomCount > 0) {
+                    const molName = lines[0].trim() || 'LIG';
+                    residues.add('Z-1');
+                    chains.add('Z');
+                }
+                return { atomCount, residueCount: residues.size, chains, isSmallMolecule: true };
+            }
+            if (format === 'pdb') {
+                const lines = data.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+                        atomCount++;
+                        const chain = line.substring(21, 22).trim() || 'A';
+                        const resSeq = line.substring(22, 26).trim();
+                        residues.add(chain + '-' + resSeq);
+                        chains.add(chain);
+                    }
+                }
+            } else {
+                const lines = data.split('\n');
+                for (const line of lines) {
+                    const t = line.trimStart();
+                    if (t.startsWith('ATOM') || t.startsWith('HETATM')) {
+                        atomCount++;
+                        const parts = t.split(/\s+/);
+                        if (parts.length > 8) {
+                            const chain = parts[6] || 'A';
+                            const resSeq = parts[8] || '0';
+                            residues.add(chain + '-' + resSeq);
+                            chains.add(chain);
+                        }
+                    }
+                }
+            }
+            return { atomCount, residueCount: residues.size, chains, isSmallMolecule: false };
+        }
+
+        function showLoading(viewerNum) { document.getElementById(`viewer-loading-${viewerNum}`)?.classList.add('active'); }
+        function hideLoading(viewerNum) { document.getElementById(`viewer-loading-${viewerNum}`)?.classList.remove('active'); }
+
+        function setActiveViewer(viewerNum) {
+            activeViewer = viewerNum;
+            document.querySelectorAll('.viewer-pane').forEach(pane => {
+                pane.classList.toggle('is-active', Number(pane.dataset.viewerNum) === viewerNum);
+            });
+            const state = getViewerMetadata(viewerNum);
+            plddtScores = Array.isArray(state.plddtScores) ? state.plddtScores.slice() : [];
+            updateConfidencePanel();
+            updateJobConfidencePanel(viewerNum);
+        }
+
+        function setViewerStructureState(viewerNum, hasStructure, label) {
+            const pane = document.getElementById(`viewer-pane-${viewerNum}`);
+            if (pane) pane.dataset.hasStructure = hasStructure ? 'true' : 'false';
+            if (label) {
+                const nameEl = document.getElementById(`structure-name-${viewerNum}`);
+                if (nameEl) { nameEl.textContent = label; nameEl.title = label; }
+            }
+        }
+
+        function hasDraggedFiles(event) { return Array.from(event.dataTransfer?.types || []).includes('Files'); }
+        function clearViewerDragState(viewerNum) {
+            viewerDragDepth[viewerNum] = 0;
+            document.getElementById(`viewer-pane-${viewerNum}`)?.classList.remove('is-drop-target');
+        }
+
+        function getLocalFileFormat(filename) {
+            const ext = (filename || '').split('.').pop().toLowerCase();
+            return LOCAL_FILE_FORMATS[ext] || null;
+        }
+
+        function ensureViewer(viewerNum) {
+            if (viewerNum === 1) return viewer1;
+            if (!isSplitScreen) toggleSplitScreen();
+            else if (!viewer2) {
+                const container2 = document.getElementById('viewer-canvas-2');
+                viewer2 = PhonosViewer.create(container2, { alphafoldView: false, hideControls: true, sequencePanel: false, focusPanel: false });
+            }
+            return viewer2;
+        }
+
+        function setupViewerInteractions() {
+            document.querySelectorAll('.viewer-pane').forEach(pane => {
+                const viewerNum = Number(pane.dataset.viewerNum);
+                pane.addEventListener('pointerdown', () => setActiveViewer(viewerNum));
+                pane.addEventListener('dragenter', (event) => {
+                    if (!hasDraggedFiles(event)) return;
+                    event.preventDefault();
+                    viewerDragDepth[viewerNum] += 1;
+                    pane.classList.add('is-drop-target');
+                    setActiveViewer(viewerNum);
+                });
+                pane.addEventListener('dragover', (event) => {
+                    if (!hasDraggedFiles(event)) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'copy';
+                    pane.classList.add('is-drop-target');
+                    setActiveViewer(viewerNum);
+                });
+                pane.addEventListener('dragleave', (event) => {
+                    if (!hasDraggedFiles(event)) return;
+                    event.preventDefault();
+                    viewerDragDepth[viewerNum] = Math.max(0, viewerDragDepth[viewerNum] - 1);
+                    if (viewerDragDepth[viewerNum] === 0) pane.classList.remove('is-drop-target');
+                });
+                pane.addEventListener('drop', async (event) => {
+                    if (!hasDraggedFiles(event)) return;
+                    event.preventDefault();
+                    clearViewerDragState(viewerNum);
+                    setActiveViewer(viewerNum);
+                    const file = event.dataTransfer.files?.[0];
+                    if (file) await loadLocalFile(file, viewerNum);
+                });
+            });
+            const localInput = document.getElementById('local-structure-input');
+            if (localInput) localInput.addEventListener('change', handleLocalStructureSelected);
+            document.addEventListener('dragend', () => { clearViewerDragState(1); clearViewerDragState(2); });
+        }
+
+        function browseLocalStructure(viewerNum) {
+            setActiveViewer(viewerNum);
+            const input = document.getElementById('local-structure-input');
+            if (!input) return;
+            input.dataset.viewerNum = String(viewerNum);
+            input.click();
+        }
+
+        async function handleLocalStructureSelected(event) {
+            const input = event.target;
+            const viewerNum = Number(input.dataset.viewerNum || activeViewer || 1);
+            const files = Array.from(input.files || []);
+            input.value = '';
+            for (const file of files) await loadLocalFile(file, viewerNum);
+        }
+
+        async function loadLocalFile(file, viewerNum) {
+            const format = getLocalFileFormat(file.name);
+            if (!format) { alert('Unsupported file format. Use PDB, CIF, mmCIF, MOL, MOL2, SDF, XYZ, or CUBE.'); return; }
+            setActiveViewer(viewerNum);
+            showLoading(viewerNum);
+            updateStatus(`Loading ${file.name}...`);
+            try {
+                const viewer = ensureViewer(viewerNum);
+                const structureData = await file.text();
+                await loadStructureToViewer(viewer, structureData, format, viewerNum, file.name);
+                applyJobConfidenceMetadataToViewer(viewer, viewerNum, null);
+                if (currentColorScheme === 'job-confidence') applyStyleToViewer(viewer);
+                detectAndHighlightLigands(viewer, structureData);
+                updateStructureInfo(file.name, 'Local file', '-', format, structureData);
+                hideLoading(viewerNum);
+                updateStatus(`Loaded ${file.name}`);
+            } catch (error) {
+                console.error('Error loading local structure:', error);
+                hideLoading(viewerNum);
+                updateStatus('Error loading local file');
+                alert('Failed to load local file: ' + error.message);
+            }
+        }
+
+        function setQuality(quality) {
+            currentQuality = quality;
+            document.querySelectorAll('.seg-btn[data-quality]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.quality === quality);
+            });
+            applyStyleToViewer(viewer1);
+            if (viewer2) applyStyleToViewer(viewer2);
+            updateStatus('Quality: ' + quality.charAt(0).toUpperCase() + quality.slice(1));
+        }
+
+        async function initViewer() {
+            if (typeof PhonosViewer === 'undefined') {
+                console.error('[Viewer] PhonosViewer not loaded — check _molstar_head.html include');
+                updateStatus('Viewer library not loaded');
+                return;
+            }
+            const container1 = document.getElementById('viewer-canvas-1');
+            viewer1 = PhonosViewer.create(container1, { alphafoldView: false, hideControls: true, sequencePanel: false, focusPanel: false });
+            window._phonosViewer = viewer1;
+            setupViewerInteractions();
+            setActiveViewer(1);
+            setupDrawer();
+            await loadProjects();
+            handleUrlParams();
+            updateStatus('Ready');
+            logEvent('ok', 'Viewer ready — Mol* engine online');
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                projectsData = await response.json();
+                const select = document.getElementById('project-select');
+                if (!select) return;
+                select.innerHTML = '<option value="">Select a project...</option>';
+                projectsData.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                updateStatus('Error loading projects');
+            }
+        }
+
+        async function onProjectChange() {
+            const projectId = document.getElementById('project-select')?.value;
+            const jobSelect = document.getElementById('job-select');
+            const fileSelect = document.getElementById('file-select');
+            if (jobSelect) { jobSelect.innerHTML = '<option value="">Select a job...</option>'; jobSelect.disabled = true; }
+            if (fileSelect) { fileSelect.innerHTML = '<option value="">Select a file...</option>'; fileSelect.disabled = true; }
+            if (!projectId) return;
+            try {
+                if (!jobsCache[projectId]) {
+                    const response = await fetch(`/api/projects/${projectId}/jobs`);
+                    jobsCache[projectId] = await response.json();
+                }
+                const jobs = jobsCache[projectId];
+                const completedJobs = jobs.filter(j => j.status === 'completed');
+                if (completedJobs.length > 0 && jobSelect) {
+                    jobSelect.disabled = false;
+                    completedJobs.forEach(job => {
+                        const option = document.createElement('option');
+                        option.value = job.job_id;
+                        option.textContent = job.name || job.job_id;
+                        option.dataset.jobType = job.job_type || 'unknown';
+                        jobSelect.appendChild(option);
+                    });
+                }
+                if (!filesCache[projectId]) {
+                    const response = await fetch(`/api/projects/${projectId}/files`);
+                    filesCache[projectId] = await response.json();
+                }
+                const files = filesCache[projectId];
+                const uploadedFiles = files.filter(f => {
+                    if (f.type !== 'upload') return false;
+                    const ext = (f.filename || '').split('.').pop().toLowerCase();
+                    return MOLECULAR_EXTENSIONS.includes(ext);
+                });
+                if (fileSelect && (uploadedFiles.length > 0 || completedJobs.length === 0)) {
+                    fileSelect.disabled = false;
+                    fileSelect.innerHTML = '<option value="">Select a file...</option>';
+                    if (uploadedFiles.length > 0) {
+                        const uploadGroup = document.createElement('optgroup');
+                        uploadGroup.label = 'Uploaded Files';
+                        uploadedFiles.forEach(file => {
+                            const option = document.createElement('option');
+                            option.value = `upload:${file.id}`;
+                            option.textContent = file.filename;
+                            const ext = (file.filename || '').split('.').pop().toLowerCase();
+                            option.dataset.format = ext === 'mmcif' ? 'cif' : ext;
+                            option.dataset.type = 'upload';
+                            uploadGroup.appendChild(option);
+                        });
+                        fileSelect.appendChild(uploadGroup);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+                updateStatus('Error loading jobs');
+            }
+        }
+
+        async function onJobChange() {
+            const projectId = document.getElementById('project-select')?.value;
+            const jobId = document.getElementById('job-select')?.value;
+            const fileSelect = document.getElementById('file-select');
+            if (!jobId) { await onProjectChange(); return; }
+            try {
+                const files = filesCache[projectId] || [];
+                if (!fileSelect) return;
+                while (fileSelect.firstChild) fileSelect.removeChild(fileSelect.firstChild);
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Select output file...';
+                fileSelect.appendChild(placeholder);
+                fileSelect.disabled = false;
+                const jobOutputFiles = files.filter(f => f.type === 'output' && String(f.job_id) === String(jobId));
+                const outputGroup = document.createElement('optgroup');
+                outputGroup.label = 'Job Output Files';
+                const mainOption = document.createElement('option');
+                mainOption.value = 'job:' + jobId;
+                mainOption.textContent = 'Main Output (PDB)';
+                mainOption.dataset.format = 'pdb';
+                mainOption.dataset.type = 'job';
+                outputGroup.appendChild(mainOption);
+                jobOutputFiles.forEach(file => {
+                    const ext = (file.filename || '').split('.').pop().toLowerCase();
+                    if (MOLECULAR_EXTENSIONS.includes(ext)) {
+                        const option = document.createElement('option');
+                        option.value = 'file:' + file.id;
+                        option.textContent = file.filename;
+                        option.dataset.format = ext === 'mmcif' ? 'cif' : ext;
+                        option.dataset.type = 'file';
+                        outputGroup.appendChild(option);
+                    }
+                });
+                fileSelect.appendChild(outputGroup);
+                fileSelect.value = 'job:' + jobId;
+            } catch (error) {
+                console.error('Error loading job files:', error);
+            }
+        }
+
+        async function loadSelectedStructure() {
+            const projectSelect = document.getElementById('project-select');
+            const jobSelect = document.getElementById('job-select');
+            const fileSelect = document.getElementById('file-select');
+            const projectId = projectSelect?.value;
+            const fileValue = fileSelect?.value;
+            if (!fileValue) { alert('Please select a file to load'); return; }
+            showLoading(activeViewer);
+            updateStatus('Loading structure...');
+            try {
+                const [type, id] = fileValue.split(':');
+                let structureData;
+                let format = 'pdb';
+                let jobDetails = null;
+                const metadataJobId = type === 'job' ? id : (jobSelect?.value || null);
+                const selectedOption = fileSelect.options[fileSelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset.format) format = selectedOption.dataset.format;
+                if (metadataJobId) jobDetails = await fetchJobDetails(metadataJobId);
+
+                if (type === 'job') {
+                    const response = await fetch(`/api/jobs/${id}/output_content`, { headers: { 'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || '' } });
+                    if (!response.ok) throw new Error('Failed to load job output');
+                    const data = await response.json();
+                    if (data.docking_style && data.protein_file && data.ligand_file) {
+                        console.log('[Viewer] Boltz2 docking-style job detected');
+                        await loadBoltz2DockingStyleViewer(id, data.protein_file, data.ligand_file, jobDetails?.policy || null);
+                        hideLoading(activeViewer);
+                        updateStatus('Structure loaded (Protein + Ligand)');
+                        return;
+                    }
+                    structureData = data.content;
+                } else if (type === 'upload' || type === 'file') {
+                    const response = await fetch(`/download_file/${id}?view=true`);
+                    if (!response.ok) throw new Error('Failed to load file');
+                    structureData = await response.text();
+                }
+
+                const viewer = activeViewer === 1 ? viewer1 : viewer2;
+                await loadStructureToViewer(viewer, structureData, format, activeViewer);
+                applyJobConfidenceMetadataToViewer(viewer, activeViewer, jobDetails?.policy || null);
+                if (currentColorScheme === 'job-confidence') applyStyleToViewer(viewer);
+                detectAndHighlightLigands(viewer, structureData);
+                const projectName = projectSelect?.options[projectSelect.selectedIndex]?.text || '-';
+                const jobName = jobSelect?.options[jobSelect.selectedIndex]?.text || '-';
+                const fileName = selectedOption?.text || 'Structure';
+                updateStructureInfo(fileName, projectName, jobName, format, structureData);
+                hideLoading(activeViewer);
+                updateStatus('Structure loaded');
+                logEvent('ok', `Loaded ${fileName} (${format.toUpperCase()})`);
+                setInspectorCrumb(projectName, jobName, fileName);
+            } catch (error) {
+                console.error('Error loading structure:', error);
+                hideLoading(activeViewer);
+                updateStatus('Error loading structure');
+                alert('Failed to load structure: ' + error.message);
+                logEvent('err', 'Load failed: ' + error.message);
+            }
+        }
+
+        function extractPlddt(fileText, format) {
+            plddtScores = [];
+            if (format === 'pdb') {
+                const lines = fileText.split('\n');
+                let currentResId = -1;
+                for (const line of lines) {
+                    if (line.startsWith('ATOM')) {
+                        const atomName = line.substring(12, 16).trim();
+                        if (atomName === 'CA') {
+                            const resId = parseInt(line.substring(22, 26).trim());
+                            if (resId !== currentResId) {
+                                const bFactor = parseFloat(line.substring(60, 66).trim());
+                                plddtScores.push(bFactor);
+                                currentResId = resId;
+                            }
+                        }
+                    }
+                }
+            } else if (format === 'cif' || format === 'mmcif') {
+                const lines = fileText.split('\n');
+                let inAtomSite = false;
+                let currentResId = -1;
+                for (const line of lines) {
+                    if (line.startsWith('_atom_site.')) {
+                        if (line.includes('_atom_site.B_iso_or_equiv')) inAtomSite = true;
+                    } else if (line.startsWith('loop_')) {
+                        inAtomSite = false;
+                    } else if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+                        const parts = line.split(/\s+/);
+                        if (parts.length > 10) {
+                            const atomName = parts[3];
+                            const resId = parseInt(parts[8]);
+                            let bFactor = parseFloat(parts[parts.length - 2]);
+                            if (isNaN(bFactor) || bFactor < 0 || bFactor > 100) {
+                                for (let i = 10; i < parts.length; i++) {
+                                    const val = parseFloat(parts[i]);
+                                    if (!isNaN(val) && val >= 0 && val <= 100 && parts[i].includes('.')) { bFactor = val; break; }
+                                }
+                            }
+                            if (atomName === 'CA' && resId !== currentResId && !isNaN(bFactor)) {
+                                plddtScores.push(bFactor);
+                                currentResId = resId;
+                            }
+                        }
+                    }
+                }
+            }
+            return plddtScores.slice();
+        }
+
+        async function loadStructureToViewer(pv, data, format, viewerNum, displayName) {
+            if (!pv) return;
+            const isSmallMolecule = ['sdf', 'mol', 'mol2', 'xyz'].includes(format);
+            if (format === 'pdb' || format === 'cif' || format === 'mmcif') {
+                const extractedScores = extractPlddt(data, format);
+                setViewerPlddtScores(viewerNum, extractedScores);
+            } else {
+                plddtScores = [];
+                setViewerPlddtScores(viewerNum, []);
+            }
+            if (isSmallMolecule && currentStyle === 'cartoon') {
+                currentStyle = 'stick';
+                pv._visualStyle = 'ball-and-stick';
+                document.querySelectorAll('.tile[data-style]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.style === 'stick');
+                });
+                const tag = document.getElementById('status-style-tag');
+                if (tag) tag.textContent = 'STICK';
+            }
+            const pvFormat = (format === 'mmcif') ? 'cif' : format;
+            await pv.loadData(data, pvFormat);
+            applyStyleToViewer(pv);
+            const fileSelect = document.getElementById('file-select');
+            const selectedOption = fileSelect?.options[fileSelect.selectedIndex];
+            const structureLabel = displayName || selectedOption?.text || 'Structure';
+            setViewerStructureState(viewerNum, true, structureLabel);
+            const counts = parseStructureCounts(data, format);
+            const atomCountEl = document.getElementById('atom-count');
+            const atomCountText = document.getElementById('atom-count-text');
+            if (atomCountEl) atomCountEl.style.display = '';
+            if (atomCountText) atomCountText.textContent = counts.atomCount.toLocaleString();
+        }
+
+        function updateStructureInfo(name, project, job, format, data) {
+            const emptyState = document.getElementById('info-empty-wrap');
+            const sections = document.getElementById('info-sections');
+            if (emptyState) emptyState.style.display = 'none';
+            if (sections) sections.style.display = '';
+
+            const nameEl = document.getElementById('info-name');
+            if (nameEl) { nameEl.textContent = name; nameEl.title = name; }
+            const sourceEl = document.getElementById('info-source');
+            if (sourceEl) {
+                if (project === 'Local file') sourceEl.textContent = 'LOCAL';
+                else if (project === 'RCSB PDB') sourceEl.textContent = 'RCSB';
+                else sourceEl.textContent = 'PHONOS';
+            }
+            const projEl = document.getElementById('info-project');
+            if (projEl) projEl.textContent = project;
+            const jobEl = document.getElementById('info-job');
+            if (jobEl) jobEl.textContent = job;
+            const fmtEl = document.getElementById('info-format');
+            if (fmtEl) fmtEl.textContent = format.toUpperCase();
+
+            if (data) {
+                const counts = parseStructureCounts(data, format);
+                const atomsEl = document.getElementById('info-atoms');
+                const residuesEl = document.getElementById('info-residues');
+                if (atomsEl) atomsEl.textContent = counts.atomCount.toLocaleString();
+                if (residuesEl) residuesEl.textContent = counts.residueCount.toLocaleString();
+
+                const atomCountEl = document.getElementById('atom-count');
+                const atomCountText = document.getElementById('atom-count-text');
+                if (atomCountEl && atomCountText) {
+                    atomCountEl.style.display = '';
+                    atomCountText.textContent = counts.atomCount.toLocaleString();
+                }
+
+                const chainList = document.getElementById('chain-list');
+                if (chainList) {
+                    chainList.textContent = '';
+                    if (counts.chains.size > 0) {
+                        const palette = ['#22D3EE', '#60A5FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#FB923C', '#F472B6'];
+                        let i = 0;
+                        Array.from(counts.chains).sort().forEach(chain => {
+                            const row = document.createElement('div');
+                            row.className = 'chain-row';
+                            const swatch = document.createElement('span');
+                            swatch.className = 'swatch';
+                            swatch.style.background = palette[i % palette.length];
+                            const id = document.createElement('span');
+                            id.className = 'id';
+                            id.textContent = 'CHAIN ' + chain;
+                            const meta = document.createElement('span');
+                            meta.className = 'meta';
+                            meta.textContent = 'AUTO';
+                            row.appendChild(swatch);
+                            row.appendChild(id);
+                            row.appendChild(meta);
+                            chainList.appendChild(row);
+                            i++;
+                        });
+                    } else {
+                        const empty = document.createElement('span');
+                        empty.style.color = 'var(--lab-text-mute)';
+                        empty.style.fontSize = '11px';
+                        empty.textContent = 'None detected';
+                        chainList.appendChild(empty);
+                    }
+                }
+            }
+            detectAndShowModelType(job);
+            updateConfidencePanel();
+        }
+
+        function detectAndShowModelType(jobName) {
+            const modelTypeRow = document.getElementById('info-model-type-row');
+            const modelTypeEl = document.getElementById('info-model-type');
+            if (!modelTypeRow || !modelTypeEl) return;
+            const jl = (jobName || '').toLowerCase();
+            let modelType = null, badgeClass = '';
+            if (jl.includes('alphafold') || jl.includes('af2') || jl.includes('alpha_fold')) { modelType = 'AlphaFold2'; badgeClass = 'alphafold'; }
+            else if (jl.includes('boltz') || jl.includes('boltz2')) { modelType = 'Boltz2'; badgeClass = 'boltz2'; }
+            else if (jl.includes('openfold') || jl.includes('open_fold') || jl.includes('of3')) { modelType = 'OpenFold3'; badgeClass = 'openfold'; }
+            else if (jl.includes('esmfold') || jl.includes('esm')) { modelType = 'ESMFold'; badgeClass = 'alphafold'; }
+            if (modelType) {
+                modelTypeRow.style.display = '';
+                modelTypeEl.textContent = '';
+                const badge = document.createElement('span');
+                badge.className = 'model-type-badge ' + badgeClass;
+                badge.textContent = modelType;
+                modelTypeEl.appendChild(badge);
+            } else {
+                modelTypeRow.style.display = 'none';
+            }
+        }
+
+        function updateConfidencePanel() {
+            const panel = document.getElementById('confidence-panel');
+            const empty = document.getElementById('confidence-empty');
+            if (!panel) return;
+            if (!plddtScores || plddtScores.length === 0) {
+                panel.style.display = 'none';
+                if (empty) empty.style.display = '';
+                const cell = document.getElementById('plddt-cell');
+                if (cell) cell.style.display = 'none';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+            panel.style.display = '';
+
+            const avg = plddtScores.reduce((a, b) => a + b, 0) / plddtScores.length;
+            const isNormalized = plddtScores.every(s => s <= 1.0);
+            const scaledAvg = isNormalized ? avg * 100 : avg;
+            const scaledScores = isNormalized ? plddtScores.map(s => s * 100) : plddtScores;
+
+            let vhigh = 0, conf = 0, low = 0, vlow = 0;
+            for (const s of scaledScores) {
+                if (s > 90) vhigh++;
+                else if (s > 70) conf++;
+                else if (s > 50) low++;
+                else vlow++;
+            }
+            const total = scaledScores.length;
+            const pctVH = (vhigh / total * 100).toFixed(1);
+            const pctC = (conf / total * 100).toFixed(1);
+            const pctL = (low / total * 100).toFixed(1);
+            const pctVL = (vlow / total * 100).toFixed(1);
+
+            const circumference = 2 * Math.PI * 30;
+            const offset = circumference * (1 - scaledAvg / 100);
+            const ringFill = document.getElementById('conf-ring-fill');
+            if (ringFill) {
+                ringFill.style.strokeDasharray = circumference;
+                ringFill.style.strokeDashoffset = offset;
+                if (scaledAvg > 90) ringFill.style.stroke = '#60A5FA';
+                else if (scaledAvg > 70) ringFill.style.stroke = '#67E8F9';
+                else if (scaledAvg > 50) ringFill.style.stroke = '#FCD34D';
+                else ringFill.style.stroke = '#FB923C';
+            }
+
+            const avgEl = document.getElementById('conf-avg-score');
+            if (avgEl) avgEl.textContent = scaledAvg.toFixed(1);
+
+            const levelText = document.getElementById('conf-level-text');
+            const levelBadge = document.getElementById('conf-level-badge');
+            const levelBadgeText = document.getElementById('conf-level-badge-text');
+            let levelLabel, levelColor, levelClass;
+            if (scaledAvg > 90) { levelLabel = 'Very High Confidence'; levelColor = '#60A5FA'; levelClass = 'vh'; }
+            else if (scaledAvg > 70) { levelLabel = 'Confident'; levelColor = '#67E8F9'; levelClass = 'c'; }
+            else if (scaledAvg > 50) { levelLabel = 'Low Confidence'; levelColor = '#FCD34D'; levelClass = 'l'; }
+            else { levelLabel = 'Very Low Confidence'; levelColor = '#FB923C'; levelClass = 'vl'; }
+
+            if (levelText) { levelText.textContent = 'AVG. CONFIDENCE'; levelText.style.color = levelColor; }
+            if (levelBadge) {
+                levelBadge.style.display = '';
+                levelBadge.className = 'confidence-level-band ' + levelClass;
+                const dot = levelBadge.querySelector('.dot');
+                if (dot) dot.style.background = levelColor;
+            }
+            if (levelBadgeText) levelBadgeText.textContent = levelLabel;
+
+            document.getElementById('conf-bar-vh').style.width = pctVH + '%';
+            document.getElementById('conf-bar-c').style.width = pctC + '%';
+            document.getElementById('conf-bar-l').style.width = pctL + '%';
+            document.getElementById('conf-bar-vl').style.width = pctVL + '%';
+
+            document.getElementById('conf-pct-vh').textContent = pctVH + '%';
+            document.getElementById('conf-pct-c').textContent = pctC + '%';
+            document.getElementById('conf-pct-l').textContent = pctL + '%';
+            document.getElementById('conf-pct-vl').textContent = pctVL + '%';
+
+            // Status strip
+            const cell = document.getElementById('plddt-cell');
+            const cellVal = document.getElementById('status-plddt');
+            if (cell) cell.style.display = '';
+            if (cellVal) { cellVal.textContent = scaledAvg.toFixed(1) + '%'; cellVal.style.color = levelColor; }
+
+            const colorScheme = document.getElementById('color-scheme');
+            if (colorScheme && scaledAvg > 0 && currentColorScheme === 'spectrum') {
+                colorScheme.value = 'bfactor';
+                applyColorScheme();
+            }
+        }
+
+        function handleUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileId = urlParams.get('file_id');
+            const jobId = urlParams.get('job_id');
+            const projectId = urlParams.get('project_id');
+            if (projectId) {
+                const ps = document.getElementById('project-select');
+                if (ps) ps.value = projectId;
+                onProjectChange().then(() => {
+                    if (jobId) {
+                        const js = document.getElementById('job-select');
+                        if (js) js.value = jobId;
+                        onJobChange().then(() => {
+                            const fs = document.getElementById('file-select');
+                            if (fileId) fs.value = `file:${fileId}`;
+                            else fs.value = `job:${jobId}`;
+                            loadSelectedStructure();
+                        });
+                    } else if (fileId) {
+                        const fs = document.getElementById('file-select');
+                        fs.value = `upload:${fileId}`;
+                        loadSelectedStructure();
+                    }
+                });
+            }
+        }
+
+        function toggleSplitScreen() {
+            isSplitScreen = !isSplitScreen;
+            const pane2 = document.getElementById('viewer-pane-2');
+            const divider = document.getElementById('split-divider');
+            const toggle = document.getElementById('split-toggle');
+            if (isSplitScreen) {
+                pane2.classList.remove('hidden');
+                divider.classList.add('active');
+                if (toggle) toggle.classList.add('active');
+                if (!viewer2) {
+                    const container2 = document.getElementById('viewer-canvas-2');
+                    viewer2 = PhonosViewer.create(container2, { alphafoldView: false, hideControls: true, sequencePanel: false, focusPanel: false });
+                }
+            } else {
+                pane2.classList.add('hidden');
+                divider.classList.remove('active');
+                if (toggle) toggle.classList.remove('active');
+                clearViewerDragState(2);
+                if (activeViewer === 2) setActiveViewer(1);
+            }
+        }
+
+        function loadToViewer2() {
+            setActiveViewer(2);
+            loadSelectedStructure().then(() => { setActiveViewer(1); });
+        }
+
+        // ===== Inspector (right pane) =====================================
+        function toggleInspector() {
+            const shell = document.getElementById('viewer-shell');
+            shell.classList.toggle('no-inspector');
+            shell.classList.toggle('inspector-open');
+        }
+
+        function switchInspectorTab(name) {
+            const inspector = document.getElementById('sidebar-right');
+            if (!inspector) return;
+            inspector.dataset.activeTab = name;
+            document.querySelectorAll('.inspector-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.itab === name);
+            });
+            const body = document.getElementById('sidebar-right-content');
+            if (body) {
+                body.querySelectorAll('[data-tab]').forEach(el => {
+                    el.style.display = (el.dataset.tab === name) ? '' : 'none';
+                });
+            }
+        }
+
+        function toggleInspSection(head) {
+            head.closest('.insp-section')?.classList.toggle('collapsed');
+        }
+
+        // ===== Status strip ===============================================
+        function setInspectorCrumb(project, job, structure) {
+            const pe = document.getElementById('mf-project-crumb');
+            const je = document.getElementById('mf-job-crumb');
+            const ne = document.getElementById('mf-structure-name');
+            if (pe) pe.textContent = project || '—';
+            if (je) je.textContent = job || '—';
+            if (ne) { ne.textContent = (structure || 'NO STRUCTURE LOADED').toUpperCase(); }
+            const meta = document.getElementById('well-toolbar-meta');
+            if (meta) meta.textContent = `${project || '—'} / ${job || '—'} / ${(structure || '—').toUpperCase()}`;
+        }
+
+        // ===== Log ========================================================
+        function logEvent(level, message) {
+            const stream = document.getElementById('log-stream');
+            if (!stream) return;
+            const t = new Date();
+            const time = t.toTimeString().slice(0, 8);
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            const ts = document.createElement('span'); ts.className = 't'; ts.textContent = time;
+            const lv = document.createElement('span'); lv.className = 'lvl ' + level; lv.textContent = level;
+            const msg = document.createElement('span'); msg.className = 'm'; msg.textContent = message;
+            line.appendChild(ts); line.appendChild(lv); line.appendChild(msg);
+            stream.appendChild(line);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        // ===== Drawer system ==============================================
+        function setupDrawer() {
+            drawerTemplates.source = drawerSourceHTML();
+            drawerTemplates.files = drawerFilesHTML();
+            drawerTemplates.style = drawerStyleHTML();
+            drawerTemplates.color = drawerColorHTML();
+            drawerTemplates.view = drawerViewHTML();
+            drawerTemplates.display = drawerDisplayHTML();
+        }
+
+        function openDrawer(name) {
+            if (!drawerTemplates[name]) return;
+            activeDrawer = name;
+            const drawer = document.getElementById('drawer');
+            const body = document.getElementById('drawer-body');
+            const title = document.getElementById('drawer-title');
+            const backdrop = document.getElementById('drawer-backdrop');
+            if (title) title.textContent = name.toUpperCase();
+            if (body) body.innerHTML = drawerTemplates[name];
+            if (drawer) drawer.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+            document.querySelectorAll('.rail-btn[data-rail]').forEach(b => {
+                b.classList.toggle('active', b.dataset.rail === name);
+            });
+            if (name === 'source') wireSourceDrawer();
+            if (name === 'color') wireColorDrawer();
+            if (name === 'view') wireViewDrawer();
+            if (name === 'display') wireDisplayDrawer();
+        }
+
+        function closeDrawer() {
+            const drawer = document.getElementById('drawer');
+            const backdrop = document.getElementById('drawer-backdrop');
+            if (drawer) drawer.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+            document.querySelectorAll('.rail-btn[data-rail]').forEach(b => b.classList.remove('active'));
+            activeDrawer = null;
+        }
+
+        function drawerSourceHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">RCSB PDB Lookup</div>
+                    <div class="field">
+                        <label class="field-label">PDB ID</label>
+                        <div class="input-row">
+                            <input type="text" class="input mono" id="pdb-id-input" placeholder="e.g. 4F0K" maxlength="4" style="text-transform: uppercase;">
+                            <button class="btn primary" onclick="loadFromPDB()">Fetch</button>
+                        </div>
+                        <div class="pdb-info" id="pdb-info" style="display: none;">
+                            <div id="pdb-title" style="color: var(--lab-text-1); margin-bottom: 6px;"></div>
+                            <div id="pdb-details" style="color: var(--lab-text-3); font-size: 10.5px; line-height: 1.6;"></div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Quick Examples</label>
+                        <div class="quick-pdb">
+                            <button onclick="quickLoadPDB('4F0K')" title="Rubisco · CO2">4F0K</button>
+                            <button onclick="quickLoadPDB('1RXO')" title="Rubisco · RuBP">1RXO</button>
+                            <button onclick="quickLoadPDB('1HHO')" title="Hemoglobin">1HHO</button>
+                            <button onclick="quickLoadPDB('1CRN')" title="Crambin">1CRN</button>
+                            <button onclick="quickLoadPDB('2GS6')" title="Kinase">2GS6</button>
+                            <button onclick="quickLoadPDB('1A2N')" title="Alpha-1 antitrypsin">1A2N</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-title">My Projects</div>
+                    <div class="field">
+                        <label class="field-label">Project</label>
+                        <select class="select" id="project-select" onchange="onProjectChange()">
+                            <option value="">Select a project…</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Job</label>
+                        <select class="select" id="job-select" onchange="onJobChange()" disabled>
+                            <option value="">Select a job…</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">File</label>
+                        <select class="select" id="file-select" disabled>
+                            <option value="">Select a file…</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-block primary" onclick="loadSelectedStructure()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        Load Structure
+                    </button>
+                </div>
+
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Local File</div>
+                    <div class="field">
+                        <button class="btn btn-block" onclick="browseLocalStructure(activeViewer)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5-5 5 5M12 5v12"/>
+                            </svg>
+                            Browse File
+                        </button>
+                        <div style="color: var(--lab-text-mute); font-family: var(--lab-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px;">
+                            Drag &amp; drop onto the canvas
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawerFilesHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Project Files</div>
+                    <div class="field">
+                        <label class="field-label">Project</label>
+                        <select class="select" id="project-select" onchange="onProjectChange()">
+                            <option value="">Select a project…</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">File</label>
+                        <select class="select" id="file-select" disabled>
+                            <option value="">Select a file…</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawerStyleHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Representation</div>
+                    <div class="field">
+                        <div class="tile-grid" id="style-grid">
+                            <button class="tile active" data-style="cartoon" onclick="setStyle('cartoon')">CARTOON<span class="kbd">1</span></button>
+                            <button class="tile" data-style="stick" onclick="setStyle('stick')">STICK<span class="kbd">2</span></button>
+                            <button class="tile" data-style="sphere" onclick="setStyle('sphere')">SPHERE<span class="kbd">3</span></button>
+                            <button class="tile" data-style="surface" onclick="setStyle('surface')">SURFACE<span class="kbd">4</span></button>
+                            <button class="tile" data-style="line" onclick="setStyle('line')">LINE<span class="kbd">5</span></button>
+                            <button class="tile" data-style="cross" onclick="setStyle('cross')">CROSS<span class="kbd">6</span></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawerColorHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Color Scheme</div>
+                    <div class="field">
+                        <select class="select" id="color-scheme" onchange="applyColorScheme()">
+                            <option value="spectrum">Spectrum (Rainbow)</option>
+                            <option value="chain">By Chain</option>
+                            <option value="ss">Secondary Structure</option>
+                            <option value="residue">By Residue</option>
+                            <option value="element">By Element (CPK)</option>
+                            <option value="bfactor">B-Factor / pLDDT</option>
+                            <option value="job-confidence">Job Confidence Score</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Background</div>
+                    <div class="field">
+                        <div class="swatch-row" id="bg-swatches">
+                            <div class="swatch active" style="background: #09090b;" data-bg="#09090b" onclick="setBackground(this)"></div>
+                            <div class="swatch" style="background: #18181b;" data-bg="#18181b" onclick="setBackground(this)"></div>
+                            <div class="swatch" style="background: #1e293b;" data-bg="#1e293b" onclick="setBackground(this)"></div>
+                            <div class="swatch" style="background: #0f172a;" data-bg="#0f172a" onclick="setBackground(this)"></div>
+                            <div class="swatch" style="background: #ffffff;" data-bg="#ffffff" onclick="setBackground(this)"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Ligand Display</div>
+                    <div class="field">
+                        <label class="checkbox">
+                            <input type="checkbox" id="show-ligands" checked onchange="toggleLigandVisibility()">
+                            <span class="box"></span>
+                            <span>Show ligands</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" id="highlight-ligands" checked onchange="toggleLigandHighlight()">
+                            <span class="box"></span>
+                            <span>Ball &amp; stick style</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" id="show-ligand-labels" onchange="toggleLigandLabels()">
+                            <span class="box"></span>
+                            <span>Show labels</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawerViewHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Camera Presets</div>
+                    <div class="field">
+                        <div class="tile-grid" id="view-presets">
+                            <button class="tile" onclick="setPresetView('front')">FRONT<span class="kbd">F</span></button>
+                            <button class="tile" onclick="setPresetView('back')">BACK<span class="kbd">B</span></button>
+                            <button class="tile" onclick="setPresetView('left')">LEFT<span class="kbd">L</span></button>
+                            <button class="tile" onclick="setPresetView('right')">RIGHT<span class="kbd">H</span></button>
+                            <button class="tile" onclick="setPresetView('top')">TOP<span class="kbd">T</span></button>
+                            <button class="tile" onclick="setPresetView('bottom')">BOTTOM<span class="kbd">G</span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Render</div>
+                    <div class="field">
+                        <button class="btn btn-block" onclick="resetView()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Reset View
+                        </button>
+                    </div>
+                    <div class="field">
+                        <button class="btn btn-block" onclick="takeScreenshot()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <circle cx="12" cy="13" r="3"/>
+                            </svg>
+                            Screenshot
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawerDisplayHTML() {
+            return `
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Display Options</div>
+                    <div class="field">
+                        <label class="checkbox">
+                            <input type="checkbox" id="show-hydrogens" onchange="toggleHydrogens()">
+                            <span class="box"></span>
+                            <span>Show hydrogens</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" id="show-labels" onchange="toggleLabels()">
+                            <span class="box"></span>
+                            <span>Show residue labels</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" id="spin-model" onchange="toggleSpin()">
+                            <span class="box"></span>
+                            <span>Auto spin</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="drawer-section">
+                    <div class="drawer-section-title">Rendering Quality</div>
+                    <div class="field">
+                        <div class="tile-grid">
+                            <button class="tile" data-quality="low" onclick="setQuality('low')">LO<span class="kbd">7</span></button>
+                            <button class="tile active" data-quality="medium" onclick="setQuality('medium')">MED<span class="kbd">8</span></button>
+                            <button class="tile" data-quality="high" onclick="setQuality('high')">HI<span class="kbd">9</span></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function wireSourceDrawer() { loadProjects(); }
+        function wireColorDrawer() {}
+        function wireViewDrawer() {}
+        function wireDisplayDrawer() {}
+
+        // Style functions
+        function setStyle(style) {
+            currentStyle = style;
+            document.querySelectorAll('.tile[data-style]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.style === style);
+            });
+            applyStyleToViewer(viewer1);
+            if (viewer2) applyStyleToViewer(viewer2);
+            const tag = document.getElementById('status-style-tag');
+            if (tag) tag.textContent = style.toUpperCase();
+        }
+
+        function applyStyleToViewer(pv) {
+            if (!pv) return;
+            if (pv.setVisualStyle) pv.setVisualStyle(currentStyle);
+            switch (currentColorScheme) {
+                case 'bfactor': pv.applyConfidenceColoring(); break;
+                case 'job-confidence': applyJobConfidenceColoringToViewer(pv); break;
+                case 'chain': pv.applyChainColoring(); break;
+                default: pv.applyDefaultColoring(); break;
+            }
+        }
+
+        function applyColorScheme() {
+            currentColorScheme = document.getElementById('color-scheme').value;
+            applyStyleToViewer(viewer1);
+            if (viewer2) applyStyleToViewer(viewer2);
+            const colorTag = document.getElementById('status-color-tag');
+            if (colorTag) {
+                const opt = document.getElementById('color-scheme').selectedOptions[0];
+                colorTag.textContent = opt ? opt.textContent.split('(')[0].trim().toUpperCase() : currentColorScheme.toUpperCase();
+            }
+        }
+
+        function setBackground(el) {
+            const hex = el.dataset.bg;
+            const rgb = hexToRgb(hex);
+            if (viewer1) viewer1.setBgColor(rgb.r, rgb.g, rgb.b);
+            if (viewer2) viewer2.setBgColor(rgb.r, rgb.g, rgb.b);
+            document.querySelectorAll('.swatch[data-bg]').forEach(swatch => {
+                swatch.classList.toggle('active', swatch === el);
+            });
+        }
+
+        function toggleHydrogens() { console.log('[Viewer] Hydrogen toggle not available with PhonosViewer'); }
+        function toggleLabels() { console.log('[Viewer] Residue label toggle not available with PhonosViewer'); }
+
+        function toggleSpin() {
+            isSpinning = document.getElementById('spin-model')?.checked;
+            if (viewer1) viewer1.toggleSpin(isSpinning);
+            if (viewer2) viewer2.toggleSpin(isSpinning);
+        }
+
+        function setPresetView(preset) {
+            if (viewer1) viewer1.resetView();
+            if (viewer2) viewer2.resetView();
+        }
+
+        function resetView() {
+            if (viewer1) viewer1.resetView();
+            if (viewer2) viewer2.resetView();
+        }
+
+        function zoomViewer(num) { const pv = num === 1 ? viewer1 : viewer2; if (pv) pv.resetView(); }
+
+        function takeScreenshot() {
+            const pv = activeViewer === 1 ? viewer1 : viewer2;
+            if (!pv) return;
+            pv.screenshot();
+        }
+
+        function showAtomTooltip(atom) { /* no-op */ }
+        function hideAtomTooltip() {
+            const tooltip = document.getElementById('atom-tooltip');
+            if (tooltip) tooltip.classList.remove('visible');
+        }
+        function positionTooltip(e) {
+            const tooltip = document.getElementById('atom-tooltip');
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top  = (e.clientY + 15) + 'px';
+        }
+
+        function showShortcuts() {
+            document.getElementById('shortcuts-overlay').classList.add('active');
+            const search = document.getElementById('sc-search');
+            if (search) { search.value = ''; filterShortcuts(); setTimeout(() => search.focus(), 50); }
+        }
+
+        function hideShortcuts(e) {
+            if (e && e.target && e.target.closest('.modal')) return;
+            document.getElementById('shortcuts-overlay').classList.remove('active');
+        }
+
+        function filterShortcuts() {
+            const q = (document.getElementById('sc-search')?.value || '').toLowerCase();
+            let visible = 0;
+            document.querySelectorAll('.shortcut-table tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const show = !q || text.includes(q);
+                row.classList.toggle('hidden', !show);
+                if (show) visible++;
+            });
+            const countEl = document.getElementById('sc-visible-count');
+            if (countEl) countEl.textContent = visible + ' SHORTCUT' + (visible === 1 ? '' : 'S');
+        }
+
+        function updateStatus(text) {
+            const el = document.getElementById('status-text');
+            if (el) el.textContent = (text || '').toUpperCase();
+        }
+
+        // PDB
+        async function loadFromPDB() {
+            const input = document.getElementById('pdb-id-input');
+            if (!input) return;
+            const pdbId = input.value.trim().toUpperCase();
+            if (!pdbId || pdbId.length !== 4) { alert('Please enter a valid 4-character PDB ID'); return; }
+            await fetchAndLoadPDB(pdbId);
+        }
+
+        function quickLoadPDB(pdbId) {
+            const input = document.getElementById('pdb-id-input');
+            if (input) input.value = pdbId;
+            fetchAndLoadPDB(pdbId);
+        }
+
+        async function fetchAndLoadPDB(pdbId) {
+            showLoading(activeViewer);
+            updateStatus(`Fetching ${pdbId} from RCSB PDB…`);
+            try {
+                const infoResponse = await fetch(`https://data.rcsb.org/rest/v1/core/entry/${pdbId}`);
+                let structureInfo = null;
+                if (infoResponse.ok) structureInfo = await infoResponse.json();
+                const pdbResponse = await fetch(`https://files.rcsb.org/download/${pdbId}.pdb`);
+                if (!pdbResponse.ok) throw new Error(`PDB ID "${pdbId}" not found`);
+                const pdbData = await pdbResponse.text();
+
+                const viewer = activeViewer === 1 ? viewer1 : viewer2;
+                await loadStructureToViewer(viewer, pdbData, 'pdb', activeViewer);
+                applyJobConfidenceMetadataToViewer(viewer, activeViewer, null);
+                if (currentColorScheme === 'job-confidence') applyStyleToViewer(viewer);
+                detectAndHighlightLigands(viewer, pdbData);
+
+                const nameEl = document.getElementById('structure-name-' + activeViewer);
+                if (nameEl) nameEl.textContent = pdbId;
+
+                if (structureInfo) {
+                    showPDBInfo(structureInfo, pdbId);
+                    updateStructureInfoFromPDB(structureInfo, pdbId, pdbData);
+                }
+                hideLoading(activeViewer);
+                updateStatus(`Loaded ${pdbId}`);
+                logEvent('ok', `Loaded ${pdbId} from RCSB PDB`);
+                setInspectorCrumb('RCSB PDB', '—', pdbId);
+            } catch (error) {
+                console.error('Error fetching PDB:', error);
+                hideLoading(activeViewer);
+                updateStatus('Error fetching PDB');
+                alert(`Failed to load PDB: ${error.message}`);
+                logEvent('err', 'PDB fetch failed: ' + error.message);
+            }
+        }
+
+        function showPDBInfo(info, pdbId) {
+            const infoDiv = document.getElementById('pdb-info');
+            const section = document.getElementById('pdb-info-section');
+            const titleDiv = document.getElementById('pdb-title');
+            const detailsDiv = document.getElementById('pdb-details');
+            if (!infoDiv || !section || !titleDiv || !detailsDiv) return;
+
+            const title = info.struct?.title || 'Unknown';
+            const method = info.exptl?.[0]?.method || 'Unknown';
+            const resolution = info.rcsb_entry_info?.resolution_combined?.[0];
+            const organism = info.rcsb_entity_source_organism?.[0]?.ncbi_scientific_name || '';
+
+            titleDiv.textContent = title;
+            detailsDiv.textContent = '';
+
+            const methodRow = document.createElement('div');
+            methodRow.className = 'insp-row';
+            methodRow.style.padding = '3px 0';
+            methodRow.innerHTML = `<span class="k">Method</span><span class="v">${method}</span>`;
+            detailsDiv.appendChild(methodRow);
+
+            if (resolution) {
+                const r = document.createElement('div');
+                r.className = 'insp-row'; r.style.padding = '3px 0';
+                r.innerHTML = `<span class="k">Resolution</span><span class="v mono">${resolution.toFixed(2)} Å</span>`;
+                detailsDiv.appendChild(r);
+            }
+            if (organism) {
+                const o = document.createElement('div');
+                o.className = 'insp-row'; o.style.padding = '3px 0';
+                o.innerHTML = `<span class="k">Organism</span><span class="v">${organism}</span>`;
+                detailsDiv.appendChild(o);
+            }
+            const link = document.createElement('a');
+            link.href = `https://www.rcsb.org/structure/${encodeURIComponent(pdbId)}`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = 'View on RCSB →';
+            link.style.cssText = 'display: inline-block; margin-top: 8px; color: var(--lab-accent); font-family: var(--lab-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;';
+            detailsDiv.appendChild(link);
+
+            section.style.display = '';
+        }
+
+        function updateStructureInfoFromPDB(info, pdbId, pdbData) {
+            const nameEl = document.getElementById('info-name');
+            const projEl = document.getElementById('info-project');
+            const jobEl  = document.getElementById('info-job');
+            const fmtEl  = document.getElementById('info-format');
+            const sourceEl = document.getElementById('info-source');
+            if (nameEl) nameEl.textContent = pdbId;
+            if (projEl) projEl.textContent = 'RCSB PDB';
+            if (jobEl) jobEl.textContent = '—';
+            if (fmtEl) fmtEl.textContent = 'PDB';
+            if (sourceEl) sourceEl.textContent = 'RCSB';
+
+            const emptyState = document.getElementById('info-empty-wrap');
+            const sections = document.getElementById('info-sections');
+            if (emptyState) emptyState.style.display = 'none';
+            if (sections) sections.style.display = '';
+
+            if (pdbData) {
+                const counts = parseStructureCounts(pdbData, 'pdb');
+                const atomsEl = document.getElementById('info-atoms');
+                const residuesEl = document.getElementById('info-residues');
+                if (atomsEl) atomsEl.textContent = counts.atomCount.toLocaleString();
+                if (residuesEl) residuesEl.textContent = counts.residueCount.toLocaleString();
+                const chainList = document.getElementById('chain-list');
+                if (chainList) {
+                    chainList.textContent = '';
+                    if (counts.chains.size > 0) {
+                        const palette = ['#22D3EE', '#60A5FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#FB923C', '#F472B6'];
+                        let i = 0;
+                        Array.from(counts.chains).sort().forEach(chain => {
+                            const row = document.createElement('div');
+                            row.className = 'chain-row';
+                            const sw = document.createElement('span');
+                            sw.className = 'swatch'; sw.style.background = palette[i % palette.length];
+                            const id = document.createElement('span');
+                            id.className = 'id'; id.textContent = 'CHAIN ' + chain;
+                            const m = document.createElement('span');
+                            m.className = 'meta'; m.textContent = 'AUTO';
+                            row.appendChild(sw); row.appendChild(id); row.appendChild(m);
+                            chainList.appendChild(row); i++;
+                        });
+                    }
+                }
+            }
+            updateConfidencePanel();
+            const modelTypeRow = document.getElementById('info-model-type-row');
+            if (modelTypeRow) modelTypeRow.style.display = 'none';
+        }
+
+        function detectAndHighlightLigands(pv, rawData) {
+            currentLigands = [];
+            if (!rawData) { updateLigandInfo(); return; }
+            const ligandMap = new Map();
+            const lines = rawData.split('\n');
+            for (const line of lines) {
+                if (!line.startsWith('HETATM')) continue;
+                const resn = line.substring(17, 20).trim();
+                if (resn === 'HOH' || resn === 'WAT' || resn === 'DOD') continue;
+                const chain = line.substring(21, 22).trim() || 'A';
+                const resi = line.substring(22, 26).trim();
+                const key = resn + '_' + chain + '_' + resi;
+                if (!ligandMap.has(key)) ligandMap.set(key, { resn, chain, resi });
+            }
+            currentLigands = Array.from(ligandMap.values());
+            if (!showLigands && pv) pv.setVisibility({ het: false, water: false });
+            updateLigandInfo();
+        }
+
+        function applyLigandHighlight(pv) { /* no-op */ }
+        function applyLigandLabels(pv) { /* no-op */ }
+        function toggleLigandHighlight() {
+            highlightLigands = document.getElementById('highlight-ligands')?.checked;
+        }
+        function toggleLigandLabels() {
+            showLigandLabels = document.getElementById('show-ligand-labels')?.checked;
+        }
+        function toggleLigandVisibility() {
+            showLigands = document.getElementById('show-ligands')?.checked;
+            const pv = activeViewer === 1 ? viewer1 : viewer2;
+            if (!pv) return;
+            pv.setVisibility({ het: showLigands, water: false });
+        }
+
+        function updateLigandInfo() {
+            const infoDiv = document.getElementById('ligand-count-info');
+            const emptyDiv = document.getElementById('ligand-empty');
+            if (currentLigands.length > 0) {
+                if (infoDiv) {
+                    infoDiv.textContent = '';
+                    infoDiv.style.display = 'flex';
+                    const seen = new Set();
+                    currentLigands.forEach(l => {
+                        if (seen.has(l.resn)) return;
+                        seen.add(l.resn);
+                        const chip = document.createElement('span');
+                        chip.className = 'ligand-chip';
+                        chip.innerHTML = '<span class="swatch"></span>' + l.resn + ' · ' + l.chain;
+                        infoDiv.appendChild(chip);
+                    });
+                }
+                if (emptyDiv) emptyDiv.style.display = 'none';
+                const infoRow = document.getElementById('info-ligand-row');
+                const cntEl = document.getElementById('info-ligand-count');
+                if (infoRow) infoRow.style.display = '';
+                if (cntEl) cntEl.textContent = currentLigands.length + ' (' + Array.from(new Set(currentLigands.map(l => l.resn))).join(', ') + ')';
+            } else {
+                if (infoDiv) infoDiv.style.display = 'none';
+                if (emptyDiv) emptyDiv.style.display = '';
+                const infoRow = document.getElementById('info-ligand-row');
+                if (infoRow) infoRow.style.display = 'none';
+            }
+        }
+
+        async function loadBoltz2DockingStyleViewer(jobId, proteinFilename, ligandFilename, jobMetadata = null) {
+            const pv = activeViewer === 1 ? viewer1 : viewer2;
+            if (!pv) return;
+            try {
+                const proteinRes = await fetch('/download_job_artifact/' + jobId + '/' + encodeURIComponent(proteinFilename));
+                let proteinData;
+                if (proteinRes.ok) proteinData = await proteinRes.text();
+                else {
+                    const contentRes = await fetch(`/api/jobs/${jobId}/artifacts/${encodeURIComponent(proteinFilename)}/content`, { headers: { 'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || '' } });
+                    if (!contentRes.ok) throw new Error('Failed to load protein file');
+                    const contentData = await contentRes.json();
+                    if (contentData.status !== 'success' || !contentData.content) throw new Error('Protein content empty');
+                    proteinData = contentData.content;
+                }
+                let proteinFormat = 'pdb';
+                if (proteinFilename.endsWith('.cif') || (proteinData.includes('data_') && proteinData.includes('_atom_site'))) proteinFormat = 'cif';
+                extractPlddt(proteinData, proteinFormat);
+                const pvFormat = (proteinFormat === 'mmcif') ? 'cif' : proteinFormat;
+                await pv.loadData(proteinData, pvFormat);
+                setViewerPlddtScores(activeViewer, plddtScores);
+                applyJobConfidenceMetadataToViewer(pv, activeViewer, jobMetadata);
+                applyStyleToViewer(pv);
+                detectAndHighlightLigands(pv, proteinData);
+
+                if (ligandFilename) {
+                    try {
+                        let ligandData;
+                        const ligandRes = await fetch('/download_job_artifact/' + jobId + '/' + encodeURIComponent(ligandFilename));
+                        if (ligandRes.ok) ligandData = await ligandRes.text();
+                        else {
+                            const ligandContentRes = await fetch(`/api/jobs/${jobId}/artifacts/${encodeURIComponent(ligandFilename)}/content`, { headers: { 'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || '' } });
+                            if (ligandContentRes.ok) {
+                                const lcd = await ligandContentRes.json();
+                                if (lcd.status === 'success' && lcd.content) ligandData = lcd.content;
+                            }
+                        }
+                        if (ligandData && ligandData.trim()) {
+                            let ligandFormat = 'sdf';
+                            if (ligandFilename.endsWith('.mol2')) ligandFormat = 'mol2';
+                            else if (ligandFilename.endsWith('.mol')) ligandFormat = 'mol';
+                            else if (ligandFilename.endsWith('.pdb')) ligandFormat = 'pdb';
+                            await pv.appendData(ligandData, ligandFormat);
+                        }
+                    } catch (ligErr) { console.warn('[Boltz2 Docking] Failed to load ligand file:', ligErr); }
+                }
+                updateStructureInfo('Protein + Ligand', '-', '-', proteinFormat, proteinData);
+            } catch (err) {
+                console.error('[Boltz2 Docking] Error:', err);
+                throw err;
+            }
+        }
+
+        // Key bindings
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('sc-search')?.addEventListener('input', filterShortcuts);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const tag = (e.target.tagName || '').toUpperCase();
+            const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+            const shortcutsOpen = document.getElementById('shortcuts-overlay').classList.contains('active');
+            if (shortcutsOpen) {
+                if (e.key === 'Escape') { e.preventDefault(); hideShortcuts(); }
+                return;
+            }
+            if (inField) return;
+            switch (e.key.toLowerCase()) {
+                case 'r': resetView(); break;
+                case 's': takeScreenshot(); break;
+                case 'v': toggleSplitScreen(); break;
+                case ' ': e.preventDefault(); {
+                    const cb = document.getElementById('spin-model');
+                    if (cb) { cb.checked = !cb.checked; toggleSpin(); }
+                } break;
+                case 'q': toggleSequencePanel(); break;
+                case 'i': toggleInspector(); break;
+                case 'd': openDrawer('source'); break;
+                case 'o': browseLocalStructure(activeViewer); break;
+                case 'escape':
+                    if (activeDrawer) closeDrawer();
+                    break;
+                case '1': setStyle('cartoon'); break;
+                case '2': setStyle('stick'); break;
+                case '3': setStyle('sphere'); break;
+                case '4': setStyle('surface'); break;
+                case '5': setStyle('line'); break;
+                case '6': setStyle('cross'); break;
+                case '7': setQuality('low'); break;
+                case '8': setQuality('medium'); break;
+                case '9': setQuality('high'); break;
+                case 'f': setPresetView('front'); break;
+                case 'b': setPresetView('back'); break;
+                case 'l': setPresetView('left'); break;
+                case 'h': setPresetView('right'); break;
+                case 't': setPresetView('top'); break;
+                case 'g': setPresetView('bottom'); break;
+                case '?': showShortcuts(); break;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', initViewer);
+    </script>
+</body>
+</html>

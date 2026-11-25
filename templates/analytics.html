@@ -1,0 +1,119 @@
+{# 3D Analytics — the molecular visualizer as its own product surface.
+
+   Semi-standalone: it hosts the same Views/App runtime as the Phonos
+   dashboard and pins itself to the `visualizer` view via PHONOS_BOOT_VIEW,
+   so project, file and job access all run through the same APIs and the same
+   database as inside Phonos. Only the shell differs — no Phonos nav sidebar,
+   just a slim header with the launcher button. #}
+<!DOCTYPE html>
+<html lang="{{ g.lang | default('en') }}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Analytics · Phonos</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=dc892a0f">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ligand_diagram.css') }}?v=f6729a4e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/oversight.css') }}?v=72ffc802">
+    {% include '_i18n_scripts.html' %}
+    <script defer src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% include '_molstar_head.html' %}
+    <style>
+        /* Standalone shell: the stage should own the whole window, so the
+           content area loses the dashboard's padding and scrolling. */
+        body.standalone-analytics .app-container { display: block; }
+        body.standalone-analytics .main-content {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            width: 100%;
+        }
+        body.standalone-analytics .content-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body.standalone-analytics .header {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-3, 12px);
+            padding: 0 var(--space-4, 16px);
+            height: var(--header-height, 52px);
+            border-bottom: 1px solid var(--border-color, rgba(148, 163, 184, 0.18));
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body class="standalone-analytics" data-page="analytics" data-product="analytics">
+    <div class="app-container">
+        <main class="main-content" role="main">
+            <header class="header">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                    {% include '_app_switcher.html' %}
+                    <h1 class="header-title" id="page-title" style="font-size:14px;margin:0;">3D Analytics</h1>
+                </div>
+                <div class="header-actions" style="display:flex;align-items:center;gap:8px;">
+                    <span id="analytics-project-label" class="oversight-pill"></span>
+                </div>
+            </header>
+
+            <div class="content-area" id="content-area" role="region" aria-live="polite" aria-label="3D analytics workspace"></div>
+
+            <div id="sr-announcements" class="sr-only" aria-live="assertive" aria-atomic="true"
+                 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;"></div>
+        </main>
+    </div>
+
+    {# Shared runtime scaffolding the app modules bind to on init. #}
+    <div class="toast-container" id="toast-container"></div>
+    <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+        <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title"></h3>
+                <button class="modal-close" id="modal-close" aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel" data-i18n="modal.cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm" data-i18n="modal.confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.PHONOS_CONFIG = {
+            csrfToken: "{{ csrf_token if csrf_token is defined else '' }}",
+            userId: "{{ session.get('user_id', '') }}"
+        };
+        // Pin this shell to the visualizer view (see App.init in app.js).
+        window.PHONOS_BOOT_VIEW = 'visualizer';
+    </script>
+    <script>
+    (function() {
+        var useVite = window.PHONOS_CONFIG && window.PHONOS_CONFIG.useViteBundle;
+        if (!useVite) {
+            document.write('<script defer src="{{ url_for('static', filename='js/file-upload-preview.js') }}?v=76d1aae8"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/ui-utils.js') }}?v=fb3eacd8"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/theme-manager.js') }}?v=7dd5e1dc"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/ligand_diagram.js') }}?v=496f5c40"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/app.js') }}?v=3cc8b068"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/oversight.js') }}?v=aa02e540"><\/script>');
+        }
+    })();
+    </script>
+</body>
+</html>

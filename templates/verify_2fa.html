@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="verify2fa.pageTitle">Verification - Phonos</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v=fe4b19fe">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body class="verify-auth-page">
+    <main class="split-layout">
+        <section class="content-side">
+            <header class="brand-header">
+                <div class="brand-name" data-i18n="common.phonos">Phonos</div>
+            </header>
+
+            <div class="verify-header">
+                <div class="verify-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                </div>
+                <h1 class="headline" data-i18n="auth.twoFactorTitle">Two-factor verification</h1>
+                <p class="subheadline" data-i18n="auth.twoFactorSubtitle">Enter the 6-digit code sent to your email.</p>
+            </div>
+
+            <div class="auth-note">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M4 4h16v16H4z"/>
+                    <path d="m22 6-10 7L2 6"/>
+                </svg>
+                <span data-i18n="auth.checkSpam">Check your spam or junk folder if you don't see the email.</span>
+            </div>
+
+            {% if error %}
+            <div class="auth-error">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="auth-success">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>{{ success }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" id="verify-form" class="verify-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="2fa_code" id="2fa_code_hidden">
+
+                <div class="otp-group" id="otp-group" data-i18n-aria="auth.verificationCode" aria-label="Verification code">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="0" autocomplete="one-time-code" data-i18n-aria="auth.verificationCode" aria-label="Digit 1">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="1" data-i18n-aria="auth.verificationCode" aria-label="Digit 2">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="2" data-i18n-aria="auth.verificationCode" aria-label="Digit 3">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="3" data-i18n-aria="auth.verificationCode" aria-label="Digit 4">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="4" data-i18n-aria="auth.verificationCode" aria-label="Digit 5">
+                    <input class="otp-digit" type="text" maxlength="1" data-idx="5" data-i18n-aria="auth.verificationCode" aria-label="Digit 6">
+                </div>
+                <div class="otp-dots" id="otp-dots">
+                    <span class="otp-dot"></span><span class="otp-dot"></span><span class="otp-dot"></span>
+                    <span class="otp-dot"></span><span class="otp-dot"></span><span class="otp-dot"></span>
+                </div>
+
+                <button type="submit" class="btn-primary" id="verify-btn" disabled>
+                    <span class="button-text" data-i18n="auth.verify">Verify</span>
+                </button>
+            </form>
+
+            <div class="verify-actions">
+                <span data-i18n="auth.didntReceiveCode">Didn't receive the code?</span>
+                <a href="#" id="resend-btn" class="link-primary" onclick="return handleResend(this)" data-i18n="auth.resendCode">Resend Code</a>
+            </div>
+
+            <div class="auth-links verify-links">
+                <a href="{{ url_for('login') }}" class="link-text" data-i18n="auth.backToLogin">Back to login</a>
+            </div>
+
+            <div class="verify-legal">{% include 'partials/_legal_footer.html' %}</div>
+        </section>
+
+        <section class="visual-side" aria-hidden="true">
+            <div class="grid-pattern"></div>
+            <div class="visual-image-container">
+                <img src="{{ url_for('static', filename='img/login-visual.png') }}" alt="" class="visual-image">
+            </div>
+        </section>
+    </main>
+
+    <script>
+    (function() {
+        var digits = document.querySelectorAll('.otp-digit');
+        var hidden = document.getElementById('2fa_code_hidden');
+        var btn = document.getElementById('verify-btn');
+        var dots = document.querySelectorAll('#otp-dots .otp-dot');
+        var autoTimer = null;
+
+        function collectCode() {
+            return Array.from(digits).map(function(d) { return d.value.toUpperCase(); }).join('');
+        }
+
+        function sync() {
+            var code = collectCode();
+            hidden.value = code;
+            var count = code.split('').filter(function(c) { return c !== ''; }).length;
+            btn.disabled = count < 6;
+            dots.forEach(function(dot, i) { dot.classList.toggle('lit', i < count); });
+            digits.forEach(function(d) { d.classList.toggle('otp-filled', d.value !== ''); });
+            clearTimeout(autoTimer);
+            if (count === 6) {
+                autoTimer = setTimeout(function() {
+                    if (!btn.disabled) { document.getElementById('verify-form').submit(); }
+                }, 400);
+            }
+        }
+
+        digits.forEach(function(el, i) {
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !el.value && i > 0) {
+                    digits[i - 1].value = '';
+                    digits[i - 1].focus();
+                    sync();
+                }
+                if (e.key === 'ArrowLeft' && i > 0) digits[i - 1].focus();
+                if (e.key === 'ArrowRight' && i < 5) digits[i + 1].focus();
+            });
+            el.addEventListener('input', function() {
+                var v = el.value.toUpperCase();
+                if (v.length > 1) {
+                    /* paste into single box — distribute */
+                    v.split('').slice(0, 6 - i).forEach(function(c, j) {
+                        if (digits[i + j]) digits[i + j].value = c;
+                    });
+                    var next = Math.min(i + v.length, 5);
+                    digits[next].focus();
+                    sync(); return;
+                }
+                el.value = v;
+                if (v && i < 5) digits[i + 1].focus();
+                sync();
+            });
+            el.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = (e.clipboardData || window.clipboardData).getData('text');
+                text.split('').slice(0, 6).forEach(function(c, j) {
+                    if (digits[j]) digits[j].value = c.toUpperCase();
+                });
+                digits[Math.min(text.length, 5)].focus();
+                sync();
+            });
+            el.addEventListener('focus', function() { el.select(); });
+        });
+
+        document.getElementById('verify-form').addEventListener('submit', function(e) {
+            var code = collectCode();
+            if (code.length < 6) { e.preventDefault(); return; }
+            btn.disabled = true;
+            btn.querySelector('.button-text').textContent = 'Verifying...';
+        });
+
+        digits[0].focus();
+    })();
+
+    function handleResend(el) {
+        if (el.dataset.busy) return false;
+        el.dataset.busy = '1';
+        el.textContent = 'Sending…';
+        fetch('{{ url_for("resend_2fa") }}', {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                el.textContent = d.success ? 'Code sent!' : (d.error || 'Failed');
+                setTimeout(function() { el.textContent = 'Resend Code'; delete el.dataset.busy; }, 3000);
+            })
+            .catch(function() {
+                el.textContent = 'Failed';
+                setTimeout(function() { el.textContent = 'Resend Code'; delete el.dataset.busy; }, 3000);
+            });
+        return false;
+    }
+    </script>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

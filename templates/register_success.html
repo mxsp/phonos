@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="register.submittedPageTitle">Check your email - Phonos</title>
+    <meta name="description" content="Check your email to verify your Phonos account." data-i18n="[content]register.metaDescription">
+    <meta name="author" content="Maximilian S-Peter">
+    <link rel="canonical" href="{{ url_for('register', _external=True) }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    {% include '_i18n_scripts.html' %}
+    <style>
+        :root {
+            --color-bg: #09090b;
+            --color-bg-subtle: #18181b;
+            --color-text-main: #fafafa;
+            --color-text-muted: #a1a1aa;
+            --color-primary: #10B981;
+            --color-primary-glow: rgba(16, 185, 129, 0.5);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--color-bg);
+            color: var(--color-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        .success-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--color-primary);
+        }
+
+        .success-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .success-message {
+            color: var(--color-text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            padding: 0.875rem 2rem;
+            background: var(--color-text-main);
+            color: var(--color-bg);
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Disclaimer Modal */
+        #disclaimer-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        #disclaimer-modal.active {
+            display: flex;
+        }
+
+        .disclaimer-content {
+            background: var(--color-bg-subtle);
+            padding: 2rem;
+            border-radius: var(--r-ui, 0px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 440px;
+            width: 100%;
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .disclaimer-title {
+            color: #fff;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .disclaimer-text {
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .disclaimer-text strong {
+            color: var(--color-text-main);
+        }
+
+        .disclaimer-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--color-text-main);
+            color: var(--color-bg);
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .disclaimer-btn:hover {
+            background: #ffffff;
+        }
+
+        .auth-footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+        </div>
+        <h1 class="success-title" data-i18n="register.successTitle">Check Your Email</h1>
+        <p class="success-message" data-i18n="register.successMessage">We have sent a verification email. Click the link in it within 24 hours to create your account.</p>
+        <a href="{{ url_for('login') }}" class="btn-primary" data-i18n="register.goToLogin">Go to sign in</a>
+
+        <div class="auth-footer">
+            <span data-i18n="auth.alreadyHaveAccount">Already have an account?</span> <a href="{{ url_for('login') }}" data-i18n="auth.signIn">Sign in</a>
+        </div>
+    </div>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal">
+        <div class="disclaimer-content">
+            <h3 class="disclaimer-title" data-i18n="register.importantNotice">Important Notice</h3>
+            <p class="disclaimer-text" data-i18n="register.disclaimerText">
+                <strong>Phonos is a Research Preview.</strong> This service is not legally binding, provides no warranties, and is intended for authorized research use only.
+                AI predictions may be inaccurate. Always verify results experimentally.
+            </p>
+            <button id="disclaimer-accept" class="disclaimer-btn" data-i18n="register.iUnderstand">I Understand</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Show disclaimer modal on load
+            window.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById('disclaimer-modal');
+                const acceptBtn = document.getElementById('disclaimer-accept');
+                
+                if (modal && acceptBtn) {
+                    modal.classList.add('active');
+                    
+                    acceptBtn.addEventListener('click', () => {
+                        modal.classList.remove('active');
+                    });
+                }
+            });
+        })();
+    </script>
+    <!-- Cookie Consent Modal -->
+    {% include 'partials/_legal_footer.html' %}
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

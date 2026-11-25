@@ -1,0 +1,330 @@
+<style>
+    .cookie-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95); /* darker background */
+        backdrop-filter: blur(10px);
+        z-index: 2147483647; /* Max Z-Index */
+        display: none; /* Hidden by default */
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .cookie-modal-content {
+        background: #18181b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--r-ui, 0px);
+        padding: 2.5rem;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    .cookie-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .cookie-text {
+        color: #a1a1aa;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .cookie-options {
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+
+    .cookie-option-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--r-ui, 0px);
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .cookie-option-info {
+        flex: 1;
+    }
+
+    .cookie-option-title {
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+
+    .cookie-option-desc {
+        font-size: 0.875rem;
+        color: #a1a1aa;
+        line-height: 1.4;
+    }
+
+    .cookie-toggle-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cookie-toggle {
+        position: relative;
+        width: 48px;
+        height: 26px;
+        background: #3f3f46;
+        border-radius: var(--r-ui, 0px);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .cookie-toggle.checked {
+        background: #10B981;
+    }
+
+    .cookie-toggle.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .cookie-toggle-slider {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: #ffffff;
+        border-radius: 50%;
+        transition: transform 0.2s;
+    }
+
+    .cookie-toggle.checked .cookie-toggle-slider {
+        transform: translateX(22px);
+    }
+
+    .cookie-toggle-label {
+        font-size: 0.875rem;
+        color: #a1a1aa;
+    }
+
+    .cookie-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    /* Accept all and Reject all sit side by side at identical size so rejecting
+       is exactly as easy as accepting (CNIL / German DSK guidance). */
+    .cookie-actions-row {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .cookie-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 2rem;
+        border-radius: var(--r-ui, 0px);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        width: 100%;
+    }
+
+    .cookie-actions-row .cookie-btn {
+        flex: 1 1 0;
+        padding: 1rem 1.25rem;
+    }
+
+    .cookie-btn-accept {
+        background: #10B981;
+        color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+    }
+
+    .cookie-btn-accept:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+
+    .cookie-btn-reject {
+        background: transparent;
+        color: #fafafa;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .cookie-btn-reject:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Granular "save my choices" — secondary, below the primary pair. */
+    .cookie-btn-save {
+        background: transparent;
+        color: #a1a1aa;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-weight: 500;
+        font-size: 0.875rem;
+        padding: 0.7rem 1.5rem;
+    }
+
+    .cookie-btn-save:hover {
+        color: #fafafa;
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .cookie-links {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: #71717a;
+    }
+
+    .cookie-links a {
+        color: #10B981;
+        text-decoration: none;
+        margin: 0 0.5rem;
+    }
+
+    .cookie-links a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div id="cookie-consent-modal" class="cookie-modal-overlay">
+    <div class="cookie-modal-content">
+        <div class="cookie-title">
+            <span data-i18n="cookies.title">Cookie Settings</span>
+        </div>
+        <div class="cookie-text">
+            <p data-i18n="cookies.description">We use essential cookies for authentication, security, and preferences. With your consent, we also use analytics cookies (Google Analytics with IP anonymization) to improve the platform. See our <a href="/datenschutz" target="_blank" style="color: #10B981;">Privacy Policy</a> for details.</p>
+        </div>
+        <div class="cookie-options">
+            <div class="cookie-option-item">
+                <div class="cookie-option-info">
+                    <div class="cookie-option-title" data-i18n="cookies.essentialTitle">Essential Cookies</div>
+                    <div class="cookie-option-desc" data-i18n="cookies.essentialDesc">Required for authentication, security, and basic site functionality</div>
+                </div>
+                <div class="cookie-toggle-wrapper">
+                    <div class="cookie-toggle checked disabled">
+                        <div class="cookie-toggle-slider"></div>
+                    </div>
+                    <span class="cookie-toggle-label" data-i18n="cookies.alwaysOn">Always On</span>
+                </div>
+            </div>
+            <div class="cookie-option-item">
+                <div class="cookie-option-info">
+                    <div class="cookie-option-title" data-i18n="cookies.analyticsTitle">Analytics Cookies</div>
+                    <div class="cookie-option-desc" data-i18n="cookies.analyticsDesc">Help us improve the platform with Google Analytics (IP anonymization enabled)</div>
+                </div>
+                <div class="cookie-toggle-wrapper">
+                    <div id="cookie-modal-analytics-toggle" class="cookie-toggle">
+                        <div class="cookie-toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cookie-actions">
+            <div class="cookie-actions-row">
+                <button id="cookie-reject-btn" class="cookie-btn cookie-btn-reject" data-i18n="cookies.rejectAll">Reject all</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept" data-i18n="cookies.acceptAll">Accept all</button>
+            </div>
+            <button id="cookie-save-btn" class="cookie-btn cookie-btn-save" data-i18n="cookies.save">Save my choices</button>
+        </div>
+        <div class="cookie-links">
+            <a href="/datenschutz" target="_blank" data-i18n="cookies.privacyPolicy">Privacy Policy</a> |
+            <a href="/impressum" target="_blank" data-i18n="cookies.legalNotice">Legal Notice</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // First-visit consent banner. All state goes through window.PhonosConsent
+    // (static/js/consent.js, loaded by _google_analytics.html) — this script
+    // never touches localStorage or cookies directly, so the banner, the
+    // Settings panel and the GA loader can never disagree about consent.
+    (function() {
+        function ready(fn) {
+            if (document.readyState !== 'loading') fn();
+            else document.addEventListener('DOMContentLoaded', fn);
+        }
+
+        ready(function () {
+            var modal = document.getElementById('cookie-consent-modal');
+            if (!modal) return;
+            var saveBtn = document.getElementById('cookie-save-btn');
+            var acceptBtn = document.getElementById('cookie-accept-btn');
+            var rejectBtn = document.getElementById('cookie-reject-btn');
+            var analyticsToggle = document.getElementById('cookie-modal-analytics-toggle');
+            var PC = window.PhonosConsent;
+
+            function showModal() {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+            function hideModal() {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+
+            // Reflect any prior choice in the granular toggle. Default OFF so
+            // consent stays a deliberate opt-in (Planet49, C-673/17 — pre-ticked
+            // analytics boxes are not valid consent).
+            var analyticsEnabled = !!(PC && PC.get() === 'accepted');
+            if (analyticsEnabled) analyticsToggle.classList.add('checked');
+
+            analyticsToggle.addEventListener('click', function () {
+                analyticsEnabled = !analyticsEnabled;
+                analyticsToggle.classList.toggle('checked', analyticsEnabled);
+            });
+
+            function decide(analytics) {
+                if (PC) {
+                    PC.set(analytics);
+                } else if (typeof window.phonosLoadGtag === 'function' && analytics) {
+                    window.phonosLoadGtag();
+                }
+                hideModal();
+            }
+
+            // Accept all / Reject all carry equal weight; Save my choices applies
+            // whatever the granular toggle is currently set to.
+            acceptBtn.addEventListener('click', function () { decide(true); });
+            rejectBtn.addEventListener('click', function () { decide(false); });
+            saveBtn.addEventListener('click', function () { decide(analyticsEnabled); });
+
+            // Show the banner only when there is no fresh, current consent on
+            // record (first visit, expired after 12 months, or policy bumped).
+            // On a first visit the first-visit notice (static/js/first-visit.js) asks instead; its OK
+            // records consent through PhonosConsent, so this banner never shows on top of it.
+            var firstVisitOpen = !!(window.FFFirstVisit && window.FFFirstVisit.pending);
+            if (!firstVisitOpen && (!PC || PC.needsPrompt())) showModal();
+
+            // Let any element reopen the banner so consent can be withdrawn as
+            // easily as it was given, e.g. <a href="#" data-cookie-settings>…</a>.
+            document.querySelectorAll('[data-cookie-settings]').forEach(function (el) {
+                el.addEventListener('click', function (e) { e.preventDefault(); showModal(); });
+            });
+            window.PhonosOpenCookieSettings = showModal;
+        });
+    })();
+</script>

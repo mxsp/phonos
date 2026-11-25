@@ -1,0 +1,102 @@
+<!-- Google Sign-In Button Partial -->
+{# Usage: {% include 'partials/_google_button.html' with context %} #}
+{# Pass `mode` as 'login' or 'register' set in the template context #}
+{% if config.GOOGLE_CLIENT_ID %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<div id="google-button-container" style="margin-top: 1rem;">
+  <div class="google-divider" style="display: flex; align-items: center; gap: 1rem;">
+    <hr style="flex: 1; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+    <span style="font-size: 0.8rem; color: var(--color-text-muted); white-space: nowrap;" data-i18n="auth.or">or</span>
+    <hr style="flex: 1; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+  </div>
+  <div id="google-button" style="display: flex; justify-content: center; margin-top: 0.75rem;"></div>
+  <div id="google-error" style="display: none; margin-top: 0.75rem; padding: 0.75rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--r-ui, 0px); color: #fca5a5; font-size: 0.85rem; text-align: center;"></div>
+</div>
+
+<script>
+(function() {
+  var container = document.getElementById('google-button');
+  var errorEl = document.getElementById('google-error');
+  var btnEl = null;
+
+  function showError(msg) {
+    if (!errorEl) return;
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+
+  function hideError() {
+    if (!errorEl) return;
+    errorEl.style.display = 'none';
+  }
+
+  function setLoading(loading) {
+    if (!btnEl) return;
+    if (loading) {
+      btnEl.style.opacity = '0.6';
+      btnEl.style.pointerEvents = 'none';
+    } else {
+      btnEl.style.opacity = '1';
+      btnEl.style.pointerEvents = 'auto';
+    }
+  }
+
+  window.handleGoogleCredential = function(response) {
+    hideError();
+    setLoading(true);
+
+    fetch('{{ url_for("auth_google_token") }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        credential: response.credential,
+        is_register: {{ 'true' if mode == 'register' else 'false' }}
+      })
+    })
+    .then(function(res) {
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+      return res.json().then(function(data) {
+        if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
+        window.location.reload();
+      });
+    })
+    .catch(function(err) {
+      setLoading(false);
+      showError(err.message);
+    });
+  };
+
+  function initGoogleButton() {
+    if (typeof google === 'undefined' || !google.accounts) {
+      setTimeout(initGoogleButton, 300);
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: '{{ config.GOOGLE_CLIENT_ID }}',
+      callback: window.handleGoogleCredential,
+      cancel_on_tap_outside: false,
+      auto_select: false
+    });
+
+    google.accounts.id.renderButton(container, {
+      type: 'standard',
+      shape: 'rectangular',
+      theme: 'outline',
+      text: '{{ "signup_with" if mode == "register" else "signin_with" }}',
+      size: 'large',
+      width: container.parentElement ? container.parentElement.offsetWidth - 2 : 400,
+      logo_alignment: 'center'
+    });
+
+    btnEl = container.querySelector('div[role="button"]');
+  }
+
+  initGoogleButton();
+})();
+</script>
+{% endif %}

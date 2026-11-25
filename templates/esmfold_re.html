@@ -1,0 +1,313 @@
+{% extends "_configure_base.html" %}
+{% from "partials/_model_badges.html" import retired_badge with context %}
+
+{% block model_id %}esmfold-re{% endblock %}
+
+{% block title_i18n %}esmfold.title{% endblock %}
+{% block page_title_text %}Phonos - ESMFold Structure Prediction{% endblock %}
+
+{% block model_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>{% endblock %}
+
+{% block model_name %}<span data-i18n="esmfold.heading">ESMFold Structure Prediction</span>{% endblock %}
+{% block model_tagline %}<span data-i18n="esmfold.subheading">Single-sequence protein structure prediction via Meta ESM</span>{% endblock %}
+
+{% block header_badge %}{{ retired_badge() }}{% endblock %}
+{% block credits %}{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="esmfold.inputSequence">Input Sequence</h2></div>
+                    <div class="card-body">
+                        <form id="predict-form">
+                            <div class="form-group">
+                                <label class="form-label" for="sequence" data-i18n="esmfold.proteinSequence">Protein Sequence</label>
+                                <textarea id="sequence" class="form-textarea" placeholder="Enter amino acid sequence (single letter codes)&#10;e.g. MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGLYTHMKALRPDEDRLSPLHSVYVDQWDWERVMGDGERQFSTLKSTVEAIWAGIKATEAAVSEEFGLAPFLPDQIHFVHSQELLSRYPDLDAKGRERAIAKDLGAVFLVGIGGKLSDGHRHDVRAPDYDDWSTPSELGHAGLNGDILVWNPVLEDAFELSSMGIRVDADTLKHQLALTGDEDRLELEWHQALLRGEMPQTIGGGIGQSRLTMLLLQLPHIGQVQAGVWPAAVRESVPSLL">                            </textarea>
+                                <div class="form-hint" data-i18n="esmfold.sequenceHint">Provide a standard amino acid sequence in single-letter code. No FASTA header needed.</div>
+                            </div>
+
+                            <div class="status-bar" id="status-bar">
+                                <div class="status-dot idle" id="status-dot"></div>
+                                <span id="status-text" style="color:#71717a;" data-i18n="esmfold.readyToPredict">Ready to predict</span>
+                            </div>
+
+                            <button type="submit" class="btn-primary" id="submit-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                <span data-i18n="esmfold.predictStructure">Predict Structure</span>
+                            </button>
+                        </form>
+
+                        <div class="form-group" style="margin-top:24px;">
+                            <label class="form-label" data-i18n="esmfold.quickExamples">Quick Examples</label>
+                            <div class="examples-grid">
+                                <div class="example-card" data-example="hba">
+                                    <div class="example-title" data-i18n="esmfold.exampleHba">Hemoglobin α</div>
+                                    <div class="example-desc">141 residues</div>
+                                </div>
+                                <div class="example-card" data-example="ubiquitin">
+                                    <div class="example-title" data-i18n="esmfold.exampleUbiquitin">Ubiquitin</div>
+                                    <div class="example-desc">76 residues</div>
+                                </div>
+                                <div class="example-card" data-example="insulin">
+                                    <div class="example-title" data-i18n="esmfold.exampleInsulin">Insulin Chain A</div>
+                                    <div class="example-desc">21 residues</div>
+                                </div>
+                                <div class="example-card" data-example="gfp">
+                                    <div class="example-title" data-i18n="esmfold.exampleGfp">GFP</div>
+                                    <div class="example-desc">238 residues</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="esmfold.structure">3D Structure</h2></div>
+                    <div class="card-body" style="padding:16px;">
+                        <div class="viewer-container">
+                            <div id="structure-viewer" data-phonos-viewer></div>
+                            <div class="viewer-placeholder" id="viewer-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                                <span style="font-size:14px;" data-i18n="esmfold.structurePlaceholder">Submit a sequence to view the predicted structure</span>
+                            </div>
+                            <div class="viewer-controls" id="viewer-controls" style="display:none;">
+                                <button class="viewer-btn" onclick="resetView()" data-i18n="common.reset">Reset</button>
+                                <button class="viewer-btn" onclick="toggleSpin()" data-i18n="common.spin">Spin</button>
+                                <button class="viewer-btn" onclick="toggleColorMode()" data-i18n="common.color">Color</button>
+                            </div>
+                        </div>
+
+                        <div class="metrics-grid" id="metrics-grid" style="display:none;"></div>
+
+                        <div class="confidence-legend" id="confidence-legend" style="display:none;">
+                            <div class="confidence-legend-title" data-i18n="esmfold.plddtConfidence">pLDDT Confidence</div>
+                            <div class="confidence-items">
+                                <div class="confidence-item"><div class="confidence-dot" style="background:#0053D6;"></div><span data-i18n="esmfold.veryHigh">Very High (&ge;90)</span></div>
+                                <div class="confidence-item"><div class="confidence-dot" style="background:#65CBF3;"></div><span data-i18n="esmfold.high">High (70–89)</span></div>
+                                <div class="confidence-item"><div class="confidence-dot" style="background:#FFDB13;"></div><span data-i18n="esmfold.low">Low (50–69)</span></div>
+                                <div class="confidence-item"><div class="confidence-dot" style="background:#FF7D45;"></div><span data-i18n="esmfold.veryLow">Very Low (&lt;50)</span></div>
+                            </div>
+                        </div>
+
+                        <div id="download-section" style="display:none;">
+                            <button class="download-btn" id="download-btn" onclick="downloadPDB()" data-i18n="esmfold.downloadPdb">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download PDB
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+    (function() {
+        var pdbData = null;
+        var taskId = null;
+        var pollTimer = null;
+
+        var EXAMPLES = {
+            hba: 'MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR',
+            ubiquitin: 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG',
+            insulin: 'GIVEQCCTSICSLYQLENYCN',
+            gfp: 'MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTLTYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITLGMDELYK'
+        };
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getCsrf() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
+        }
+
+        function setStatus(state, msg) {
+            var dot = document.getElementById('status-dot');
+            var text = document.getElementById('status-text');
+            dot.className = 'status-dot ' + state;
+            text.textContent = msg;
+            text.style.color = state === 'error' ? '#ef4444' : state === 'success' ? '#10b981' : '#a1a1aa';
+        }
+
+        document.querySelectorAll('.example-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var key = card.getAttribute('data-example');
+                if (EXAMPLES[key]) {
+                    document.getElementById('sequence').value = EXAMPLES[key];
+                }
+            });
+        });
+
+        document.getElementById('predict-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var seq = document.getElementById('sequence').value.trim();
+            if (!seq) { setStatus('error', 'Please enter a protein sequence'); return; }
+
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            setStatus('running', 'Submitting prediction...');
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+            fetch('/api/esmfold-re/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                body: JSON.stringify({ sequence: seq })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) { throw new Error(data.error); }
+                if (data.task_id) {
+                    taskId = data.task_id;
+                    setStatus('running', 'Processing... (task ' + escapeHtml(taskId.slice(0,8)) + ')');
+                    pollStatus();
+                } else if (data.pdb_content || data.structure) {
+                    handleResult({ pdb_content: data.pdb_content || data.structure });
+                    btn.disabled = false;
+                } else {
+                    throw new Error('Unexpected response from server');
+                }
+            })
+            .catch(function(err) {
+                setStatus('error', 'Error: ' + err.message);
+                btn.disabled = false;
+            });
+        });
+
+        function pollStatus() {
+            if (!taskId) return;
+            pollTimer = setInterval(function() {
+                fetch('/api/esmfold-re/status/' + encodeURIComponent(taskId), {
+                    headers: { 'X-CSRF-Token': getCsrf() }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.status === 'completed' || data.status === 'done') {
+                        clearInterval(pollTimer);
+                        handleResult(data);
+                        document.getElementById('submit-btn').disabled = false;
+                    } else if (data.status === 'failed' || data.status === 'error') {
+                        clearInterval(pollTimer);
+                        setStatus('error', 'Prediction failed: ' + (data.error || 'Unknown error'));
+                        document.getElementById('submit-btn').disabled = false;
+                    } else {
+                        setStatus('running', 'Processing... (' + (data.status || 'running') + ')');
+                    }
+                })
+                .catch(function(err) {
+                    clearInterval(pollTimer);
+                    setStatus('error', 'Polling error: ' + err.message);
+                    document.getElementById('submit-btn').disabled = false;
+                });
+            }, 3000);
+        }
+
+        function handleResult(data) {
+            var pdb = data.pdb_content || data.structure || data.output || '';
+            if (!pdb) { setStatus('error', 'No structure data in response'); return; }
+            pdbData = pdb;
+            loadViewer(pdb);
+            buildMetrics(pdb);
+            document.getElementById('download-section').style.display = '';
+            document.getElementById('confidence-legend').style.display = '';
+            setStatus('success', 'Structure predicted successfully');
+        }
+
+        function loadViewer(pdb) {
+            document.getElementById('viewer-placeholder').style.display = 'none';
+            document.getElementById('viewer-controls').style.display = '';
+
+            try {
+                if (window._phonosViewer) { window._phonosViewer.destroy(); }
+                window._phonosViewer = PhonosViewer.create('structure-viewer', {
+                    alphafoldView: true,
+                    sequencePanel: false,
+                    hideControls: true
+                });
+                window._phonosViewer.loadData(pdb, 'pdb', { alphafoldView: true });
+            } catch(err) {
+                console.error('PhonosViewer error:', err);
+                setStatus('error', 'Error loading structure: ' + err.message);
+            }
+        }
+
+        function buildMetrics(pdb) {
+            var lines = pdb.split('\n');
+            var bfactors = [];
+            lines.forEach(function(line) {
+                if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+                    var b = parseFloat(line.substring(60, 66).trim());
+                    if (!isNaN(b)) bfactors.push(b);
+                }
+            });
+
+            var grid = document.getElementById('metrics-grid');
+            grid.innerHTML = '';
+            grid.style.display = 'grid';
+
+            var avgVal = bfactors.length ? (bfactors.reduce(function(a,b){return a+b;},0)/bfactors.length).toFixed(1) : 'N/A';
+            var highPct = bfactors.length ? Math.round(bfactors.filter(function(b){return b>=70;}).length/bfactors.length*100) : 0;
+
+            var avgColor = '#fafafa';
+            if (bfactors.length) {
+                var avg = parseFloat(avgVal);
+                if (avg >= 90) avgColor = '#0053D6';
+                else if (avg >= 70) avgColor = '#65CBF3';
+                else if (avg >= 50) avgColor = '#FFDB13';
+                else avgColor = '#FF7D45';
+            }
+
+            [
+                { val: avgVal, label: 'Avg pLDDT', color: avgColor },
+                { val: String(bfactors.length), label: 'Residues', color: '#fafafa' },
+                { val: highPct + '%', label: 'High Confidence', color: '#10b981' }
+            ].forEach(function(m) {
+                var card = document.createElement('div');
+                card.className = 'metric-card';
+                var valEl = document.createElement('div');
+                valEl.className = 'metric-value';
+                valEl.textContent = m.val;
+                valEl.style.color = m.color;
+                var labelEl = document.createElement('div');
+                labelEl.className = 'metric-label';
+                labelEl.textContent = m.label;
+                card.appendChild(valEl);
+                card.appendChild(labelEl);
+                grid.appendChild(card);
+            });
+        }
+
+        window.resetView = function() {
+            if (window._phonosViewer && window._phonosViewer.instance) {
+                window._phonosViewer.instance.visual.reset({ camera: true });
+            }
+        };
+        window.toggleSpin = function() {
+            if (window._phonosViewer) { window._phonosViewer.toggleSpin(); }
+        };
+        window.toggleColorMode = function() {
+            /* PhonosViewer handles pLDDT coloring automatically via alphafoldView;
+               color toggling is available through the built-in panel controls */
+        };
+        window.downloadPDB = function() {
+            if (!pdbData) return;
+            var blob = new Blob([pdbData], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'esmfold_structure.pdb';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    })();
+    </script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{#- Shared bits for model pages. Import with context:
+    {% from "partials/_model_badges.html" import runs_at, retired_badge with context %}
+    Hosting and price come from production/config.py (hosted_by, credit_cost), never from copy. -#}
+{% macro runs_at(model_id, cls='badge-nim') -%}
+{%- set h = model_runs_at(model_id) -%}
+<span class="{{ cls }}" data-i18n="models.runsAt" data-i18n-options='{{ h|tojson }}'>Runs at {{ h.provider }} ({{ h.region }})</span>
+{%- endmacro %}
+
+{% macro retired_badge(cls='badge-nim') -%}
+<span class="{{ cls }}" data-i18n="models.retired">Retired</span>
+{%- endmacro %}

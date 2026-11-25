@@ -1,0 +1,1145 @@
+/* Custom Models - SPA Dashboard
+ *
+ * Styles for the unified Custom Models tab + Worker Key modal rendered
+ * inside the dashboard SPA (not the standalone /custom_models page).
+ *
+ * Loaded by dashboard.html alongside the rest of the app styles so the
+ * key-modal CSS is parsed once at page load — no inline <style> blocks
+ * leaking into the modal body, no duplicate rules accumulating per open.
+ */
+
+/* ============================================================
+   Custom Models tab + Model Builder (Views.load('user-models'))
+   ============================================================ */
+
+/* ============================================================
+   Builder layout — sticky right-side panel
+   ============================================================
+   The right-side Integration / Format Guide panel must scroll
+   independently of the page so the user always sees the current tab
+   header + Copy buttons. This requires a viewport-locked height on
+   every ancestor from the dashboard content area down to the
+   .nb-md-section.
+
+   The dashboard's content area fills the remaining viewport
+   (calc(100vh - topbar height)) — we tap into that here. */
+
+.mb-builder {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.mb-builder-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(360px, 1fr);
+    gap: 18px;
+    align-items: stretch;
+    min-height: 0;
+    /* Lock the grid to the available viewport space so flex children can
+       establish their own scroll regions. The dashboard content area
+       fills the rest of the screen; the builder grid consumes all of
+       that height and lets each cell scroll internally. */
+    height: calc(100vh - 240px);
+    min-height: 480px;
+}
+@media (max-width: 1080px) {
+    /* Stack on narrow screens — fall back to natural page scroll. */
+    .mb-builder-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+    }
+}
+.mb-builder-grid > form {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+.mb-builder-grid > form::-webkit-scrollbar { width: 8px; }
+.mb-builder-grid > form::-webkit-scrollbar-track { background: transparent; }
+.mb-builder-grid > form::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-ui, 0px);
+}
+.mb-builder-grid > form::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* Accordion sections — flat dark cards, notebook-IDE inspired. */
+.mb-section {
+    background: var(--color-bg-secondary, #18181b);
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+}
+.mb-section:hover { border-color: rgba(19, 124, 189, 0.32); }
+.mb-section.open { border-color: rgba(45, 157, 120, 0.4); }
+
+.mb-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    border-bottom: 1px solid transparent;
+}
+.mb-section.open .mb-section-header { border-bottom-color: var(--color-border, #27272a); }
+.mb-section-header:hover { background: rgba(45, 157, 120, 0.08); }
+
+.mb-section-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm, 4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(19, 124, 189, 0.14);
+    color: #137CBD;
+}
+
+.mb-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-primary, #f4f4f5);
+    flex: 1;
+}
+
+.mb-section-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    background: rgba(19, 124, 189, 0.16);
+    color: #137CBD;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mb-section-chevron {
+    transition: transform 0.15s;
+    flex-shrink: 0;
+    color: var(--color-text-secondary, #a1a1aa);
+}
+.mb-section.collapsed .mb-section-chevron { transform: rotate(-90deg); }
+.mb-section.collapsed .mb-section-body { display: none; }
+.mb-section-body { padding: 16px; }
+
+/* The .mb-builder .nb-md-tab etc. rules are defined further down in the
+   Code-snippet panel section. They were consolidated there so all the
+   IDE-derived styles live next to each other instead of scattered
+   throughout the file. */
+
+/* ============================================================
+   Code snippet panel (right side of model builder)
+   ============================================================
+   These classes are duplicated from notebook.css so the dashboard
+   SPA can render code blocks without loading the entire notebook
+   stylesheet. Overrides below recolor the notebook IDE's blue
+   accent to the builder's green (#2d9d78). */
+
+.mb-builder .nb-md-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--color-border, #27272a);
+    background: var(--color-bg-primary, #0e0e10);
+    flex-shrink: 0;
+}
+
+/* The right-side preview panel — fixed-height column with sticky
+   tab strip + scrollable section body. */
+.nb-split-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--color-bg-secondary, #18181b);
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+}
+.mb-preview-panel {
+    /* Fill the grid cell so the inner section can scroll without
+       pushing the tab strip off-screen. */
+    align-self: stretch;
+    min-height: 0;
+}
+.mb-builder .nb-md-tab {
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.mb-builder .nb-md-tab:hover { color: var(--text-primary, #f4f4f5); }
+.mb-builder .nb-md-tab.active {
+    color: #2d9d78;
+    border-bottom-color: #2d9d78;
+}
+.mb-builder .nb-md-tab-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.mb-builder .nb-md-section {
+    display: none;
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 0;
+    min-height: 0;
+    /* Keep the section anchored to the bottom of the panel so the
+       last snippet / hero card doesn't float in the middle. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+.mb-builder .nb-md-section.active { display: flex; flex-direction: column; }
+.mb-builder .nb-md-section.active > * { min-width: 0; }
+.mb-builder .nb-md-section::-webkit-scrollbar { width: 8px; }
+.mb-builder .nb-md-section::-webkit-scrollbar-track { background: transparent; }
+.mb-builder .nb-md-section::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-ui, 0px);
+}
+.mb-builder .nb-md-section::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.mb-builder .nb-md-hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 14px;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+}
+.mb-builder .nb-md-hero-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--r-ui, 0px);
+    flex-shrink: 0;
+}
+.mb-builder .nb-md-hero-info { min-width: 0; flex: 1; }
+.mb-builder .nb-md-hero-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #f4f4f5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mb-builder .nb-md-hero-sub {
+    font-size: 11px;
+    color: var(--text-tertiary, #71717a);
+    margin-top: 2px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.mb-builder .nb-md-hero--cta {
+    border-color: rgba(19, 124, 189, 0.4);
+    background: rgba(19, 124, 189, 0.06);
+}
+.mb-builder .nb-md-hero-btn {
+    flex-shrink: 0;
+    background: #137CBD;
+    border-color: #137CBD;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.mb-builder .nb-md-hero-btn:hover {
+    background: #137CBD;
+    filter: brightness(1.1);
+}
+
+.mb-builder .nb-md-h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary, #71717a);
+    margin: 16px 0 8px;
+}
+.mb-builder .nb-md-h3:first-child { margin-top: 0; }
+
+.mb-builder .nb-md-snippet {
+    margin-bottom: 12px;
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-sm, 4px);
+    overflow: hidden;
+    background: #09090b;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.mb-builder .nb-md-snippet:hover {
+    border-color: rgba(45, 157, 120, 0.4);
+}
+.mb-builder .nb-md-snippet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 12px;
+    background: var(--color-bg-primary, #0e0e10);
+    border-bottom: 1px solid var(--color-border, #27272a);
+    min-width: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.mb-builder .nb-md-snippet-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary, #d4d4d8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.4;
+}
+.mb-builder .nb-md-snippet-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.mb-builder .nb-md-snippet-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 9px;
+    background: transparent;
+    border: 1px solid var(--color-border, #27272a);
+    color: var(--text-secondary, #d4d4d8);
+    border-radius: var(--radius-sm, 4px);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.mb-builder .nb-md-snippet-btn:hover {
+    background: var(--color-bg-hover, rgba(255, 255, 255, 0.06));
+    color: var(--text-primary, #f4f4f5);
+}
+.mb-builder .nb-md-snippet-btn.nb-md-primary {
+    background: rgba(45, 157, 120, 0.16);
+    border-color: rgba(45, 157, 120, 0.45);
+    color: #2d9d78;
+}
+.mb-builder .nb-md-snippet-btn.nb-md-primary:hover {
+    background: rgba(45, 157, 120, 0.28);
+    color: #2d9d78;
+}
+.mb-builder .nb-md-snippet-btn.copied {
+    background: rgba(34, 197, 94, 0.18);
+    border-color: rgba(34, 197, 94, 0.45);
+    color: #22c55e;
+}
+.mb-builder .nb-md-snippet-btn svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+}
+
+.mb-builder .nb-md-snippet-code {
+    padding: 12px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #d4d4d8;
+    white-space: pre;
+    overflow: auto;
+    margin: 0;
+    max-height: 240px;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    background: #09090b;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm, 4px) var(--radius-sm, 4px);
+}
+@media (min-height: 900px) {
+    .mb-builder .nb-md-snippet-code { max-height: 320px; }
+}
+.mb-builder .nb-md-snippet-code::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.mb-builder .nb-md-snippet-code::-webkit-scrollbar-track {
+    background: transparent;
+}
+.mb-builder .nb-md-snippet-code::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-ui, 0px);
+}
+.mb-builder .nb-md-snippet-code::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+.mb-builder .nb-md-snippet-code::-webkit-scrollbar-corner {
+    background: transparent;
+}
+.mb-builder .nb-md-snippet-code .m-tok-cmt { color: #6b7280; font-style: italic; }
+.mb-builder .nb-md-snippet-code .m-tok-str { color: #a5d6ff; }
+.mb-builder .nb-md-snippet-code .m-tok-fn  { color: #d2a8ff; }
+.mb-builder .nb-md-snippet-code .m-tok-kw  { color: #ff7b72; }
+
+/* Param list used in the Format Guide tab */
+.mb-builder .nb-md-param-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+}
+.mb-builder .nb-md-param {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border, #27272a);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    flex-wrap: wrap;
+}
+.mb-builder .nb-md-param:last-child { border-bottom: none; }
+.mb-builder .nb-md-param-name {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: #2d9d78;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.mb-builder .nb-md-param-help {
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 11px;
+    line-height: 1.4;
+    flex-basis: 100%;
+}
+.mb-builder .nb-md-param-help code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    padding: 1px 5px;
+    border-radius: var(--r-ui, 0px);
+    color: #fb923c;
+}
+
+/* ============================================================
+   Format chip row in the format-guide tab
+   ============================================================ */
+
+.mb-format-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border, #27272a);
+    background: transparent;
+    border-radius: var(--radius-sm, 4px);
+    color: var(--text-secondary, #d4d4d8);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    line-height: 1;
+}
+.mb-format-chip:hover {
+    border-color: rgba(45, 157, 120, 0.5);
+    color: var(--text-primary, #f4f4f5);
+}
+.mb-format-chip.active {
+    background: rgba(45, 157, 120, 0.14);
+    border-color: rgba(45, 157, 120, 0.5);
+    color: #57d9a3;
+}
+.mb-format-chip svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+}
+
+/* The builder root (.mb-builder) is defined at the top of this section.
+   We deliberately keep that single definition as the source of truth so
+   the layout cascade doesn't diverge. */
+
+/* ============================================================
+   API-Key Modal (Worker Key Created)
+   ============================================================
+   The modal contains a tab strip + four sections. Each section must
+   stay readable on a tall scrollable body without auto-closing the
+   modal. */
+
+.apkm-root {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+}
+
+.apkm-hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.25);
+    border-radius: var(--radius-md, 6px);
+    transition: background 0.2s, border-color 0.2s;
+}
+.apkm-hero--saved {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.35);
+}
+.apkm-hero-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--r-ui, 0px);
+    background: #f97316;
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.7);
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.apkm-hero--saved .apkm-hero-dot {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+.apkm-hero-info { flex: 1; min-width: 0; }
+.apkm-hero-title { font-size: 14px; font-weight: 600; color: var(--text-primary, #f4f4f5); }
+.apkm-hero-sub { font-size: 11px; color: var(--text-tertiary, #71717a); margin-top: 2px; line-height: 1.5; }
+.apkm-hero-sub strong { color: #22c55e; }
+.apkm-hero-sub em { font-style: normal; color: #fb923c; font-weight: 600; }
+
+.apkm-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--color-border, #27272a);
+    background: var(--color-bg-primary, #0e0e10);
+}
+.apkm-tab {
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: color 0.15s, border-color 0.15s;
+}
+.apkm-tab:hover { color: var(--text-primary, #f4f4f5); }
+.apkm-tab.active { color: #2d9d78; border-bottom-color: #2d9d78; }
+
+.apkm-section { display: none; padding: 16px; }
+.apkm-section.active { display: block; }
+
+/* Section heading */
+.apkm-h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary, #71717a);
+    margin: 14px 0 8px;
+}
+.apkm-h3:first-child { margin-top: 0; }
+
+/* The most important element — the key itself.
+   Inline-flex row with the monospace text on the left and a fat orange
+   "Copy" button on the right. Wraps with the key inline so a Cmd/Ctrl-C
+   anywhere in the input selects the whole thing. */
+.apkm-key-box {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid #f97316;
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    background: var(--color-bg, #09090b);
+    margin-bottom: 8px;
+}
+.apkm-key-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #fb923c;
+    background: transparent;
+    border: none;
+    outline: none;
+    user-select: all;
+    -webkit-user-select: all;
+    /* Long keys scroll horizontally inside the input rather than
+       wrapping awkwardly. */
+    white-space: nowrap;
+    overflow-x: auto;
+    text-overflow: clip;
+}
+.apkm-key-input:focus { box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0.35); }
+
+.apkm-key-copy {
+    flex-shrink: 0;
+    padding: 0 16px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width: 84px;
+    transition: filter 0.15s;
+}
+.apkm-key-copy:hover { filter: brightness(1.08); }
+.apkm-key-copy:focus-visible { outline: 2px solid #fb923c; outline-offset: 2px; }
+.apkm-key-copy.copied { background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); }
+.apkm-key-copy.compact { padding: 4px 12px; font-size: 10px; min-width: 0; }
+
+/* Code snippets (curl, Python worker). Lock the font, allow horizontal
+   scroll, keep line breaks. Highlight.js tokens work because the
+   snippets are rendered as plain <pre>. */
+.apkm-snippet {
+    margin-bottom: 10px;
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    background: #09090b;
+}
+.apkm-snippet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--color-bg-primary, #0e0e10);
+    border-bottom: 1px solid var(--color-border, #27272a);
+}
+.apkm-snippet-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary, #d4d4d8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.apkm-snippet-body {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #d6e6f2;
+    white-space: pre;
+    overflow-x: auto;
+    max-height: 320px;
+    tab-size: 4;
+    -moz-tab-size: 4;
+}
+.apkm-snippet-body code { font-family: inherit; }
+
+.apkm-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 12px;
+}
+.apkm-meta {
+    padding: 8px 10px;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+}
+.apkm-meta-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary, #71717a);
+    margin-bottom: 2px;
+}
+.apkm-meta-value {
+    font-size: 12px;
+    color: var(--text-primary, #f4f4f5);
+    font-weight: 500;
+    word-break: break-word;
+}
+.apkm-meta-value.apkm-mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.apkm-section-intro {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary, #d4d4d8);
+    margin: 0 0 12px;
+}
+.apkm-hint {
+    font-size: 11px;
+    color: var(--text-tertiary, #71717a);
+    margin: 0;
+    line-height: 1.55;
+}
+.apkm-hint code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    padding: 1px 5px;
+    border-radius: var(--r-ui, 0px);
+    color: var(--text-secondary, #d4d4d8);
+}
+.apkm-test-btn {
+    background: #2d9d78 !important;
+    border-color: #2d9d78 !important;
+    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.apkm-test-btn:hover { background: #268866 !important; }
+
+/* ============================================================
+   Sticky Modal (one-time secrets)
+   ============================================================
+   When `sticky: true` is passed to Modal.open, the modal gets a red
+   border accent + "do not close" lock icon to signal that this dialog
+   holds a one-time secret that requires explicit acknowledgment. */
+
+.modal.modal-sticky {
+    border-color: rgba(239, 68, 68, 0.45);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25),
+                0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+.modal.modal-sticky .modal-header {
+    border-bottom-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.06);
+}
+.modal.modal-sticky .modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal.modal-sticky .modal-title-lock {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #ef4444;
+}
+
+/* ============================================================
+   Worker Security modal (manageModelApiKeys)
+   ============================================================ */
+
+.wsk-root {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.wsk-intro {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary, #d4d4d8);
+}
+.wsk-banner {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.05));
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: var(--radius-md, 6px);
+}
+.wsk-banner > svg { flex-shrink: 0; color: #f97316; margin-top: 2px; }
+.wsk-banner-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fb923c;
+    margin-bottom: 2px;
+}
+.wsk-key-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.wsk-key-note {
+    font-size: 11px;
+    color: var(--text-tertiary, #71717a);
+}
+.wsk-key-mask {
+    padding: 8px 12px;
+    background: var(--color-bg, #09090b);
+    border-radius: var(--r-ui, 0px);
+    font-size: 13px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: #f97316;
+    border: 1px solid var(--color-border, #27272a);
+}
+
+.wsk-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--color-border, #27272a);
+}
+.wsk-tab {
+    padding: 9px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: color 0.15s, border-color 0.15s;
+}
+.wsk-tab:hover { color: var(--text-primary, #f4f4f5); }
+.wsk-tab.active { color: #f97316; border-bottom-color: #f97316; }
+
+.wsk-section { display: none; }
+.wsk-section.active { display: block; }
+
+.wsk-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.wsk-section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary, #f4f4f5);
+}
+
+.wsk-empty {
+    text-align: center;
+    padding: 40px 24px;
+    background: var(--color-bg-secondary, #18181b);
+    border-radius: var(--radius-md, 6px);
+    border: 1px dashed var(--color-border, #27272a);
+}
+.wsk-empty svg { margin: 0 auto 12px; color: var(--text-tertiary, #71717a); display: block; }
+.wsk-empty h4 { margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: var(--text-primary, #f4f4f5); }
+.wsk-empty p { margin: 0; font-size: 12px; color: var(--text-tertiary, #71717a); }
+
+.wsk-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.wsk-card {
+    padding: 14px;
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.03));
+}
+.wsk-card.is-inactive { opacity: 0.65; }
+.wsk-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.wsk-card-info { flex: 1; min-width: 0; }
+.wsk-card-title {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #f4f4f5);
+}
+.wsk-card-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.wsk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.wsk-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.wsk-badge--ok { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.wsk-badge--off { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+.wsk-badge--e2e { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.wsk-badge--plain { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.wsk-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.wsk-btn-danger {
+    color: #ef4444;
+}
+
+.wsk-desc {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+    color: var(--text-tertiary, #a1a1aa);
+}
+
+.wsk-meta-row {
+    display: flex;
+    gap: 16px;
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid var(--color-border, #27272a);
+    font-size: 11px;
+    color: var(--text-secondary, #d4d4d8);
+    flex-wrap: wrap;
+}
+.wsk-meta-row strong {
+    color: var(--text-primary, #f4f4f5);
+    margin-right: 4px;
+    font-weight: 700;
+}
+
+.wsk-info-card {
+    padding: 14px 16px;
+    background: var(--color-bg-secondary, #18181b);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid var(--color-border, #27272a);
+    margin-bottom: 12px;
+}
+.wsk-rules {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-secondary, #d4d4d8);
+    font-size: 12px;
+    line-height: 1.7;
+}
+.wsk-rules code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.04));
+    padding: 1px 5px;
+    border-radius: var(--r-ui, 0px);
+    color: var(--text-primary, #f4f4f5);
+}
+
+.wsk-code-card {
+    background: #0d1117;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+}
+.wsk-code-card .apkm-snippet-body { background: transparent; }
+
+.wsk-footnote {
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: var(--color-bg-secondary, #18181b);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid var(--color-border, #27272a);
+    font-size: 11px;
+    color: var(--text-tertiary, #a1a1aa);
+}
+.wsk-footnote strong { color: var(--text-primary, #f4f4f5); }
+
+/* Highlight the orange "Create Worker Key" CTA */
+.wsk-section-head .btn-primary {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wsk-view-key {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border: none;
+    color: white;
+    border-radius: var(--r-ui, 0px);
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.wsk-view-key:hover { filter: brightness(1.08); }
+
+.apkm-mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+}
+
+.apkm-test-result {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 6px);
+    font-size: 12px;
+    line-height: 1.5;
+    border: 1px solid transparent;
+}
+.apkm-test-result.ok {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+.apkm-test-result.err {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+.apkm-test-result.pending {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+}
+
+.apkm-spinner {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: apkm-pulse 1s ease-in-out infinite;
+}
+@keyframes apkm-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ============================================================
+   Worker Security modal (manageModelApiKeys)
+   ============================================================ */
+
+.wsk-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--color-border, #27272a);
+}
+.wsk-tab {
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.wsk-tab.active { color: #2d9d78; border-bottom-color: #2d9d78; }
+.wsk-tab:hover { color: var(--text-primary, #f4f4f5); }
+
+.wsk-section { display: none; }
+.wsk-section.active { display: block; }
+
+/* Sticky warning banner at the top of the keys list */
+.wsk-banner {
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.05));
+    border: 1px solid rgba(249, 115, 22, 0.25);
+    border-radius: var(--radius-md, 6px);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-primary, #f4f4f5);
+}
+
+/* Per-key card */
+.wsk-card {
+    padding: 16px;
+    border: 1px solid var(--color-border, #27272a);
+    border-radius: var(--radius-md, 6px);
+    background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.03));
+    margin-bottom: 10px;
+}
+.wsk-card.is-inactive { opacity: 0.65; }
+
+.wsk-key-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.wsk-key-mask {
+    padding: 8px 12px;
+    background: var(--color-bg, #09090b);
+    border-radius: var(--r-ui, 0px);
+    font-size: 13px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: #fb923c;
+    border: 1px solid var(--color-border, #27272a);
+}
+.wsk-key-actions { display: flex; gap: 6px; }
+
+.wsk-meta-row {
+    display: flex;
+    gap: 16px;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--color-border, #27272a);
+    font-size: 12px;
+    color: var(--text-secondary, #a1a1aa);
+    flex-wrap: wrap;
+}
+.wsk-meta-row strong { color: var(--text-primary, #f4f4f5); margin-right: 4px; }

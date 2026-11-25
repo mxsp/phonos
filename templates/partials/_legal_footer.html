@@ -1,0 +1,12 @@
+{# Self-contained legal footer for open-source / self-hosted Phonos deployments. #}
+{% set _de = (legal_lang|default('')) == 'de' %}
+<footer class="legal-footer {{ legal_footer_class|default('') }}">
+    <nav class="legal-footer__nav" aria-label="{{ 'Rechtliches' if _de else 'Legal' }}">
+        <a href="{{ url_for('terms_of_service') }}">{{ 'Nutzungsbedingungen & RUO-Hinweis' if _de else 'Terms & Research-Only Notice' }}</a>
+        <a href="{{ url_for('datenschutz') }}">{{ 'Datenschutz' if _de else 'Privacy & Data Governance' }}</a>
+        <a href="{{ url_for('impressum') }}">{{ 'Betreiberhinweis' if _de else 'Instance Notice' }}</a>
+        <a href="{{ url_for('licenses') }}">{{ 'Lizenzen & Modelle' if _de else 'Licenses & Models' }}</a>
+        <a href="https://github.com/mxsp/phonos" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </nav>
+    <p class="legal-footer__line">Phonos · Research Use Only (RUO) · Non-Commercial Source License · Zero Telemetry</p>
+</footer>

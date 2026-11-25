@@ -1,0 +1,199 @@
+/* ============================================================================
+   Wolfram Notebook (.nb) preview sidebar
+   ============================================================================ */
+.fm-preview-wolfram-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px;
+    background: var(--bg-secondary, #1c2127);
+}
+
+.wolfram-nb-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+}
+
+.wolfram-nb-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #2d3748);
+    border-radius: var(--r-ui, 0px);
+    background: var(--bg-tertiary, #232a32);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.wolfram-nb-cell {
+    border: 1px solid var(--border-color, #2d3748);
+    border-radius: var(--r-ui, 0px);
+    background: var(--bg-primary, #181d23);
+    overflow: hidden;
+}
+
+.wolfram-nb-cell-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--bg-tertiary, #232a32);
+    border-bottom: 1px solid var(--border-color, #2d3748);
+}
+
+.wolfram-nb-cell-tag {
+    font-size: 11px;
+    color: var(--text-tertiary, #8a98a8);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.wolfram-nb-run-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+.wolfram-nb-cell-code {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--text-primary, #f5f8fa);
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: transparent;
+}
+
+.wolfram-nb-cell-output {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color, #2d3748);
+    background: var(--bg-secondary, #1c2127);
+    min-height: 28px;
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.wolfram-nb-out-text {
+    margin: 0;
+    padding: 6px 8px;
+    font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 12.5px;
+    color: var(--text-primary, #f5f8fa);
+    white-space: pre-wrap;
+    background: var(--bg-primary, #181d23);
+    border-radius: var(--r-ui, 0px);
+}
+
+.wolfram-nb-out-image {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.wolfram-nb-out-image img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color, #2d3748);
+    border-radius: var(--r-ui, 0px);
+    background: #ffffff;
+}
+
+.wolfram-nb-out-empty {
+    color: var(--text-tertiary, #8a98a8);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.wolfram-nb-err {
+    color: var(--accent-error, #f55656);
+    font-size: 12.5px;
+    padding: 6px 8px;
+    background: rgba(245, 86, 86, 0.08);
+    border-radius: var(--r-ui, 0px);
+}
+
+.wolfram-nb-spinner {
+    color: var(--text-tertiary, #8a98a8);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.wolfram-nb-meta {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--text-tertiary, #8a98a8);
+    display: flex;
+    gap: 12px;
+}
+
+.wolfram-nb-summary {
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+/* ============================================================================
+   Wolfram Notebook inside the notebook IDE's split panel
+   ============================================================================ */
+.nb-split-content .nb-split-wolfram {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    background: var(--bg-secondary, #1c2127);
+    padding: 8px;
+}
+
+.nb-split-content .nb-split-wolfram-meta {
+    display: none;
+}
+
+/* ============================================================================
+   Per-cell action icons (Copy, Toggle raw) + scroll container for long cells
+   ============================================================================ */
+.wolfram-nb-cell-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.wolfram-nb-icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-color, #2d3748);
+    color: var(--text-secondary, #c7d0db);
+    cursor: pointer;
+    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    line-height: 1;
+    border-radius: var(--r-ui, 0px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.wolfram-nb-icon-btn:hover {
+    background: var(--bg-primary, #181d23);
+    color: var(--text-primary, #f5f8fa);
+}
+
+.wolfram-nb-cell-code-scroll {
+    max-height: 320px;
+    overflow: auto;
+    background: transparent;
+}
+
+.wolfram-nb-cell-code {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--text-primary, #f5f8fa);
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+    background: transparent;
+    font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    tab-size: 4;
+}

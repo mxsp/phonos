@@ -1,0 +1,27 @@
+{# Entry pages (landing, sign-in): what actually runs in this preview, in place of a stock picture.
+   Rows come from Config.public_model_table() (active, not retired models in production/config.py). #}
+{% set _rows = public_model_table() %}
+<figure class="model-table" aria-labelledby="model-table-caption">
+    <figcaption id="model-table-caption" class="model-table__caption">
+        <span data-i18n="landing.tableTitle">Models in this preview</span>
+        <span class="model-table__count">{{ _rows|length }}</span>
+    </figcaption>
+    <div class="model-table__scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col" data-i18n="landing.colTask">Task</th>
+                    <th scope="col" data-i18n="landing.colModel">Model</th>
+                    <th scope="col" data-i18n="landing.colIO">Input → output</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set _groups = {'structure': ('landing.taskStructure', 'Structure'), 'design': ('landing.taskDesign', 'Design'), 'docking': ('landing.taskDocking', 'Docking'), 'genomics': ('landing.taskGenomics', 'Genomics'), 'chemistry': ('landing.taskChemistry', 'Chemistry')} %}
+                {% for r in _rows %}
+                <tr><td data-i18n="{{ _groups[r.group][0] }}">{{ _groups[r.group][1] }}</td><td>{{ r.name }}</td><td>{{ r.io }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="model-table__note" data-i18n="landing.tableNote">ESMFold and AlphaFold2 are offline: NVIDIA retired their endpoints in 2026.</p>
+</figure>

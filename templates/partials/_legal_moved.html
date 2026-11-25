@@ -1,0 +1,74 @@
+{# Self-contained legal, privacy, and Research-Use-Only notice for self-hosted Phonos instances. #}
+{% set _de = (moved_lang|default('en')) == 'de' %}
+{% set _titles = {
+    'impressum': ('Betreiberhinweis (Self-Hosted)' if _de else 'Instance & Operator Notice'),
+    'privacy': ('Datenschutz & Lokale Datenhaltung' if _de else 'Privacy & Self-Hosted Data Governance'),
+    'terms': ('Nutzungsbedingungen & Forschungshinweis (RUO)' if _de else 'Terms of Use & Research-Use-Only Disclaimer')
+} %}
+{% set _name = _titles.get(moved_to, 'Legal Notice') %}
+<!DOCTYPE html>
+<html lang="{{ 'de' if _de else 'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ _name }} – Phonos</title>
+    <style>
+        :root { --bg: #09090b; --card: #121216; --border: rgba(255,255,255,0.09); --text: #f4f4f5; --muted: #a1a1aa; --accent: #10b981; --warn: #f59e0b; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 'Inter', system-ui, sans-serif; padding: 3rem 1.25rem; }
+        main { max-width: 52rem; margin: 0 auto; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem; }
+        h1 { margin: 0 0 0.5rem; font-size: 1.65rem; letter-spacing: -0.02em; }
+        h2 { margin: 1.75rem 0 0.5rem; font-size: 1.1rem; color: #fff; }
+        p, li { color: var(--muted); }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: rgba(16,185,129,0.14); color: var(--accent); margin-bottom: 1rem; }
+        .ruo-box { border: 1px solid rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.25rem 0; color: #fde68a; font-size: 0.92rem; }
+        .top-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 0.88rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="top-links">
+            <a href="/">← Back to Phonos</a>
+            <a href="{{ url_for('terms_of_service') }}">Terms & RUO</a>
+            <a href="{{ url_for('datenschutz') }}">Privacy</a>
+            <a href="{{ url_for('impressum') }}">Operator Notice</a>
+            <a href="{{ url_for('licenses') }}">Model & OSS Licenses</a>
+        </div>
+        <span class="badge">Self-Hosted Open-Source Edition</span>
+        <h1>{{ _name }}</h1>
+
+        <div class="ruo-box">
+            <strong>FOR RESEARCH USE ONLY (RUO) — NOT MEDICAL OR CLINICAL ADVICE.</strong><br>
+            Phonos outputs (3D protein/nucleic-acid structures, docking poses, binding scores, designed sequences, and generated molecules) are probabilistic computational predictions. They are NOT validated for clinical, diagnostic, therapeutic, or wet-lab safety decisions.
+        </div>
+
+        {% if moved_to == 'privacy' %}
+        <h2>1. Local Data Residency & Zero Telemetry</h2>
+        <p>This Phonos instance runs as self-hosted software. The Phonos open-source authors (FyreFly Systems GbR / mxsp) receive <strong>zero telemetry, zero analytics, and zero biological data</strong> from your installation.</p>
+        <h2>2. Data Controller</h2>
+        <p>The administrator or organization operating this server is the sole Data Controller for local user accounts, session cookies, audit logs, uploaded sequences/structures, and notebooks stored in this instance's database.</p>
+        <h2>3. External Model & AI Provider Calls</h2>
+        <p>When an administrator or user configures external API keys (e.g., NVIDIA NIM <code>health.api.nvidia.com</code>, Google Gemini, OpenAI, Anthropic, or custom HTTP endpoints), inputs submitted to those models are sent directly from this server to the configured endpoint under the operator's own API terms.</p>
+        {% elif moved_to == 'impressum' %}
+        <h2>1. Self-Hosted Instance Operator</h2>
+        <p>This Phonos installation is operated independently by the administrator of this host/network. Contact your local lab or IT administrator for account, data-protection, or operational inquiries.</p>
+        <h2>2. Open-Source Software Attribution</h2>
+        <p>Powered by <strong>Phonos</strong> (Copyright © 2026 FyreFly Systems GbR / mxsp), distributed under the <em>Phonos Non-Commercial Source License (v1.0)</em> at <a href="https://github.com/mxsp/phonos" target="_blank" rel="noopener">github.com/mxsp/phonos</a>.</p>
+        {% else %}
+        <h2>1. License & Non-Commercial Research Scope</h2>
+        <p>Phonos is licensed under the <strong>Phonos Non-Commercial Source License (v1.0)</strong> for personal use, academic research, education, and non-commercial scientific experimentation. Commercial deployment requires a separate written license.</p>
+        <h2>2. Biosecurity, Biosafety & Chemical Safety</h2>
+        <ul>
+            <li>Users must never use Phonos or connected models to design, optimize, or screen regulated pathogens, biological toxins, bioweapons, or hazardous agents.</li>
+            <li>Generated molecules and sequences have unknown toxicity and reactivity; any wet-lab synthesis or assay is performed solely at the user's and operating institution's own risk under qualified biosafety oversight.</li>
+        </ul>
+        <h2>3. Upstream Model Terms</h2>
+        <p>Connected models carry their own upstream licenses (see <a href="{{ url_for('licenses') }}">Licenses & Models</a>). Notably, NVIDIA <strong>MolMIM</strong> is restricted to non-commercial research & development under the NVIDIA AI Foundation Models Community License unless covered by an NVIDIA Enterprise agreement.</p>
+        <h2>4. No Warranty</h2>
+        <p>THE SOFTWARE AND ALL PREDICTIONS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

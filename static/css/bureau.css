@@ -1,0 +1,332 @@
+/* ===================================================================
+   Bureau — product identity + project management panel
+
+   Bureau and Phonos share one backend, one database and one file store.
+   What separates them is the surface: Phonos is the emerald-accented
+   discovery console, Bureau is the amber-accented workspace (notebooks,
+   files, projects). This stylesheet carries the Bureau side of that split
+   plus the project-management panel that both shells embed.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   Project management panel
+   ------------------------------------------------------------------- */
+
+.bureau-project {
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--r-ui, 0px);
+    margin: 0 8px 6px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.bureau-project:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.bureau-project.active {
+    border-color: var(--color-accent, #f97316);
+    background: rgba(249, 115, 22, 0.08);
+}
+
+.bureau-project.expanded {
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.bureau-project-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 10px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+
+.bureau-project-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.bureau-project-name {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary, #f4f4f5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bureau-project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.bureau-project-metaitem {
+    font-size: 10px;
+    color: var(--text-tertiary, #a1a1aa);
+}
+
+.bureau-role {
+    padding: 1px 5px;
+    border-radius: var(--r-ui, 0px);
+    background: rgba(249, 115, 22, 0.16);
+    color: var(--color-accent-light, #fb923c);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.bureau-chevron {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-ui, 0px);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 12px;
+    line-height: 1;
+}
+
+.bureau-project-desc {
+    padding: 0 10px 9px;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-tertiary, #a1a1aa);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.bureau-project-detail {
+    padding: 8px 10px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bureau-detail-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent, #f97316);
+    margin: 10px 0 6px;
+}
+
+.bureau-detail-hint {
+    font-size: 10px;
+    color: var(--text-muted, #71717a);
+    padding: 2px 0;
+}
+
+.bureau-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.bureau-action {
+    flex: 1 1 auto;
+    min-width: 62px;
+    padding: 5px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-ui, 0px);
+    color: var(--text-secondary, #c7d0db);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.bureau-action:hover {
+    background: rgba(249, 115, 22, 0.14);
+    border-color: rgba(249, 115, 22, 0.4);
+    color: var(--color-accent-light, #fb923c);
+}
+
+.bureau-member-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.bureau-member {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.bureau-member.pending {
+    opacity: 0.65;
+}
+
+.bureau-avatar {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(249, 115, 22, 0.18);
+    color: var(--color-accent-light, #fb923c);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.bureau-member-names {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.bureau-member-name {
+    font-size: 11px;
+    color: var(--text-secondary, #c7d0db);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bureau-member-role {
+    font-size: 9px;
+    color: var(--text-muted, #71717a);
+    text-transform: capitalize;
+}
+
+/* -------------------------------------------------------------------
+   Bureau product shell — applied only when the page IS the Bureau
+   product, not when the notebook is embedded inside Phonos.
+   ------------------------------------------------------------------- */
+
+body[data-product="bureau"] .nb-standalone-header {
+    background: linear-gradient(90deg, #1b1613 0%, #18181b 45%);
+    border-bottom: 1px solid rgba(249, 115, 22, 0.22);
+    height: 52px;
+    padding: 8px 18px;
+}
+
+body[data-product="bureau"] .nb-standalone-brand {
+    gap: 10px;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+}
+
+body[data-product="bureau"] .nb-standalone-brand svg {
+    width: 22px;
+    height: 22px;
+    color: var(--color-accent, #f97316);
+}
+
+/* The wordmark is the clearest signal that this is its own product. */
+.bureau-wordmark {
+    font-weight: 700;
+    color: #fafafa;
+}
+
+.bureau-wordmark-sub {
+    color: #71717a;
+    font-weight: 500;
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+.bureau-product-chip {
+    padding: 2px 8px;
+    border: 1px solid rgba(249, 115, 22, 0.35);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.12);
+    color: #fb923c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Product switcher — an explicit door between two products, rather than
+   a "back" link that implies Bureau is a sub-page of Phonos. */
+.bureau-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #a1a1aa;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.bureau-switch:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+.bureau-switch .bureau-switch-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    flex: none;
+}
+
+/* The shell's inline styles size the layout against a 48px header; the Bureau
+   header is 52px, so the viewport maths has to follow. */
+body[data-product="bureau"] .nb-layout {
+    height: calc(100vh - 52px);
+}
+
+body[data-product="bureau"] .nb-activity-bar {
+    background: #131110;
+    border-right: 1px solid rgba(249, 115, 22, 0.14);
+}
+
+body[data-product="bureau"] .nb-sidebar {
+    background: #171514;
+}
+
+@media (max-width: 720px) {
+    .bureau-wordmark-sub,
+    .bureau-switch span {
+        display: none;
+    }
+}
+
+/* -------------------------------------------------------------------
+   File explorer refinements (shared by both shells)
+   ------------------------------------------------------------------- */
+
+/* A non-default sort order is otherwise invisible until you hover the
+   button for its tooltip — tint it so the state is readable at a glance. */
+#nb-file-sort-btn[data-sort="modified"],
+#nb-file-sort-btn[data-sort="size"] {
+    color: var(--color-accent, #f97316);
+}
+
+.nb-empty-state.nb-filter-empty {
+    padding: 14px 12px;
+    font-size: 11px;
+    text-align: center;
+    color: var(--text-muted, #71717a);
+}

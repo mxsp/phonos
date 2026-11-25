@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include '_i18n_scripts.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="geoblocked.page_title">Phonos - Access Restricted</title>
+    <style>
+        body {
+            background-color: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #ascii-container {
+            font-size: 12px;
+            line-height: 10px;
+            white-space: pre;
+            background-color: #000;
+            padding: 20px;
+            border-radius: var(--r-ui, 0px);
+            box-shadow: 0 0 20px rgba(0, 51, 153, 0.3);
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .b { color: #003399; }
+        .y { color: #FFCC00; text-shadow: 0 0 2px #FFCC00; }
+        .d { color: #001f5c; }
+    </style>
+</head>
+<body>
+    <div id="ascii-container" title="Click to toggle wave speed"></div>
+    <script>
+        const container = document.getElementById('ascii-container');
+        const width = 80, height = 40, flagWidth = 60, flagHeight = 30;
+        const centerX = flagWidth / 2, centerY = flagHeight / 2, radius = 10, stars = 12;
+        let time = 0, speed = 0.15, running = true;
+        const flagMap = [];
+
+        function initFlag() {
+            for (let y = 0; y < flagHeight; y++) {
+                const row = [];
+                for (let x = 0; x < flagWidth; x++) row.push(1);
+                flagMap.push(row);
+            }
+            for (let i = 0; i < stars; i++) {
+                const angle = (i * 360 / stars) * (Math.PI / 180);
+                const starX = Math.round(centerX + (radius * 2.0) * Math.cos(angle));
+                const starY = Math.round(centerY + radius * Math.sin(angle));
+                drawStar(starX, starY);
+            }
+        }
+
+        function drawStar(x, y) {
+            const starPoints = [{dx:0,dy:0},{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
+            starPoints.forEach(p => {
+                const px = x + p.dx, py = y + p.dy;
+                if (px >= 0 && px < flagWidth && py >= 0 && py < flagHeight) flagMap[py][px] = 2;
+            });
+        }
+
+        function render() {
+            let output = "";
+            const frequency = 0.15, amplitude = 2.5;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const sine = Math.sin((x * frequency) - time);
+                    const yOffset = Math.round(sine * amplitude);
+                    const cos = Math.cos((x * frequency) - time);
+                    const isShadow = cos < -0.3;
+                    const sourceX = x - (width - flagWidth) / 2;
+                    const sourceY = y - (height - flagHeight) / 2 + yOffset;
+                    let type = 0;
+                    if (sourceX >= 0 && sourceX < flagWidth && sourceY >= 0 && sourceY < flagHeight) {
+                        type = flagMap[sourceY][sourceX];
+                    }
+                    if (type === 0) output += " ";
+                    else if (type === 1) output += isShadow ? '<span class="d">~</span>' : '<span class="b">:</span>';
+                    else if (type === 2) output += '<span class="y">*</span>';
+                }
+                output += "\n";
+            }
+            container.innerHTML = output;
+            if (running) { time += speed; requestAnimationFrame(render); }
+        }
+
+        container.addEventListener('click', () => { speed = speed === 0.15 ? 0.05 : 0.15; });
+        initFlag();
+        render();
+    </script>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

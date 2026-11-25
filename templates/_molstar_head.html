@@ -1,0 +1,30 @@
+{# Mol* (pdbe-molstar) viewer includes — replaces 3Dmol.js #}
+{# Include this in <head> of any template that needs 3D molecular visualization #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.11.0/build/pdbe-molstar.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/phonos_viewer.css') }}?v=86548956">
+<script src="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.11.0/build/pdbe-molstar-plugin.js"></script>
+<script>
+/* PhonosViewer crash debug — visible error on page */
+window.addEventListener('error', function(ev) {
+    var el = document.querySelector('[data-phonos-viewer], #mol-vis-viewport, #viewer-3d-main');
+    if (!el) return;
+    var d = document.createElement('div');
+    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(9,9,11,.85);color:#ef4444;font:12px monospace;text-align:center;padding:20px;z-index:9999;white-space:pre-wrap;word-break:break-all';
+    var msg = ev.error && ev.error.message ? ev.error.message : ev.message;
+    var stack = ev.error && ev.error.stack ? '\\n\\n' + ev.error.stack.split('\\n').slice(0,4).join('\\n') : '';
+    d.textContent = '⚠ Mol* crash:\\n' + msg + stack;
+    el.style.position = 'relative';
+    el.appendChild(d);
+});
+window.addEventListener('unhandledrejection', function(ev) {
+    var el = document.querySelector('[data-phonos-viewer], #mol-vis-viewport, #viewer-3d-main');
+    if (!el) return;
+    var d = document.createElement('div');
+    d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(9,9,11,.85);color:#f59e0b;font:12px monospace;text-align:center;padding:20px;z-index:9999;white-space:pre-wrap;word-break:break-all';
+    var msg = ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason);
+    d.textContent = '⚠ Mol* async error:\\n' + msg;
+    el.style.position = 'relative';
+    el.appendChild(d);
+});
+</script>
+<script src="{{ url_for('static', filename='js/phonos_viewer.js') }}?v=c2ddb55d"></script>

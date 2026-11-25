@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang | default('en') }}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Copilot · Phonos</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}?v=20261115o">
+</head>
+<body class="agent-page-body" data-page="agent" data-agent-mode="page"
+      data-csrf="{{ csrf_token }}"
+      data-user-id="{{ current_user.id or '' }}"
+      data-username="{{ current_user.username or '' }}"
+      data-is-admin="{{ '1' if current_user.is_admin else '0' }}">
+
+    <header class="agent-page-header">
+        <a class="agent-brand" href="{{ url_for('dashboard') }}">
+            <img src="{{ url_for('static', filename='logo-small.png') }}" alt="" width="26" height="26">
+            <span>Phonos</span>
+            <span class="agent-brand-sep">/</span>
+            <strong>Copilot</strong>
+        </a>
+        <nav class="agent-page-nav" aria-label="Assistant navigation">
+            <a href="{{ url_for('dashboard') }}">Back to workspace</a>
+            <a href="/custom-models">Models &amp; Endpoints</a>
+            <a href="{{ url_for('notebook_page') }}">Notebook</a>
+            <a href="{{ url_for('analytics') }}">3D Analytics</a>
+            {% if current_user.is_admin %}
+            <a href="/admin/accounts">Accounts &amp; Updates</a>
+            {% endif %}
+        </nav>
+        <div class="agent-page-user">
+            <span class="agent-pill">{{ current_user.username or 'User' }}</span>
+            <a class="agent-pill is-link" href="{{ url_for('logout') }}">Sign out</a>
+        </div>
+    </header>
+
+    <main id="phonos-agent-root" class="agent-page-root" aria-live="polite">
+        <noscript>Phonos Copilot needs JavaScript. Enable it and reload this page.</noscript>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/agent-context.js') }}?v=20261115o" defer></script>
+    <script src="{{ url_for('static', filename='js/agent.js') }}?v=20261115o" defer></script>
+</body>
+</html>

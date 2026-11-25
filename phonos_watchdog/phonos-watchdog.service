@@ -1,0 +1,25 @@
+[Unit]
+Description=Phonos Watchdog (self-healing supervisor for app/mrs/db/workers)
+# Intentionally NO Requires=/After= on redis/postgres: the watchdog must keep
+# running and be able to heal those services precisely when they are down.
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/phonos
+# phonos_watchdog reads /opt/phonos/.env itself; no EnvironmentFile
+# coupling so a malformed .env can never stop the watchdog from starting.
+Environment=PYTHONPATH=/opt/phonos
+Environment=PATH=/opt/phonos/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3.11 -m phonos_watchdog run
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=phonos-watchdog
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,64 @@
+Phonos Non-Commercial Source License (v1.0)
+Copyright (c) 2026 FyreFly Systems GbR / mxsp. All rights reserved.
+
+1. Permitted Non-Commercial Use
+You are granted a non-exclusive, worldwide, royalty-free license to use, copy,
+study, modify, and distribute this software and its source code solely for
+Non-Commercial Purposes, subject to the conditions below.
+
+"Non-Commercial Purposes" means personal use, academic research, education,
+evaluation, internal testing, and non-profit scientific experimentation that is
+not intended for or directed toward commercial advantage, monetary compensation,
+for-profit drug discovery/clinical programs, or production business operations.
+
+2. Commercial Use Restriction
+You may NOT use this software, in whole or in part, for any commercial purpose—
+including operating it in a for-profit biotech, pharmaceutical, or commercial
+R&D environment, selling it, offering it as a hosted/SaaS service, or bundling
+it into commercial products—without obtaining a separate written commercial
+license from the copyright holder.
+
+For commercial licensing inquiries, contact the repository maintainers at:
+https://github.com/mxsp/phonos
+
+3. Redistribution Conditions
+Any redistribution of the software or modified versions must:
+  (a) retain this copyright notice and full license text;
+  (b) clearly indicate any modifications made to the original files; and
+  (c) include the THIRD_PARTY_LICENSES.md and DISCLAIMER.md notices.
+
+4. Research Use Only, Biosecurity & Upstream Model Terms
+This software is strictly FOR RESEARCH USE ONLY (RUO) and is NOT a medical
+device, clinical decision support system, or validated diagnostic/therapeutic
+tool. Computational predictions (protein structures, docking poses, affinities,
+designed sequences, and generated molecules/nucleic acids) are probabilistic
+estimates that have NOT been experimentally verified for safety, toxicity, or
+efficacy.
+
+Users are solely responsible for:
+  (a) complying with all applicable biosafety, biosecurity, dual-use, chemical
+      safety, export-control, and data-protection laws;
+  (b) never using the software to design, optimize, or screen regulated
+      pathogens, biological toxins, chemical weapons, or hazardous agents; and
+  (c) complying with the separate license terms and acceptable-use policies of
+      any third-party AI models, weights, or APIs connected to the software
+      (including NVIDIA NIM / BioNeMo, MolMIM non-commercial restrictions,
+      OpenFold3, Boltz-2, RFdiffusion, ProteinMPNN, DiffDock, and Evo 2).
+
+5. No Warranty & Limitation of Liability
+THE SOFTWARE AND ALL COMPUTATIONAL OUTPUTS ARE PROVIDED "AS IS", WITHOUT
+WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, ACCURACY, SCIENTIFIC VALIDITY, SAFETY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, WET-LAB SYNTHESIS OUTCOMES,
+CLINICAL/BIOLOGICAL INJURY, REGULATORY PENALTIES, OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE, ITS PREDICTIONS, OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Note: Keep in mind that `packages/sdk` (the standalone client library) may carry
+its own package-level license notice where explicitly stated; the core Phonos
+platform is governed by this license. If you prefer a standard third-party
+template for non-commercial source distribution, see also the PolyForm
+Noncommercial License 1.0.0:
+https://polyformproject.org/licenses/noncommercial/1.0.0/

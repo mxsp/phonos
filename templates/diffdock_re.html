@@ -1,0 +1,545 @@
+{% extends "_configure_base.html" %}
+{% from "partials/_model_badges.html" import runs_at with context %}
+
+{% block model_id %}diffdock-re{% endblock %}
+
+{% block title_i18n %}diffdock.title{% endblock %}
+{% block page_title_text %}Phonos - DiffDock Molecular Docking{% endblock %}
+
+{% block head_extra %}
+<style>
+.poses-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.pose-item { background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.2s; }
+.pose-item:hover { border-color: var(--cfg-accent); }
+.pose-item.active { border-color: var(--cfg-accent); background: var(--cfg-accent-bg); }
+.pose-label { font-size: 13px; font-weight: 600; color: var(--cfg-text); }
+.pose-confidence { font-size: 12px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block model_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>{% endblock %}
+
+{% block model_name %}<span data-i18n="diffdock.heading">DiffDock Molecular Docking</span>{% endblock %}
+
+{% block model_tagline %}<span data-i18n="diffdock.subheading">Diffusion-based protein-ligand docking via MIT DiffDock</span>{% endblock %}
+
+{% block header_badge %}{{ runs_at('diffdock-re') }}{% endblock %}
+
+{% block credits %}{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="diffdock.inputs">Docking Inputs</h2></div>
+                    <div class="card-body">
+                        <form id="dock-form">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="diffdock.proteinStructure">Protein Structure</label>
+                                <div class="input-tabs">
+                                    <button type="button" class="tab-btn active" id="tab-paste" data-i18n="diffdock.pastePdb">Paste PDB/CIF</button>
+                                    <button type="button" class="tab-btn" id="tab-upload" data-i18n="diffdock.uploadFile">Upload File</button>
+                                    <button type="button" class="tab-btn" id="tab-pdbid" data-i18n="diffdock.pdbId">PDB ID</button>
+                                </div>
+                                <div id="pdb-paste-area">
+                                    <textarea id="protein-pdb" class="form-textarea" style="min-height:180px;" placeholder="Paste PDB or mmCIF file content here..." data-i18n-placeholder="diffdock.pdbPlaceholder"></textarea>
+                                </div>
+                                <div id="pdb-upload-area" style="display:none;">
+                                    <input type="file" id="pdb-file" accept=".pdb,.cif,.mmcif,.ent" class="form-input" style="padding:8px;">
+                                </div>
+                                <div id="pdb-id-area" style="display:none;">
+                                    <div style="display:flex;gap:8px;">
+                                        <input type="text" id="pdb-id-input" class="form-input" placeholder="e.g. 4HHB" style="flex:1;text-transform:uppercase;">
+                                        <button type="button" id="fetch-pdb-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:12px;">Fetch</button>
+                                    </div>
+                                    <div id="pdb-id-status" style="font-size:11px;color:#71717a;margin-top:6px;"></div>
+                                </div>
+                                <div class="form-hint" data-i18n="diffdock.pdbHint">The receptor protein structure in PDB, mmCIF, or PDB ID format.</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="diffdock.ligand">Ligand</label>
+                                <div class="input-tabs">
+                                    <button type="button" class="tab-btn active" id="ltab-smiles" data-i18n="diffdock.smilesTab">SMILES</button>
+                                    <button type="button" class="tab-btn" id="ltab-sdf" data-i18n="diffdock.uploadSdf">Upload SDF</button>
+                                </div>
+                                <div id="ligand-smiles-area">
+                                    <input type="text" id="ligand-smiles" class="form-input" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O">
+                                    <div class="form-hint" data-i18n="diffdock.smilesHint">Small molecule ligand in SMILES notation.</div>
+                                </div>
+                                <div id="ligand-sdf-area" style="display:none;">
+                                    <input type="file" id="ligand-file" accept=".sdf,.mol,.mol2" class="form-input" style="padding:8px;">
+                                    <div class="form-hint" data-i18n="diffdock.sdfHint">Upload a ligand structure file (SDF, MOL, or MOL2). DiffDock reads SDF natively.</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="num-poses" data-i18n="diffdock.numPoses">Number of Poses</label>
+                                <input type="number" id="num-poses" class="form-input" value="10" min="1" max="20">
+                                <div class="form-hint" data-i18n="diffdock.posesHint">How many docked poses to generate (1-20).</div>
+                            </div>
+                            <div class="status-bar" id="status-bar">
+                                <div class="status-dot idle" id="status-dot"></div>
+                                <span id="status-text" style="color:#71717a;" data-i18n="common.ready">Ready</span>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button type="button" id="preview-btn" class="btn-primary" style="width:auto;padding:8px 16px;font-size:12px;background:#27272a;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <span data-i18n="diffdock.preview">Preview</span>
+                                </button>
+                                <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+                                    <span data-i18n="diffdock.runDocking">Run Docking</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="diffdock.results">Docking Results</h2></div>
+                    <div class="card-body" style="padding:16px;">
+                        <div class="viewer-container">
+                            <div id="structure-viewer" data-phonos-viewer></div>
+                            <div class="viewer-placeholder" id="viewer-placeholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+                                <span style="font-size:14px;" data-i18n="diffdock.resultsPlaceholder">Docking results will appear here</span>
+                            </div>
+                            <div class="viewer-controls" id="viewer-controls" style="display:none;">
+                                <button class="viewer-btn" onclick="resetView()" data-i18n="common.reset">Reset</button>
+                                <button class="viewer-btn" onclick="toggleSpin()" data-i18n="common.spin">Spin</button>
+                                <button class="viewer-btn" onclick="showSurface()" data-i18n="common.surface">Surface</button>
+                            </div>
+                        </div>
+                        <div class="metrics-row" id="metrics-row" style="display:none;"></div>
+                        <div id="poses-section" style="display:none;">
+                            <div style="font-size:13px;font-weight:600;color:#a1a1aa;margin-top:16px;margin-bottom:8px;" data-i18n="diffdock.dockedPoses">Docked Poses</div>
+                            <div class="poses-list" id="poses-list"></div>
+                        </div>
+                        <div id="download-section" style="display:none;">
+                            <button class="download-btn" onclick="downloadAll()" data-i18n="diffdock.downloadAll">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download All Poses (SDF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+    (function() {
+        var phonosViewer = null;
+        var allPoses = [];
+        var proteinPdb = '';
+        var taskId = null;
+        var pollTimer = null;
+        var proteinInputType = 'paste'; // 'paste', 'upload', 'pdbid'
+        var ligandInputType = 'smiles'; // 'smiles', 'sdf'
+
+        function getCsrf() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
+        }
+
+        function setStatus(state, msg) {
+            var dot = document.getElementById('status-dot');
+            var text = document.getElementById('status-text');
+            dot.className = 'status-dot ' + state;
+            text.textContent = msg;
+            text.style.color = state === 'error' ? '#ef4444' : state === 'success' ? '#10b981' : '#a1a1aa';
+        }
+
+        function clearChildren(el) {
+            while (el.firstChild) { el.removeChild(el.firstChild); }
+        }
+
+        function getProteinData() {
+            return new Promise(function(resolve, reject) {
+                if (proteinInputType === 'paste') {
+                    var text = document.getElementById('protein-pdb').value.trim();
+                    resolve(text);
+                } else if (proteinInputType === 'upload') {
+                    var fileInput = document.getElementById('pdb-file');
+                    if (fileInput.files && fileInput.files[0]) {
+                        var fr = new FileReader();
+                        fr.onload = function(ev) { resolve(ev.target.result); };
+                        fr.onerror = function() { reject(new Error('Failed to read file')); };
+                        fr.readAsText(fileInput.files[0]);
+                    } else {
+                        resolve('');
+                    }
+                } else if (proteinInputType === 'pdbid') {
+                    var pdbId = document.getElementById('pdb-id-input').value.trim();
+                    if (!pdbId) { reject(new Error('No PDB ID entered')); return; }
+                    fetch('/api/diffdock-re/fetch-pdb', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                        body: JSON.stringify({ pdb_id: pdbId })
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.error) { reject(new Error(data.message || 'Failed to fetch PDB')); return; }
+                        resolve(data.structure_data);
+                    })
+                    .catch(function(err) { reject(err); });
+                }
+            });
+        }
+
+        function getLigandData() {
+            return new Promise(function(resolve, reject) {
+                if (ligandInputType === 'sdf') {
+                    var fileInput = document.getElementById('ligand-file');
+                    if (fileInput.files && fileInput.files[0]) {
+                        var fr = new FileReader();
+                        fr.onload = function(ev) { resolve({ data: ev.target.result, type: 'sdf' }); };
+                        fr.onerror = function() { reject(new Error('Failed to read ligand file')); };
+                        fr.readAsText(fileInput.files[0]);
+                    } else {
+                        resolve({ data: '', type: 'sdf' });
+                    }
+                } else {
+                    var text = document.getElementById('ligand-smiles').value.trim();
+                    // Defensive auto-detect: if SDF/MOL content was pasted into the
+                    // SMILES box (multi-line + a structure-file marker), send it as
+                    // SDF so DiffDock doesn't fail to read the molecule description.
+                    var looksLikeSdf = text.indexOf('\n') !== -1 && (
+                        text.indexOf('V2000') !== -1 ||
+                        text.indexOf('V3000') !== -1 ||
+                        text.indexOf('$$$$') !== -1 ||
+                        text.indexOf('M  END') !== -1
+                    );
+                    resolve({ data: text, type: looksLikeSdf ? 'sdf' : 'smiles' });
+                }
+            });
+        }
+
+        // Tab switching
+        document.getElementById('tab-paste').addEventListener('click', function() {
+            document.getElementById('tab-paste').className = 'tab-btn active';
+            document.getElementById('tab-upload').className = 'tab-btn';
+            document.getElementById('tab-pdbid').className = 'tab-btn';
+            document.getElementById('pdb-paste-area').style.display = '';
+            document.getElementById('pdb-upload-area').style.display = 'none';
+            document.getElementById('pdb-id-area').style.display = 'none';
+            proteinInputType = 'paste';
+        });
+        document.getElementById('tab-upload').addEventListener('click', function() {
+            document.getElementById('tab-upload').className = 'tab-btn active';
+            document.getElementById('tab-paste').className = 'tab-btn';
+            document.getElementById('tab-pdbid').className = 'tab-btn';
+            document.getElementById('pdb-paste-area').style.display = 'none';
+            document.getElementById('pdb-upload-area').style.display = '';
+            document.getElementById('pdb-id-area').style.display = 'none';
+            proteinInputType = 'upload';
+        });
+        document.getElementById('tab-pdbid').addEventListener('click', function() {
+            document.getElementById('tab-pdbid').className = 'tab-btn active';
+            document.getElementById('tab-paste').className = 'tab-btn';
+            document.getElementById('tab-upload').className = 'tab-btn';
+            document.getElementById('pdb-paste-area').style.display = 'none';
+            document.getElementById('pdb-upload-area').style.display = 'none';
+            document.getElementById('pdb-id-area').style.display = '';
+            proteinInputType = 'pdbid';
+        });
+
+        // Ligand tab switching (SMILES vs SDF upload)
+        document.getElementById('ltab-smiles').addEventListener('click', function() {
+            document.getElementById('ltab-smiles').className = 'tab-btn active';
+            document.getElementById('ltab-sdf').className = 'tab-btn';
+            document.getElementById('ligand-smiles-area').style.display = '';
+            document.getElementById('ligand-sdf-area').style.display = 'none';
+            ligandInputType = 'smiles';
+        });
+        document.getElementById('ltab-sdf').addEventListener('click', function() {
+            document.getElementById('ltab-sdf').className = 'tab-btn active';
+            document.getElementById('ltab-smiles').className = 'tab-btn';
+            document.getElementById('ligand-smiles-area').style.display = 'none';
+            document.getElementById('ligand-sdf-area').style.display = '';
+            ligandInputType = 'sdf';
+        });
+
+        // Fetch PDB by ID
+        document.getElementById('fetch-pdb-btn').addEventListener('click', doFetchPdb);
+        document.getElementById('pdb-id-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); doFetchPdb(); }
+        });
+
+        function doFetchPdb() {
+            var pdbId = document.getElementById('pdb-id-input').value.trim();
+            var statusEl = document.getElementById('pdb-id-status');
+            if (!pdbId) { statusEl.textContent = 'Please enter a PDB ID'; return; }
+            statusEl.textContent = 'Fetching...';
+            statusEl.style.color = '#a1a1aa';
+            fetch('/api/diffdock-re/fetch-pdb', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                body: JSON.stringify({ pdb_id: pdbId })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    statusEl.textContent = 'Error: ' + (data.message || 'Failed to fetch');
+                    statusEl.style.color = '#ef4444';
+                    return;
+                }
+                statusEl.textContent = 'Fetched ' + pdbId.toUpperCase() + ' (' + (data.format || 'pdb') + ', ' + (data.structure_data ? data.structure_data.length + ' bytes' : 'N/A') + ')';
+                statusEl.style.color = '#10b981';
+                // Load preview automatically
+                loadProteinPreview(data.structure_data, data.format || 'pdb');
+            })
+            .catch(function(err) {
+                statusEl.textContent = 'Error: ' + err.message;
+                statusEl.style.color = '#ef4444';
+            });
+        }
+
+        // Preview button
+        document.getElementById('preview-btn').addEventListener('click', function() {
+            setStatus('running', 'Loading preview...');
+            getProteinData().then(function(pdb) {
+                if (!pdb) { setStatus('error', 'No protein data to preview'); return; }
+                loadProteinPreview(pdb);
+                setStatus('idle', 'Preview loaded');
+            }).catch(function(err) {
+                setStatus('error', 'Preview error: ' + err.message);
+            });
+        });
+
+        function loadProteinPreview(data, format) {
+            format = format || 'pdb';
+            if (!data) return;
+            document.getElementById('viewer-placeholder').style.display = 'none';
+            document.getElementById('viewer-controls').style.display = '';
+
+            if (typeof PhonosViewer === 'undefined') {
+                setStatus('error', '3D viewer library not loaded yet.');
+                return;
+            }
+
+            try {
+                if (phonosViewer) { phonosViewer.destroy(); }
+                phonosViewer = PhonosViewer.create('structure-viewer', {
+                    hideControls: true,
+                    sequencePanel: false
+                });
+                phonosViewer.loadData(data, format);
+            } catch(err) {
+                console.error('PhonosViewer error:', err);
+                setStatus('error', 'Error loading preview: ' + err.message);
+            }
+        }
+
+        document.getElementById('dock-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var numPoses = parseInt(document.getElementById('num-poses').value) || 10;
+
+            // Validate the ligand input per mode before doing any async work.
+            if (ligandInputType === 'sdf') {
+                var lf = document.getElementById('ligand-file');
+                if (!lf.files || !lf.files[0]) { setStatus('error', 'Please choose a ligand SDF file'); return; }
+            } else {
+                if (!document.getElementById('ligand-smiles').value.trim()) { setStatus('error', 'Please enter a ligand SMILES'); return; }
+            }
+
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            setStatus('running', 'Submitting docking job...');
+
+            Promise.all([getProteinData(), getLigandData()]).then(function(results) {
+                var pdb = results[0];
+                var ligandInfo = results[1];
+                if (!pdb) { setStatus('error', 'Please provide a protein structure'); btn.disabled = false; return; }
+                if (!ligandInfo || !ligandInfo.data) { setStatus('error', 'Please provide a ligand'); btn.disabled = false; return; }
+                proteinPdb = pdb;
+
+                // Auto-detect format: check if it looks like CIF/mmCIF
+                var proteinFormat = 'pdb';
+                if (pdb.trim().startsWith('data_') || pdb.indexOf('_atom_site.') !== -1) {
+                    proteinFormat = 'cif';
+                }
+
+                fetch('/api/diffdock-re/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                    body: JSON.stringify({
+                        protein: pdb,
+                        protein_format: proteinFormat,
+                        ligand: ligandInfo.data,
+                        ligand_file_type: ligandInfo.type,
+                        num_poses: numPoses
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) { throw new Error(data.message || 'Request failed'); }
+                    if (data.task_id) {
+                        taskId = data.task_id;
+                        setStatus('running', 'Docking in progress...');
+                        pollStatus();
+                    } else {
+                        handleResult(data);
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function(err) { setStatus('error', 'Error: ' + err.message); btn.disabled = false; });
+            }).catch(function(err) {
+                setStatus('error', 'Error: ' + err.message);
+                btn.disabled = false;
+            });
+        });
+
+        function pollStatus() {
+            if (!taskId) return;
+            pollTimer = setInterval(function() {
+                fetch('/api/diffdock-re/status/' + encodeURIComponent(taskId), { headers: { 'X-CSRF-Token': getCsrf() } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        // Backend returned an error
+                        clearInterval(pollTimer);
+                        setStatus('error', 'Docking failed: ' + (data.message || 'Unknown error'));
+                        document.getElementById('submit-btn').disabled = false;
+                    } else if (data.status === 'pending') {
+                        // Still processing — update elapsed time if available
+                        var elapsed = data.elapsed ? ' (' + data.elapsed + 's)' : '';
+                        setStatus('running', 'Docking in progress...' + elapsed);
+                    } else {
+                        // No error and not pending — must be the completed result
+                        clearInterval(pollTimer);
+                        handleResult(data);
+                        document.getElementById('submit-btn').disabled = false;
+                    }
+                })
+                .catch(function(err) { clearInterval(pollTimer); setStatus('error', 'Polling error: ' + err.message); document.getElementById('submit-btn').disabled = false; });
+            }, 4000);
+        }
+
+        function handleResult(data) {
+            var poses = data.ligand_positions || data.poses || [];
+            var confidences = data.position_confidence || data.pose_confidence || [];
+            var protein = data.protein || data.visualization_files || proteinPdb || '';
+
+            // Hosted API returns docked_ligand as single SDF string with $$$$ separators
+            if (!poses.length && data.docked_ligand) {
+                poses = data.docked_ligand.split('$$$$').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+            }
+
+            allPoses = poses;
+            if (!poses.length) { setStatus('error', 'No docked poses returned'); return; }
+            buildMetrics(poses.length, confidences);
+            buildPoseList(poses, confidences, protein);
+            loadPose(0, protein, poses);
+            document.getElementById('download-section').style.display = '';
+            setStatus('success', poses.length + ' pose(s) docked successfully');
+        }
+
+        function buildMetrics(numPoses, confidences) {
+            var row = document.getElementById('metrics-row');
+            clearChildren(row);
+            row.style.display = 'grid';
+            var bestConf = confidences.length ? Math.max.apply(null, confidences).toFixed(2) : 'N/A';
+            var avgConf = confidences.length ? (confidences.reduce(function(a,b){return a+b;},0)/confidences.length).toFixed(2) : 'N/A';
+            [
+                { val: String(numPoses), label: 'Total Poses' },
+                { val: String(bestConf), label: 'Best Confidence', color: '#10b981' },
+                { val: String(avgConf), label: 'Avg Confidence' }
+            ].forEach(function(m) {
+                var card = document.createElement('div');
+                card.className = 'metric-card';
+                var v = document.createElement('div');
+                v.className = 'metric-value';
+                v.textContent = m.val;
+                if (m.color) { v.style.color = m.color; }
+                var l = document.createElement('div');
+                l.className = 'metric-label';
+                l.textContent = m.label;
+                card.appendChild(v);
+                card.appendChild(l);
+                row.appendChild(card);
+            });
+        }
+
+        function buildPoseList(poses, confidences, protein) {
+            var list = document.getElementById('poses-list');
+            clearChildren(list);
+            document.getElementById('poses-section').style.display = '';
+            poses.slice(0, 20).forEach(function(pose, i) {
+                var item = document.createElement('div');
+                item.className = 'pose-item' + (i === 0 ? ' active' : '');
+                var label = document.createElement('div');
+                label.className = 'pose-label';
+                label.textContent = 'Pose ' + (i + 1);
+                var right = document.createElement('div');
+                right.style.display = 'flex';
+                right.style.alignItems = 'center';
+                right.style.gap = '12px';
+                if (confidences[i] !== undefined) {
+                    var conf = parseFloat(confidences[i]);
+                    var confEl = document.createElement('div');
+                    confEl.className = 'pose-confidence';
+                    confEl.textContent = conf.toFixed(2);
+                    confEl.style.color = conf > 0 ? '#10b981' : conf > -1 ? '#f59e0b' : '#ef4444';
+                    right.appendChild(confEl);
+                }
+                var scoreLabel = document.createElement('div');
+                scoreLabel.style.fontSize = '12px';
+                scoreLabel.style.color = '#71717a';
+                scoreLabel.textContent = 'Confidence';
+                right.appendChild(scoreLabel);
+                item.appendChild(label);
+                item.appendChild(right);
+                var capturedI = i;
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.pose-item').forEach(function(el) { el.classList.remove('active'); });
+                    item.classList.add('active');
+                    loadPose(capturedI, protein, poses);
+                });
+                list.appendChild(item);
+            });
+        }
+
+        function loadPose(idx, protein, poses) {
+            document.getElementById('viewer-placeholder').style.display = 'none';
+            document.getElementById('viewer-controls').style.display = '';
+
+            if (typeof PhonosViewer === 'undefined') {
+                setStatus('error', '3D viewer library not loaded yet. Please try again in a moment.');
+                return;
+            }
+
+            try {
+                if (phonosViewer) { phonosViewer.destroy(); }
+                phonosViewer = PhonosViewer.create('structure-viewer', {
+                    hideControls: true,
+                    sequencePanel: false
+                });
+
+                if (protein) {
+                    phonosViewer.loadData(protein, 'pdb');
+                }
+            } catch(err) {
+                console.error('PhonosViewer error:', err);
+                setStatus('error', 'Error loading structure: ' + err.message);
+            }
+        }
+
+        window.resetView = function() { if (phonosViewer) { phonosViewer.resetView(); } };
+        window.toggleSpin = function() { if (phonosViewer) { phonosViewer.toggleSpin(); } };
+        window.showSurface = function() { /* Surface handled automatically by Mol* */ };
+        window.downloadAll = function() {
+            if (!allPoses.length) return;
+            var combined = allPoses.join('\n$$$$\n') + '\n$$$$\n';
+            var blob = new Blob([combined], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'diffdock_poses.sdf';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    })();
+    </script>
+{% endblock %}

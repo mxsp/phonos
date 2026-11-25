@@ -1,0 +1,219 @@
+/* ============================================================================
+   Wolfram Notebook — syntax highlighting, error panel
+   ============================================================================ */
+
+/* ---------- Syntax-highlighted Wolfram source --------------------------- */
+.wolfram-nb-source {
+    margin: 0;
+    padding: 10px 12px;
+    font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+    font-size: 12.5px;
+    color: var(--text-primary, #f5f8fa);
+    background: transparent;
+    overflow: auto;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    line-height: 1.5;
+}
+
+.wolfram-nb-source .wl-comment  { color: #6a9955; font-style: italic; }
+.wolfram-nb-source .wl-string   { color: #ce9178; }
+.wolfram-nb-source .wl-number   { color: #b5cea8; }
+.wolfram-nb-source .wl-keyword  { color: #c586c0; font-weight: 600; }
+.wolfram-nb-source .wl-builtin  { color: #569cd6; font-weight: 600; }
+.wolfram-nb-source .wl-atom     { color: #4fc1ff; }
+.wolfram-nb-source .wl-variable { color: #9cdcfe; }
+.wolfram-nb-source .wl-operator { color: #d4d4d4; }
+.wolfram-nb-source .wl-bracket  { color: #ffd700; }
+.wolfram-nb-source .wl-pattern  { color: #dcdcaa; }
+.wolfram-nb-source .wl-slot     { color: #f0a8d0; }
+.wolfram-nb-source .wl-error    { color: #f48771; text-decoration: underline wavy #f48771; }
+
+.wolfram-nb-source-line {
+    display: block;
+    padding-left: 4ch;
+    position: relative;
+    min-height: 1.5em;
+}
+
+.wolfram-nb-source-line[data-line-error="1"] {
+    background: rgba(244, 135, 113, 0.12);
+    box-shadow: inset 3px 0 0 #f48771;
+}
+
+.wolfram-nb-line-num {
+    position: absolute;
+    left: 0;
+    width: 3ch;
+    color: var(--text-tertiary, #6b7280);
+    text-align: right;
+    user-select: none;
+    font-variant-numeric: tabular-nums;
+    padding-right: 4px;
+}
+
+/* ---------- Structured error panel -------------------------------------- */
+.wolfram-nb-error {
+    border: 1px solid rgba(245, 86, 86, 0.35);
+    border-left: 4px solid var(--accent-error, #f55656);
+    border-radius: var(--r-ui, 0px);
+    background: rgba(245, 86, 86, 0.06);
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: 12.5px;
+    color: var(--text-primary, #f5f8fa);
+    overflow: hidden;
+}
+
+.wolfram-nb-error-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(245, 86, 86, 0.12);
+    border-bottom: 1px solid rgba(245, 86, 86, 0.25);
+}
+
+.wolfram-nb-error-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    color: var(--accent-error, #f55656);
+}
+
+.wolfram-nb-error-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent-error, #f55656);
+    flex: 1;
+    word-break: break-word;
+}
+
+.wolfram-nb-error-tag {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(245, 86, 86, 0.2);
+    color: var(--accent-error, #f55656);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.wolfram-nb-error-body {
+    padding: 10px 12px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary, #f5f8fa);
+    max-height: 280px;
+    overflow: auto;
+}
+
+.wolfram-nb-error-hint {
+    padding: 6px 12px 8px;
+    border-top: 1px solid rgba(245, 86, 86, 0.2);
+    background: rgba(0, 0, 0, 0.18);
+    font-size: 11.5px;
+    color: var(--text-secondary, #c7d0db);
+}
+
+.wolfram-nb-error-hint code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 4px;
+    border-radius: var(--r-ui, 0px);
+    font-family: var(--font-mono, monospace);
+}
+
+.wolfram-nb-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(245, 86, 86, 0.2);
+    background: rgba(0, 0, 0, 0.10);
+}
+
+.wolfram-nb-err-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-sans, sans-serif);
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: var(--r-ui, 0px);
+    border: 1px solid var(--border-color, #2d3748);
+    background: var(--bg-tertiary, #232a32);
+    color: var(--text-primary, #f5f8fa);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.wolfram-nb-err-btn:hover {
+    background: var(--bg-primary, #181d23);
+    border-color: var(--accent-primary, #137CBD);
+}
+
+.wolfram-nb-err-btn.primary {
+    background: var(--accent-primary, #137CBD);
+    border-color: var(--accent-primary, #137CBD);
+    color: #fff;
+}
+
+.wolfram-nb-err-btn.primary:hover {
+    background: #1f8ad6;
+    border-color: #1f8ad6;
+}
+
+.wolfram-nb-err-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* category-specific accent */
+.wolfram-nb-error.cat-syntax   { border-left-color: #f0a040; }
+.wolfram-nb-error.cat-syntax   .wolfram-nb-error-title,
+.wolfram-nb-error.cat-syntax   .wolfram-nb-error-tag,
+.wolfram-nb-error.cat-syntax   .wolfram-nb-error-icon { color: #f0a040; }
+.wolfram-nb-error.cat-syntax   .wolfram-nb-error-head { background: rgba(240, 160, 64, 0.12); border-bottom-color: rgba(240, 160, 64, 0.25); }
+.wolfram-nb-error.cat-syntax   .wolfram-nb-error-tag  { background: rgba(240, 160, 64, 0.20); }
+.wolfram-nb-error.cat-syntax   { border-color: rgba(240, 160, 64, 0.35); background: rgba(240, 160, 64, 0.06); }
+
+.wolfram-nb-error.cat-undefined { border-left-color: #e87b00; }
+.wolfram-nb-error.cat-undefined .wolfram-nb-error-title,
+.wolfram-nb-error.cat-undefined .wolfram-nb-error-tag,
+.wolfram-nb-error.cat-undefined .wolfram-nb-error-icon { color: #e87b00; }
+.wolfram-nb-error.cat-undefined .wolfram-nb-error-head { background: rgba(232, 123, 0, 0.12); border-bottom-color: rgba(232, 123, 0, 0.25); }
+.wolfram-nb-error.cat-undefined .wolfram-nb-error-tag  { background: rgba(232, 123, 0, 0.20); }
+.wolfram-nb-error.cat-undefined { border-color: rgba(232, 123, 0, 0.35); background: rgba(232, 123, 0, 0.06); }
+
+.wolfram-nb-error.cat-auth      { border-left-color: #c084fc; }
+.wolfram-nb-error.cat-auth      .wolfram-nb-error-title,
+.wolfram-nb-error.cat-auth      .wolfram-nb-error-tag,
+.wolfram-nb-error.cat-auth      .wolfram-nb-error-icon { color: #c084fc; }
+.wolfram-nb-error.cat-auth      .wolfram-nb-error-head { background: rgba(192, 132, 252, 0.12); border-bottom-color: rgba(192, 132, 252, 0.25); }
+.wolfram-nb-error.cat-auth      .wolfram-nb-error-tag  { background: rgba(192, 132, 252, 0.20); }
+.wolfram-nb-error.cat-auth      { border-color: rgba(192, 132, 252, 0.35); background: rgba(192, 132, 252, 0.06); }
+
+.wolfram-nb-error.cat-network   { border-left-color: #fbbf24; }
+.wolfram-nb-error.cat-network   .wolfram-nb-error-title,
+.wolfram-nb-error.cat-network   .wolfram-nb-error-tag,
+.wolfram-nb-error.cat-network   .wolfram-nb-error-icon { color: #fbbf24; }
+.wolfram-nb-error.cat-network   .wolfram-nb-error-head { background: rgba(251, 191, 36, 0.12); border-bottom-color: rgba(251, 191, 36, 0.25); }
+.wolfram-nb-error.cat-network   .wolfram-nb-error-tag  { background: rgba(251, 191, 36, 0.20); }
+.wolfram-nb-error.cat-network   { border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.06); }
+
+.wolfram-nb-error.cat-timeout   { border-left-color: #f87171; }
+.wolfram-nb-error.cat-timeout   .wolfram-nb-error-title,
+.wolfram-nb-error.cat-timeout   .wolfram-nb-error-tag,
+.wolfram-nb-error.cat-timeout   .wolfram-nb-error-icon { color: #f87171; }
+.wolfram-nb-error.cat-timeout   .wolfram-nb-error-head { background: rgba(248, 113, 113, 0.12); border-bottom-color: rgba(248, 113, 113, 0.25); }
+.wolfram-nb-error.cat-timeout   .wolfram-nb-error-tag  { background: rgba(248, 113, 113, 0.20); }
+.wolfram-nb-error.cat-timeout   { border-color: rgba(248, 113, 113, 0.35); background: rgba(248, 113, 113, 0.06); }
+
+.wolfram-nb-error.is-collapsed .wolfram-nb-error-body,
+.wolfram-nb-error.is-collapsed .wolfram-nb-error-hint {
+    display: none;
+}
+

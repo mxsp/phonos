@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include '_i18n_scripts.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="api.title">Phonos API Documentation</title>
+    <meta name="description" content="Phonos REST API documentation — programmatically submit protein structure prediction, molecular docking, and protein design jobs, retrieve results, and manage projects.">
+    <link rel="canonical" href="{{ url_for('api_docs', _external=True) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <style>
+        .api-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--space-8);
+        }
+        .api-section {
+            margin-bottom: var(--space-8);
+        }
+        .endpoint-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-4);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .endpoint-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        .method-badge {
+            padding: 6px 14px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'Monaco', 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .method-get { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .method-post { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .method-put { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .method-delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .endpoint-path {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: var(--color-text);
+            font-weight: 500;
+        }
+        .code-block-wrapper {
+            position: relative;
+            margin: var(--space-3) 0;
+        }
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+            overflow-x: auto;
+        }
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #e5e7eb;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--color-primary);
+            padding: 6px 12px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .copy-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateY(-1px);
+        }
+        .copy-btn.copied {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+        .info-box {
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 4px solid #3b82f6;
+            padding: var(--space-4);
+            border-radius: var(--border-radius);
+            margin: var(--space-4) 0;
+        }
+        .warning-box {
+            background: rgba(245, 158, 11, 0.05);
+            border-left: 4px solid #f59e0b;
+            padding: var(--space-4);
+            border-radius: var(--border-radius);
+            margin: var(--space-4) 0;
+        }
+        .success-box {
+            background: rgba(34, 197, 94, 0.05);
+            border-left: 4px solid #22c55e;
+            padding: var(--space-4);
+            border-radius: var(--border-radius);
+            margin: var(--space-4) 0;
+        }
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--space-3) 0;
+        }
+        .param-table th,
+        .param-table td {
+            padding: var(--space-2) var(--space-3);
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.875rem;
+        }
+        .param-table th {
+            background: var(--color-surface);
+            font-weight: 600;
+        }
+        .param-name {
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: var(--color-primary);
+        }
+        .required-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 2px 6px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .optional-badge {
+            background: rgba(156, 163, 175, 0.1);
+            color: #9ca3af;
+            padding: 2px 6px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .nav-links {
+            position: sticky;
+            top: 20px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: var(--space-4);
+        }
+        .nav-links a {
+            display: block;
+            padding: var(--space-2);
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--color-primary);
+        }
+        .api-layout > * { min-width: 0; }
+        @media (max-width: 768px) {
+            .api-container {
+                padding: var(--space-4);
+            }
+            .api-layout { grid-template-columns: minmax(0, 1fr) !important; }
+            .endpoint-header { flex-wrap: wrap; }
+            .param-table { display: block; max-width: 100%; overflow-x: auto; }
+            .api-container > .btn { min-height: 32px; display: inline-flex; align-items: center; }
+            .endpoint-path { font-size: 0.95rem; overflow-wrap: anywhere; }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="api-container">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost" style="margin-bottom: var(--space-6);" data-i18n="api.backToHome">
+            &larr; Back to Home
+        </a>
+
+        <div class="api-layout" style="display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: var(--space-6);">
+            <div>
+                <!-- Introduction -->
+                <div class="api-section" id="introduction">
+                    <h1 style="margin-bottom: var(--space-3);" data-i18n="api.title">Phonos API Documentation <span style="font-size: 0.5rem; color: var(--color-text-muted); font-weight: normal;">v2.0</span></h1>
+                    <p class="text-secondary" style="margin-bottom: var(--space-4); line-height: 1.6;" data-i18n="api.introText">
+                        The Phonos API provides programmatic access to our protein structure prediction and molecular docking models.
+                        Use our API to integrate ESMFold, AlphaFold2, and DiffDock into your applications and workflows.
+                    </p>
+                    <div style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--color-primary); padding: var(--space-4); border-radius: var(--border-radius); margin-bottom: var(--space-6);">
+                        <strong data-i18n="api.baseUrl">Base URL:</strong> <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: var(--r-ui, 0px);">https://app.phonos.bio</code>
+                    </div>
+                </div>
+
+                <!-- Authentication -->
+                <div class="api-section" id="authentication">
+                    <h2 style="margin-bottom: var(--space-4);" data-i18n="api.authentication">Authentication</h2>
+                    <p class="text-secondary" style="margin-bottom: var(--space-4); line-height: 1.6;" data-i18n="api.authText">
+                        All API requests (except <code>/v1/health</code>) require authentication using an API key.
+                        You can create and manage API keys in your <a href="{{ url_for('dashboard') }}" style="color: var(--color-primary);" data-i18n="api.dashboardSettings">dashboard settings</a>.
+                    </p>
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.usingApiKey">Using Your API Key</h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-3);" data-i18n="api.authHeader">Include your API key in the <code>Authorization</code> header of each request:</p>
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" onclick="copyCode(this)" data-i18n="api.copy">Copy</button>
+                        <div class="code-block">
+                            <pre>Authorization: Bearer YOUR_API_KEY</pre>
+                        </div>
+                    </div>
+                    <div class="warning-box">
+                        <strong data-i18n="api.keepKeySecure">⚠️ Keep your API key secure!</strong><br>
+                        <span data-i18n="api.keepKeySecureText">Never commit API keys to version control or expose them in client-side code. Treat them like passwords.</span>
+                    </div>
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.exampleRequest">Example Request</h3>
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" onclick="copyCode(this)" data-i18n="api.copy">Copy</button>
+                        <div class="code-block">
+                            <pre>curl -H "Authorization: Bearer pk_abc123..." \
+     https://app.phonos.bio/v1/models</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rate Limiting -->
+                <div class="api-section" id="rate-limits">
+                    <h2 style="margin-bottom: var(--space-4);" data-i18n="api.rateLimiting">Rate Limiting</h2>
+                    <p class="text-secondary" style="margin-bottom: var(--space-4); line-height: 1.6;" data-i18n="api.rateLimitText">
+                        API keys have configurable rate limits. When you exceed your rate limit, you'll receive a <code>429 Too Many Requests</code> response.
+                        Rate limits are enforced per API key, not per user.
+                    </p>
+                    <div class="info-box">
+                        <strong data-i18n="api.rateLimitBestPractices">💡 Rate Limit Best Practices</strong>
+                        <ul style="margin: var(--space-2) 0 0; padding-left: var(--space-5);">
+                            <li data-i18n="api.backoff">Implement exponential backoff when you receive 429 responses</li>
+                            <li data-i18n="api.cacheResults">Cache results when possible to reduce API calls</li>
+                            <li data-i18n="api.batchOps">Use batch operations if your workflow allows</li>
+                            <li data-i18n="api.monitorUsage">Monitor your rate limit usage in the dashboard</li>
+                        </ul>
+                    </div>
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" onclick="copyCode(this)" data-i18n="api.copy">Copy</button>
+                        <div class="code-block">
+                            <pre>{
+  "error": "Rate limit exceeded",
+  "message": "You have exceeded the rate limit of 60 requests per minute"
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endpoints -->
+                <div class="api-section" id="endpoints">
+                    <h2 style="margin-bottom: var(--space-6);" data-i18n="api.endpoints">API Endpoints</h2>
+
+                    <!-- Health Check -->
+                    <div class="endpoint-card" id="health">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/health</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.healthDesc">
+                            Check API health and status. This endpoint does not require authentication.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "status": "operational",
+  "version": "v1",
+  "message": "PHONOS API is running"
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- List Models -->
+                    <div class="endpoint-card" id="list-models">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/models</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.listModelsDesc">
+                            Retrieve a list of available AI models for protein analysis.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "models": [
+    {
+      "id": "esmfold",
+      "name": "ESMFold",
+      "description": "Fast protein structure prediction from Meta AI",
+      "type": "structure_prediction",
+      "cost_credits": 10
+    },
+    {
+      "id": "alphafold2",
+      "name": "AlphaFold2",
+      "description": "High-accuracy protein structure prediction from DeepMind",
+      "type": "structure_prediction",
+      "cost_credits": 50
+    },
+    {
+      "id": "diffdock",
+      "name": "DiffDock",
+      "description": "Molecular docking for protein-ligand interactions",
+      "type": "docking",
+      "cost_credits": 30
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Submit Prediction -->
+                    <div class="endpoint-card" id="predict">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/v1/predict</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.submitPredictionDesc">
+                            Submit a new prediction job to be processed asynchronously.
+                        </p>
+
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.requestBody">Request Body</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.required">Required</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">model</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td><span class="required-badge" data-i18n="api.required">REQUIRED</span></td>
+                                    <td data-i18n="api.modelId">Model ID (esmfold, alphafold2, diffdock)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">sequence</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td><span class="required-badge" data-i18n="api.required">REQUIRED</span></td>
+                                    <td data-i18n="api.proteinSeq">Protein sequence (amino acids) or SMILES (for diffdock)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">name</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td><span class="optional-badge" data-i18n="common.optional">OPTIONAL</span></td>
+                                    <td data-i18n="api.jobName">Human-readable job name</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">params</span></td>
+                                    <td data-i18n="common.object">object</td>
+                                    <td><span class="optional-badge" data-i18n="common.optional">OPTIONAL</span></td>
+                                    <td data-i18n="api.modelParams">Model-specific parameters</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.exampleRequest">Request Example</h4>
+                        <div class="code-block">
+                            <pre>curl -X POST https://app.phonos.bio/v1/predict \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "esmfold",
+    "sequence": "MGSSHHHHHHSSGLVPRGSHMASMTGGQQMGRGS",
+    "name": "My Protein Structure"
+  }'</pre>
+                        </div>
+
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "success": true,
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "model": "esmfold",
+  "status": "pending",
+  "credits_used": 10,
+  "message": "Job submitted successfully"
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Model-Specific Parameters -->
+                    <div class="api-section" id="model-params" style="margin-top: var(--space-8);">
+                        <h2 style="margin-bottom: var(--space-4);" data-i18n="api.modelSpecificParams">Model-Specific Parameters</h2>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4); line-height: 1.6;" data-i18n="api.modelSpecificParamsDesc">
+                            Each model accepts different optional parameters in the <code>params</code> object to customize the prediction.
+                        </p>
+
+                        <!-- ESMFold Parameters -->
+                        <div class="endpoint-card">
+                            <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.esmfoldParams">ESMFold Parameters</h3>
+                            <p class="text-secondary" style="margin-bottom: var(--space-3);" data-i18n="api.esmfoldDesc">Fast protein structure prediction optimized for speed.</p>
+                            <table class="param-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="api.parameter">Parameter</th>
+                                        <th data-i18n="api.type">Type</th>
+                                        <th data-i18n="api.default">Default</th>
+                                        <th data-i18n="api.description">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">num_recycles</span></td>
+                                        <td data-i18n="common.integer">integer</td>
+                                        <td>4</td>
+                                        <td data-i18n="api.numRecycles">Number of recycling iterations (1-24). Higher values may improve accuracy but take longer.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">chunk_size</span></td>
+                                        <td data-i18n="common.integer">integer</td>
+                                        <td>128</td>
+                                        <td data-i18n="api.chunkSize">Controls memory usage. Reduce if running into memory issues.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="success-box" style="margin-top: var(--space-3);">
+                                <strong data-i18n="api.bestFor">✓ Best for:</strong> <span data-i18n="api.esmfoldBestFor">Quick predictions, high-throughput screening, sequences up to 400 residues</span>
+                            </div>
+                        </div>
+
+                        <!-- AlphaFold2 Parameters -->
+                        <div class="endpoint-card">
+                            <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.alphafold2Params">AlphaFold2 Parameters</h3>
+                            <p class="text-secondary" style="margin-bottom: var(--space-3);" data-i18n="api.alphafold2Desc">High-accuracy predictions with MSA support.</p>
+                            <table class="param-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="api.parameter">Parameter</th>
+                                        <th data-i18n="api.type">Type</th>
+                                        <th data-i18n="api.default">Default</th>
+                                        <th data-i18n="api.description">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">max_msa_seqs</span></td>
+                                        <td data-i18n="common.integer">integer</td>
+                                        <td>512</td>
+                                        <td data-i18n="api.maxMsaSeqs">Maximum number of MSA sequences to use</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">use_templates</span></td>
+                                        <td data-i18n="common.boolean">boolean</td>
+                                        <td>true</td>
+                                        <td data-i18n="api.useTemplates">Whether to use template structures from PDB</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">model_preset</span></td>
+                                        <td data-i18n="common.string">string</td>
+                                        <td>monomer</td>
+                                        <td data-i18n="api.modelPreset">Model type: "monomer", "monomer_casp14", "monomer_ptm"</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="success-box" style="margin-top: var(--space-3);">
+                                <strong data-i18n="api.bestFor">✓ Best for:</strong> <span data-i18n="api.alphafold2BestFor">Maximum accuracy, research publications, complex proteins, multimers</span>
+                            </div>
+                        </div>
+
+                        <!-- DiffDock Parameters -->
+                        <div class="endpoint-card">
+                            <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.diffdockParams">DiffDock Parameters</h3>
+                            <p class="text-secondary" style="margin-bottom: var(--space-3);" data-i18n="api.diffdockDesc">Molecular docking for protein-ligand binding prediction.</p>
+                            <table class="param-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="api.parameter">Parameter</th>
+                                        <th data-i18n="api.type">Type</th>
+                                        <th data-i18n="api.default">Default</th>
+                                        <th data-i18n="api.description">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="param-name">protein_pdb</span></td>
+                                        <td data-i18n="common.string">string</td>
+                                        <td data-i18n="api.required">required</td>
+                                        <td data-i18n="api.proteinPdb">PDB file content or path to protein structure</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">ligand_smiles</span></td>
+                                        <td data-i18n="common.string">string</td>
+                                        <td data-i18n="api.required">required</td>
+                                        <td data-i18n="api.ligandSmiles">SMILES string of the ligand molecule</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">inference_steps</span></td>
+                                        <td data-i18n="common.integer">integer</td>
+                                        <td>20</td>
+                                        <td data-i18n="api.inferenceSteps">Number of diffusion steps (10-40). Higher = more accurate but slower.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="param-name">samples_per_complex</span></td>
+                                        <td data-i18n="common.integer">integer</td>
+                                        <td>10</td>
+                                        <td data-i18n="api.samplesPerComplex">Number of binding poses to generate</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="success-box" style="margin-top: var(--space-3);">
+                                <strong data-i18n="api.bestFor">✓ Best for:</strong> <span data-i18n="api.diffdockBestFor">Drug discovery, binding site prediction, virtual screening</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Get Job Status -->
+                    <div class="endpoint-card" id="job-status">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/jobs/{job_id}</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.getJobStatusDesc">
+                            Retrieve the status and results of a prediction job.
+                        </p>
+
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.pathParameters">Path Parameters</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">job_id</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td data-i18n="api.jobIdDesc">Job ID returned from /v1/predict</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExamplePending">Response Example (Pending)</h4>
+                        <div class="code-block">
+                            <pre>{
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "My Protein Structure",
+  "status": "pending",
+  "created_at": "2025-12-17T10:30:00Z",
+  "updated_at": "2025-12-17T10:30:00Z"
+}</pre>
+                        </div>
+
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExampleCompleted">Response Example (Completed)</h4>
+                        <div class="code-block">
+                            <pre>{
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "My Protein Structure",
+  "status": "completed",
+  "created_at": "2025-12-17T10:30:00Z",
+  "updated_at": "2025-12-17T10:32:00Z",
+  "output_file": "550e8400-e29b-41d4-a716-446655440000.pdb",
+  "download_url": "/v1/jobs/550e8400-e29b-41d4-a716-446655440000/download"
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Download Results -->
+                    <div class="endpoint-card" id="download">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/jobs/{job_id}/download</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.downloadResultsDesc">
+                            Download the output file (PDB format) for a completed job.
+                        </p>
+
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.pathParameters">Path Parameters</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">job_id</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td data-i18n="api.jobIdCompleted">Job ID of completed job</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.exampleRequest">Example</h4>
+                        <div class="code-block">
+                            <pre>curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://app.phonos.bio/v1/jobs/550e8400.../download \
+     -o structure.pdb</pre>
+                        </div>
+                    </div>
+
+                    <!-- Account Info -->
+                    <div class="endpoint-card" id="account">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/account</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.accountInfoDesc">
+                            Get your account information including credit balance and job statistics.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "account": {
+    "id": 123,
+    "username": "researcher",
+    "email": "user@example.com",
+    "created_at": "2024-01-15T08:30:00Z"
+  },
+  "credits": {
+    "balance": 5000,
+    "currency": "credits"
+  },
+  "jobs": {
+    "total": 150,
+    "completed": 142,
+    "active": 3,
+    "failed": 5
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- List Jobs -->
+                    <div class="endpoint-card" id="list-jobs">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/jobs</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.listJobsDesc">
+                            List all your jobs with optional filtering by status or model.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.queryParameters">Query Parameters</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.default">Default</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">status</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td>all</td>
+                                    <td data-i18n="api.filterStatus">Filter by status: pending, running, completed, failed</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">model</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td>all</td>
+                                    <td data-i18n="api.filterModel">Filter by model: esmfold, alphafold2, diffdock</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">limit</span></td>
+                                    <td data-i18n="common.integer">integer</td>
+                                    <td>50</td>
+                                    <td data-i18n="api.limitResults">Max results per page (max: 100)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">offset</span></td>
+                                    <td data-i18n="common.integer">integer</td>
+                                    <td>0</td>
+                                    <td data-i18n="api.offsetResults">Number of results to skip for pagination</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "jobs": [
+    {
+      "job_id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Insulin Structure",
+      "status": "completed",
+      "model": "esmfold",
+      "created_at": "2025-12-17T10:30:00Z",
+      "download_url": "/v1/jobs/550e8400.../download"
+    }
+  ],
+  "pagination": {
+    "total": 150,
+    "limit": 50,
+    "offset": 0,
+    "has_more": true
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Batch Predict -->
+                    <div class="endpoint-card" id="batch-predict">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/v1/predict/batch</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.batchPredictDesc">
+                            Submit multiple prediction jobs in a single request (max 10 jobs per batch).
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.requestBody">Request Body</h4>
+                        <div class="code-block">
+                            <pre>{
+  "jobs": [
+    {
+      "model": "esmfold",
+      "sequence": "MGSSHHHHHHSSGLVPRGSHMASMTGGQQMGRGS",
+      "name": "Protein 1"
+    },
+    {
+      "model": "esmfold",
+      "sequence": "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG",
+      "name": "Protein 2"
+    }
+  ]
+}</pre>
+                        </div>
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "success": true,
+  "summary": {
+    "total": 2,
+    "successful": 2,
+    "failed": 0,
+    "total_credits_used": 20
+  },
+  "results": [
+    {"index": 0, "success": true, "job_id": "550e8400...", "model": "esmfold", "credits_used": 10},
+    {"index": 1, "success": true, "job_id": "550e8401...", "model": "esmfold", "credits_used": 10}
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Job -->
+                    <div class="endpoint-card" id="cancel-job">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/v1/jobs/{job_id}/cancel</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.cancelJobDesc">
+                            Cancel a pending or running job.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "success": true,
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "cancelled",
+  "message": "Job cancelled successfully"
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- API Usage -->
+                    <div class="endpoint-card" id="usage">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/usage</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.apiUsageDesc">
+                            Get detailed API usage statistics including requests by endpoint, model, and daily breakdown.
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.queryParameters">Query Parameters</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.default">Default</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">days</span></td>
+                                    <td data-i18n="common.integer">integer</td>
+                                    <td>30</td>
+                                    <td data-i18n="api.daysToInclude">Number of days to include (max: 90)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.responseExample">Response Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "period": {"days": 30, "start_date": "...", "end_date": "..."},
+  "totals": {"requests": 1250, "credits_used": 15000, "avg_response_time_ms": 45.2},
+  "by_endpoint": [{"endpoint": "/v1/predict", "requests": 1000, "credits_used": 15000}],
+  "by_model": [{"model": "esmfold", "requests": 800, "credits_used": 8000}],
+  "daily": [{"date": "2025-12-17", "requests": 50, "credits_used": 500}]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Webhooks Section -->
+                    <h3 style="margin: var(--space-6) 0 var(--space-4); color: var(--color-primary);" data-i18n="api.webhooks">Webhooks</h3>
+                    <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.webhooksDesc">
+                        Webhooks allow you to receive real-time notifications when jobs complete or fail,
+                        eliminating the need to poll for status updates.
+                    </p>
+
+                    <!-- List Webhooks -->
+                    <div class="endpoint-card" id="list-webhooks">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/v1/webhooks</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.listWebhooksDesc">
+                            List all configured webhooks for your account.
+                        </p>
+                    </div>
+
+                    <!-- Create Webhook -->
+                    <div class="endpoint-card" id="create-webhook">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/v1/webhooks</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.createWebhookDesc">
+                            Create a new webhook to receive job status notifications (max 5 per account).
+                        </p>
+                        <h4 style="margin: var(--space-3) 0;" data-i18n="api.requestBody">Request Body</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="api.parameter">Parameter</th>
+                                    <th data-i18n="api.type">Type</th>
+                                    <th data-i18n="api.required">Required</th>
+                                    <th data-i18n="api.description">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="param-name">url</span></td>
+                                    <td data-i18n="common.string">string</td>
+                                    <td><span class="required-badge" data-i18n="api.required">REQUIRED</span></td>
+                                    <td data-i18n="api.webhookUrl">HTTPS URL to receive webhook events</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="param-name">events</span></td>
+                                    <td>array</td>
+                                    <td>optional</td>
+                                    <td data-i18n="api.webhookEvents">Events to subscribe to: job.completed, job.failed, job.started</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.webhookPayload">Webhook Payload Example</h4>
+                        <div class="code-block">
+                            <pre>{
+  "event": "job.completed",
+  "timestamp": "2025-12-17T10:32:00Z",
+  "data": {
+    "job_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "completed",
+    "model": "esmfold",
+    "download_url": "/v1/jobs/550e8400.../download"
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Delete Webhook -->
+                    <div class="endpoint-card" id="delete-webhook">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-delete">DELETE</span>
+                            <span class="endpoint-path">/v1/webhooks/{webhook_id}</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.deleteWebhookDesc">
+                            Delete a webhook by its ID.
+                        </p>
+                    </div>
+
+                    <!-- Test Webhook -->
+                    <div class="endpoint-card" id="test-webhook">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/v1/webhooks/{webhook_id}/test</span>
+                        </div>
+                        <p class="text-secondary" style="margin-bottom: var(--space-4);" data-i18n="api.testWebhookDesc">
+                            Send a test event to verify your webhook endpoint is working correctly.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Error Responses -->
+                <div class="api-section" id="errors">
+                    <h2 style="margin-bottom: var(--space-4);" data-i18n="api.errors">Error Responses</h2>
+                    <p class="text-secondary" style="margin-bottom: var(--space-4); line-height: 1.6;" data-i18n="api.errorDesc">
+                        The API uses standard HTTP status codes and returns JSON error objects with helpful messages.
+                    </p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="api.statusCode">Status Code</th>
+                                <th data-i18n="api.meaning">Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>400</code></td>
+                                <td data-i18n="api.badRequest">Bad Request - Invalid parameters</td>
+                            </tr>
+                            <tr>
+                                <td><code>401</code></td>
+                                <td data-i18n="api.unauthorized">Unauthorized - Invalid or missing API key</td>
+                            </tr>
+                            <tr>
+                                <td><code>404</code></td>
+                                <td data-i18n="api.notFound">Not Found - Resource doesn't exist</td>
+                            </tr>
+                            <tr>
+                                <td><code>429</code></td>
+                                <td data-i18n="api.tooManyRequests">Too Many Requests - Rate limit exceeded</td>
+                            </tr>
+                            <tr>
+                                <td><code>500</code></td>
+                                <td data-i18n="api.internalServerError">Internal Server Error - Server issue</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.errorFormat">Error Response Format</h4>
+                    <div class="code-block">
+                        <pre>{
+  "error": "Error type",
+  "message": "Detailed error message explaining what went wrong"
+}</pre>
+                    </div>
+                </div>
+
+                <!-- Best Practices -->
+                <div class="api-section" id="best-practices">
+                    <h2 style="margin-bottom: var(--space-4);" data-i18n="api.bestPractices">Best Practices</h2>
+
+                    <div class="endpoint-card">
+                        <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.performanceOpt">⚡ Performance Optimization</h3>
+                        <ul class="text-secondary" style="line-height: 1.8; padding-left: var(--space-5);">
+                            <li><strong data-i18n="api.pollEfficiently">Poll efficiently:</strong> <span data-i18n="api.pollEfficientlyText">Use 5-10 second intervals when checking job status. Don't poll more frequently than necessary.</span></li>
+                            <li><strong data-i18n="api.batchPredictions">Batch predictions:</strong> <span data-i18n="api.batchPredictionsText">Submit multiple jobs in parallel rather than waiting for each to complete.</span></li>
+                            <li><strong data-i18n="api.chooseModel">Choose the right model:</strong> <span data-i18n="api.chooseModelText">Use ESMFold for speed, AlphaFold2 for accuracy. Don't over-engineer simple tasks.</span></li>
+                            <li><strong data-i18n="api.cacheResultsBest">Cache results:</strong> <span data-i18n="api.cacheResultsBestText">Store predictions locally to avoid re-computing identical sequences.</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.security">🔒 Security</h3>
+                        <ul class="text-secondary" style="line-height: 1.8; padding-left: var(--space-5);">
+                            <li><strong data-i18n="api.envVars">Environment variables:</strong> <span data-i18n="api.envVarsText">Store API keys in environment variables, never hardcode them.</span></li>
+                            <li><strong data-i18n="api.serverSideOnly">Server-side only:</strong> <span data-i18n="api.serverSideOnlyText">Never expose API keys in client-side JavaScript or mobile apps.</span></li>
+                            <li><strong data-i18n="api.rotateKeys">Rotate keys:</strong> <span data-i18n="api.rotateKeysText">Periodically rotate your API keys, especially after team member changes.</span></li>
+                            <li><strong data-i18n="api.separateKeys">Use separate keys:</strong> <span data-i18n="api.separateKeysText">Create different API keys for development and production environments.</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.errorHandling">🎯 Error Handling</h3>
+                        <ul class="text-secondary" style="line-height: 1.8; padding-left: var(--space-5);">
+                            <li><strong data-i18n="api.implementRetries">Implement retries:</strong> <span data-i18n="api.implementRetriesText">Use exponential backoff for transient errors (500, 503).</span></li>
+                            <li><strong data-i18n="api.handleRateLimits">Handle rate limits:</strong> <span data-i18n="api.handleRateLimitsText">Catch 429 responses and wait before retrying.</span></li>
+                            <li><strong data-i18n="api.validateInputs">Validate inputs:</strong> <span data-i18n="api.validateInputsText">Check sequence formats and parameters before submitting to avoid 400 errors.</span></li>
+                            <li><strong data-i18n="api.logErrors">Log errors:</strong> <span data-i18n="api.logErrorsText">Keep detailed logs of API errors for debugging and monitoring.</span></li>
+                            <li><strong data-i18n="api.gracefulDegradation">Graceful degradation:</strong> <span data-i18n="api.gracefulDegradationText">Have fallback mechanisms when the API is unavailable.</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <h3 style="margin-bottom: var(--space-3); color: var(--color-primary);" data-i18n="api.monitoringDebugging">📊 Monitoring & Debugging</h3>
+                        <ul class="text-secondary" style="line-height: 1.8; padding-left: var(--space-5);">
+                            <li><strong data-i18n="api.trackUsage">Track usage:</strong> <span data-i18n="api.trackUsageText">Monitor your API usage and credit consumption in the dashboard.</span></li>
+                            <li><strong data-i18n="api.requestIds">Request IDs:</strong> <span data-i18n="api.requestIdsText">Log job IDs for all predictions to trace issues.</span></li>
+                            <li><strong data-i18n="api.healthChecks">Health checks:</strong> <span data-i18n="api.healthChecksText">Implement regular health checks using <code>/v1/health</code> endpoint.</span></li>
+                            <li><strong data-i18n="api.alertFailures">Alert on failures:</strong> <span data-i18n="api.alertFailuresText">Set up alerts for consecutive failures or unusual error rates.</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <strong data-i18n="api.proTip">💡 Pro Tip:</strong> <span data-i18n="api.proTipText">Start with small test batches to validate your integration before scaling up to production workloads.</span>
+                    </div>
+                </div>
+
+                <!-- Code Examples -->
+                <div class="api-section" id="examples">
+                    <h2 style="margin-bottom: var(--space-4);" data-i18n="api.codeExamples">Code Examples</h2>
+
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.python">Python</h3>
+                    <div class="code-block">
+                        <pre>import requests
+import time
+
+API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://app.phonos.bio"
+
+# Submit a job
+response = requests.post(
+    f"{BASE_URL}/v1/predict",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "model": "esmfold",
+        "sequence": "MGSSHHHHHHSSGLVPRGSHMASMTGGQQMGRGS",
+        "name": "Test Protein"
+    }
+)
+
+job = response.json()
+job_id = job["job_id"]
+print(f"Job submitted: {job_id}")
+
+# Poll for completion
+while True:
+    status = requests.get(
+        f"{BASE_URL}/v1/jobs/{job_id}",
+        headers={"Authorization": f"Bearer {API_KEY}"}
+    ).json()
+
+    if status["status"] == "completed":
+        print("Job completed!")
+        break
+    elif status["status"] == "failed":
+        print(f"Job failed: {status.get('error')}")
+        break
+
+    time.sleep(5)
+
+# Download results
+result = requests.get(
+    f"{BASE_URL}/v1/jobs/{job_id}/download",
+    headers={"Authorization": f"Bearer {API_KEY}"}
+)
+
+with open("output.pdb", "wb") as f:
+    f.write(result.content)
+
+print("Structure saved to output.pdb")</pre>
+                    </div>
+
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);" data-i18n="api.javascript">JavaScript (Node.js)</h3>
+                    <div class="code-block">
+                        <pre>const axios = require('axios');
+const fs = require('fs');
+
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://app.phonos.bio';
+
+async function runPrediction() {
+    // Submit job
+    const submitResponse = await axios.post(
+        `${BASE_URL}/v1/predict`,
+        {
+            model: 'esmfold',
+            sequence: 'MGSSHHHHHHSSGLVPRGSHMASMTGGQQMGRGS',
+            name: 'Test Protein'
+        },
+        { headers: { Authorization: `Bearer ${API_KEY}` } }
+    );
+
+    const jobId = submitResponse.data.job_id;
+    console.log(`Job submitted: ${jobId}`);
+
+    // Poll for completion
+    while (true) {
+        const statusResponse = await axios.get(
+            `${BASE_URL}/v1/jobs/${jobId}`,
+            { headers: { Authorization: `Bearer ${API_KEY}` } }
+        );
+
+        const status = statusResponse.data.status;
+
+        if (status === 'completed') {
+            console.log('Job completed!');
+            break;
+        } else if (status === 'failed') {
+            console.log(`Job failed: ${statusResponse.data.error}`);
+            return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+
+    // Download results
+    const downloadResponse = await axios.get(
+        `${BASE_URL}/v1/jobs/${jobId}/download`,
+        {
+            headers: { Authorization: `Bearer ${API_KEY}` },
+            responseType: 'arraybuffer'
+        }
+    );
+
+    fs.writeFileSync('output.pdb', downloadResponse.data);
+    console.log('Structure saved to output.pdb');
+}
+
+runPrediction().catch(console.error);</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Navigation -->
+            <div>
+                <div class="nav-links">
+                    <h4 style="margin-bottom: var(--space-3); font-size: 0.875rem; font-weight: 600;" data-i18n="api.contents">Contents</h4>
+                    <a href="#introduction" data-i18n="api.introduction">Introduction</a>
+                    <a href="#authentication" data-i18n="api.authentication">Authentication</a>
+                    <a href="#rate-limits" data-i18n="api.rateLimiting">Rate Limiting</a>
+                    <a href="#endpoints" data-i18n="api.endpoints">Endpoints</a>
+                    <a href="#health" style="padding-left: var(--space-4);" data-i18n="api.healthCheck">Health Check</a>
+                    <a href="#list-models" style="padding-left: var(--space-4);" data-i18n="api.listModels">List Models</a>
+                    <a href="#predict" style="padding-left: var(--space-4);" data-i18n="api.submitPrediction">Submit Prediction</a>
+                    <a href="#model-params" style="padding-left: var(--space-4);" data-i18n="api.modelSpecificParams">Model Parameters</a>
+                    <a href="#job-status" style="padding-left: var(--space-4);" data-i18n="api.getJobStatus">Get Job Status</a>
+                    <a href="#download" style="padding-left: var(--space-4);" data-i18n="api.downloadResults">Download Results</a>
+                    <a href="#errors" data-i18n="api.errors">Error Responses</a>
+                    <a href="#best-practices" data-i18n="api.bestPractices">Best Practices</a>
+                    <a href="#examples" data-i18n="api.codeExamples">Code Examples</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(button) {
+            const wrapper = button.parentElement;
+            const codeBlock = wrapper.querySelector('pre');
+            const text = codeBlock.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = window.i18n.t('common.copied');
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = window.i18n.t('common.failed');
+                setTimeout(() => {
+                    button.textContent = window.i18n.t('common.copy');
+                }, 2000);
+            });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

@@ -1,0 +1,41 @@
+{# Zero-telemetry default for self-hosted / open-source deployments.
+   External analytics (gtag.js) is NEVER loaded unless an operator explicitly
+   sets PHONOS_GOOGLE_ANALYTICS_ID in the server environment AND the user opts in. #}
+{% set _ga_id = config.get('PHONOS_GOOGLE_ANALYTICS_ID', '') %}
+{% if _ga_id %}
+<script src="{{ url_for('static', filename='js/first-visit.js') }}?v=df87b448" data-key="phonos-first-visit" data-name="Phonos" data-privacy="/datenschutz" data-terms="/terms-of-service" data-analytics="1" data-hide="#cookie-consent-modal"></script>
+<script src="{{ url_for('static', filename='js/consent.js') }}?v=c94fc810"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'analytics_storage': 'denied'
+  });
+  gtag('js', new Date());
+  window.phonosLoadGtag = function () {
+    if (window.__phonosGtagLoaded) return;
+    window.__phonosGtagLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent({{ _ga_id|tojson }});
+    document.head.appendChild(s);
+    gtag('consent', 'update', { 'analytics_storage': 'granted' });
+    gtag('config', {{ _ga_id|tojson }}, { 'anonymize_ip': true, 'cookie_flags': 'SameSite=Strict;Secure', 'send_page_view': true });
+  };
+  if (window.PhonosConsent && window.PhonosConsent.analyticsAllowed()) {
+    window.phonosLoadGtag();
+  }
+</script>
+{% else %}
+<script>
+  window.PhonosConsent = window.PhonosConsent || {
+    analyticsAllowed: function() { return false; },
+    getPreferences: function() { return { necessary: true, analytics: false }; },
+    savePreferences: function() {},
+    openModal: function() {}
+  };
+</script>
+{% endif %}

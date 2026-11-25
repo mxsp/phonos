@@ -1,0 +1,1708 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PHONOS API",
+    "description": "## Overview\n\nThe PHONOS API provides programmatic access to state-of-the-art bioinformatics models for protein structure prediction, molecular docking, and DNA sequence generation.\n\n## Authentication\n\nAll API requests require authentication using a Bearer token. Include your API key in the `Authorization` header:\n\n```\nAuthorization: Bearer YOUR_API_KEY\n```\n\nYou can generate API keys from your [PHONOS Dashboard](https://phonos.fyreflysystems.de/settings).\n\n## Rate Limits\n\nAPI requests are rate-limited based on your subscription plan. The default limit is 60 requests per minute. Rate limit headers are included in all responses:\n\n- `X-RateLimit-Limit`: Maximum requests per minute\n- `X-RateLimit-Remaining`: Remaining requests in current window\n- `X-RateLimit-Reset`: Unix timestamp when the limit resets\n\n## Credits\n\nMost API operations consume credits. Your credit balance is displayed in the dashboard and can be checked via the `/v1/account` endpoint. Credits are deducted upon successful completion of requests.\n\n## Error Handling\n\nThe API uses standard HTTP status codes. All error responses include an `error` field with a human-readable message.\n\n| Status Code | Description |\n|-------------|-------------|\n| 400 | Bad Request - Invalid parameters |\n| 401 | Unauthorized - Invalid or missing API key |\n| 402 | Payment Required - Insufficient credits |\n| 404 | Not Found - Resource doesn't exist |\n| 429 | Too Many Requests - Rate limit exceeded |\n| 500 | Internal Server Error |\n| 502 | Bad Gateway - Upstream service error |\n| 503 | Service Unavailable |\n| 504 | Gateway Timeout |",
+    "version": "1.0.0",
+    "termsOfService": "https://phonos.fyreflysystems.de/terms",
+    "contact": {
+      "name": "PHONOS API Support",
+      "url": "https://phonos.fyreflysystems.de/support",
+      "email": "support@fyreflysystems.de"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://phonos.fyreflysystems.de/license"
+    }
+  },
+  "externalDocs": {
+    "description": "PHONOS User Guide",
+    "url": "https://phonos.fyreflysystems.de/docs"
+  },
+  "servers": [
+    {
+      "url": "https://phonos.fyreflysystems.de",
+      "description": "Production Server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "System",
+      "description": "System health and status endpoints"
+    },
+    {
+      "name": "Account",
+      "description": "Account information, credits, and usage statistics"
+    },
+    {
+      "name": "Models",
+      "description": "Available AI models and their capabilities"
+    },
+    {
+      "name": "Evo2 - DNA Generation",
+      "description": "Generate DNA sequences using NVIDIA's Evo2-40B foundation model. Evo2 is trained on 128k genomes and can generate novel DNA sequences based on a seed sequence."
+    },
+    {
+      "name": "Structure Prediction",
+      "description": "Predict 3D protein structures from amino acid sequences using ESMFold or AlphaFold2"
+    },
+    {
+      "name": "Jobs",
+      "description": "Manage and monitor prediction jobs"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Configure webhooks for job status notifications"
+    }
+  ],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Check API health",
+        "description": "Returns the current operational status of the API. This endpoint does not require authentication and can be used for monitoring.",
+        "operationId": "healthCheck",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API is operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["operational", "degraded", "maintenance"],
+                      "example": "operational"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "v1"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "PHONOS API is running"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/account": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Get account information",
+        "description": "Retrieve your account details including username, email, credit balance, and job statistics.",
+        "operationId": "getAccount",
+        "responses": {
+          "200": {
+            "description": "Account information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountInfo"
+                },
+                "example": {
+                  "account": {
+                    "id": 123,
+                    "username": "researcher",
+                    "email": "researcher@example.com",
+                    "created_at": "2024-01-15T10:30:00Z"
+                  },
+                  "credits": {
+                    "balance": 5000,
+                    "currency": "credits"
+                  },
+                  "jobs": {
+                    "total": 150,
+                    "completed": 142,
+                    "active": 3,
+                    "failed": 5
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/usage": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Get API usage statistics",
+        "description": "Retrieve detailed API usage statistics including requests by endpoint, model, and daily breakdown.",
+        "operationId": "getUsage",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "description": "Number of days to include in the statistics (1-90)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 90,
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageStats"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "List available models",
+        "description": "Get a list of all available AI models with their capabilities, pricing, and status.",
+        "operationId": "listModels",
+        "responses": {
+          "200": {
+            "description": "List of available models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Model"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "models": [
+                    {
+                      "id": "evo2-40b",
+                      "name": "Evo2-40B",
+                      "description": "DNA sequence generation model from NVIDIA BioNeMo",
+                      "type": "dna_generation",
+                      "cost_credits": 1,
+                      "endpoints": {
+                        "info": "/v1/evo2/info",
+                        "generate": "/v1/evo2/generate"
+                      }
+                    },
+                    {
+                      "id": "esmfold",
+                      "name": "ESMFold",
+                      "description": "Fast protein structure prediction from Meta AI",
+                      "type": "structure_prediction",
+                      "cost_credits": 10
+                    },
+                    {
+                      "id": "alphafold2",
+                      "name": "AlphaFold2",
+                      "description": "High-accuracy protein structure prediction from DeepMind",
+                      "type": "structure_prediction",
+                      "cost_credits": 50
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/evo2/info": {
+      "get": {
+        "tags": ["Evo2 - DNA Generation"],
+        "summary": "Get Evo2 model information",
+        "description": "Retrieve detailed information about the Evo2-40B DNA generation model, including all available parameters, their valid ranges, and pricing.",
+        "operationId": "getEvo2Info",
+        "responses": {
+          "200": {
+            "description": "Evo2 model information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evo2Info"
+                },
+                "example": {
+                  "model": {
+                    "id": "evo2-40b",
+                    "name": "Evo2-40B",
+                    "description": "DNA sequence generation model from NVIDIA BioNeMo",
+                    "provider": "NVIDIA",
+                    "type": "dna_generation"
+                  },
+                  "parameters": {
+                    "sequence": {
+                      "description": "Input DNA seed sequence",
+                      "type": "string",
+                      "required": true,
+                      "valid_characters": "A, T, C, G, N"
+                    },
+                    "num_tokens": {
+                      "description": "Number of nucleotides to generate",
+                      "type": "integer",
+                      "min": 1,
+                      "max": 1200,
+                      "default": 128
+                    },
+                    "temperature": {
+                      "description": "Sampling temperature (higher = more random)",
+                      "type": "float",
+                      "min": 0.0,
+                      "max": 1.3,
+                      "default": 0.7
+                    },
+                    "top_k": {
+                      "description": "Top-k sampling parameter",
+                      "type": "integer",
+                      "min": 0,
+                      "max": 6,
+                      "default": 4
+                    },
+                    "top_p": {
+                      "description": "Nucleus sampling parameter",
+                      "type": "float",
+                      "min": 0.0,
+                      "max": 1.0,
+                      "default": 0.9
+                    },
+                    "enable_sampled_probs": {
+                      "description": "Return probability scores for generated nucleotides",
+                      "type": "boolean",
+                      "default": false
+                    }
+                  },
+                  "pricing": {
+                    "base_cost": 1,
+                    "currency": "credits"
+                  },
+                  "user": {
+                    "credits_available": 5000
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/evo2/generate": {
+      "post": {
+        "tags": ["Evo2 - DNA Generation"],
+        "summary": "Generate DNA sequence",
+        "description": "Generate novel DNA sequences using the Evo2-40B model. Provide a seed sequence and the model will generate continuation nucleotides based on learned genomic patterns.\n\n## Parameters\n\n- **sequence**: The seed DNA sequence. Must contain only valid nucleotides (A, T, C, G, N).\n- **num_tokens**: Number of nucleotides to generate (1-1200). Higher values take longer but generate more sequence.\n- **temperature**: Controls randomness. Lower values (0.3-0.5) produce more conservative sequences, higher values (0.8-1.0) produce more diverse outputs.\n- **top_k**: Limits sampling to top K nucleotides. Lower values (1-2) are more deterministic.\n- **top_p**: Nucleus sampling threshold. Values around 0.9-0.95 work well for most cases.\n\n## Use Cases\n\n- Generating promoter sequences\n- Designing synthetic genes\n- Exploring sequence space around known motifs\n- Creating novel regulatory elements",
+        "operationId": "generateDNA",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Evo2GenerateRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic generation",
+                  "description": "Simple sequence generation with defaults",
+                  "value": {
+                    "sequence": "ATCGATCGATCGATCGATCG",
+                    "num_tokens": 100
+                  }
+                },
+                "conservative": {
+                  "summary": "Conservative generation",
+                  "description": "Low temperature for more predictable output",
+                  "value": {
+                    "sequence": "ATGAAGTCTGTGCTCTTCCTGCTGCTGCTTCTG",
+                    "num_tokens": 200,
+                    "temperature": 0.3,
+                    "top_k": 2,
+                    "top_p": 0.9
+                  }
+                },
+                "creative": {
+                  "summary": "Creative generation",
+                  "description": "High temperature for more diverse sequences",
+                  "value": {
+                    "sequence": "ATGCGTACGTACGTACGTACGTACGTACGTACG",
+                    "num_tokens": 500,
+                    "temperature": 1.0,
+                    "top_k": 6,
+                    "top_p": 0.95,
+                    "enable_sampled_probs": true
+                  }
+                },
+                "promoter": {
+                  "summary": "Promoter extension",
+                  "description": "Extend a promoter sequence",
+                  "value": {
+                    "sequence": "TATAAAAGGCGGTATATAT",
+                    "num_tokens": 150,
+                    "temperature": 0.5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DNA sequence generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evo2GenerateResponse"
+                },
+                "example": {
+                  "success": true,
+                  "model": "evo2-40b",
+                  "input": {
+                    "sequence": "ATCGATCGATCGATCGATCG",
+                    "sequence_length": 20
+                  },
+                  "output": {
+                    "sequence": "ATCGATCGATCGATCGATCGAAGTCGTACGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCG",
+                    "sequence_length": 120,
+                    "sampled_probs": null
+                  },
+                  "parameters": {
+                    "num_tokens": 100,
+                    "temperature": 0.7,
+                    "top_k": 4,
+                    "top_p": 0.9
+                  },
+                  "usage": {
+                    "credits_used": 1,
+                    "response_time_ms": 1523
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/InsufficientCredits"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/GatewayTimeout"
+          }
+        }
+      }
+    },
+    "/v1/predict": {
+      "post": {
+        "tags": ["Structure Prediction"],
+        "summary": "Submit prediction job",
+        "description": "Submit a protein structure prediction job using ESMFold, AlphaFold2, or DiffDock. The job runs asynchronously - use the returned `job_id` to check status and download results.",
+        "operationId": "predict",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              },
+              "examples": {
+                "esmfold": {
+                  "summary": "ESMFold prediction",
+                  "description": "Fast structure prediction with ESMFold",
+                  "value": {
+                    "model": "esmfold",
+                    "sequence": "MKFLILLFNILCLFPVLAADNHGVGPQGASGVDPITFDINSNQTGVQLTLQSTGG",
+                    "name": "Insulin signal peptide"
+                  }
+                },
+                "alphafold": {
+                  "summary": "AlphaFold2 prediction",
+                  "description": "High-accuracy structure prediction",
+                  "value": {
+                    "model": "alphafold2",
+                    "sequence": "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH",
+                    "name": "Hemoglobin alpha chain"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                },
+                "example": {
+                  "success": true,
+                  "job_id": "job_abc123def456",
+                  "model": "esmfold",
+                  "status": "pending",
+                  "credits_used": 10,
+                  "message": "Job submitted successfully"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/InsufficientCredits"
+          }
+        }
+      }
+    },
+    "/v1/predict/batch": {
+      "post": {
+        "tags": ["Structure Prediction"],
+        "summary": "Submit batch prediction jobs",
+        "description": "Submit multiple prediction jobs in a single request. Maximum 10 jobs per batch. Each job is processed independently and can use different models.",
+        "operationId": "predictBatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchPredictRequest"
+              },
+              "example": {
+                "jobs": [
+                  {
+                    "model": "esmfold",
+                    "sequence": "MKFLILLFNILCLFPVLAAD",
+                    "name": "Protein A"
+                  },
+                  {
+                    "model": "esmfold",
+                    "sequence": "MVLSPADKTNVKAAWGKVGA",
+                    "name": "Protein B"
+                  },
+                  {
+                    "model": "alphafold2",
+                    "sequence": "MNIFEMLRIDEGLRLKIYKD",
+                    "name": "Protein C"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchPredictResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/jobs": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "List jobs",
+        "description": "List all your jobs with optional filtering by status or model. Results are paginated.",
+        "operationId": "listJobs",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by job status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "queued", "running", "completed", "failed", "cancelled"]
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "description": "Filter by model",
+            "schema": {
+              "type": "string",
+              "enum": ["esmfold", "alphafold2", "diffdock"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum results to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip (for pagination)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobsList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Get job details",
+        "description": "Get the current status and details of a specific job.",
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "description": "The job ID returned when the job was created",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                },
+                "example": {
+                  "job_id": "job_abc123def456",
+                  "name": "My protein prediction",
+                  "status": "completed",
+                  "model": "esmfold",
+                  "created_at": "2024-01-15T10:30:00Z",
+                  "updated_at": "2024-01-15T10:32:15Z",
+                  "download_url": "/v1/jobs/job_abc123def456/download"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/download": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Download job results",
+        "description": "Download the output file from a completed job. Returns a PDB file for structure predictions.",
+        "operationId": "downloadJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "description": "The job ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDB file download",
+            "content": {
+              "chemical/x-pdb": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Job not completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Cancel a job",
+        "description": "Cancel a pending or running job. Credits are not refunded for cancelled jobs that have already started processing.",
+        "operationId": "cancelJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "description": "The job ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "job_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "cancelled"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Job cannot be cancelled (already completed or failed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhooks",
+        "description": "List all webhooks configured for your account.",
+        "operationId": "listWebhooks",
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhooksList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Create webhook",
+        "description": "Create a new webhook to receive notifications when job status changes. Webhooks must use HTTPS. Maximum 5 webhooks per account.",
+        "operationId": "createWebhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookRequest"
+              },
+              "example": {
+                "url": "https://your-server.com/webhook",
+                "events": ["job.completed", "job.failed"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{webhook_id}": {
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Delete webhook",
+        "description": "Delete a webhook. The webhook will immediately stop receiving notifications.",
+        "operationId": "deleteWebhook",
+        "parameters": [
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "description": "The webhook ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{webhook_id}/test": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Test webhook",
+        "description": "Send a test event to verify your webhook is correctly configured and reachable.",
+        "operationId": "testWebhook",
+        "parameters": [
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "description": "The webhook ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestResult"
+                },
+                "example": {
+                  "success": true,
+                  "test_result": {
+                    "status_code": 200,
+                    "response_time_ms": 145,
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key authentication. Generate keys from your PHONOS dashboard at Settings > API Keys."
+      }
+    },
+    "schemas": {
+      "Model": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique model identifier",
+            "example": "evo2-40b"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable model name",
+            "example": "Evo2-40B"
+          },
+          "description": {
+            "type": "string",
+            "description": "Model description"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["structure_prediction", "docking", "dna_generation"],
+            "description": "Model category"
+          },
+          "cost_credits": {
+            "type": "integer",
+            "description": "Credits consumed per use"
+          },
+          "endpoints": {
+            "type": "object",
+            "description": "Model-specific API endpoints (if any)"
+          }
+        }
+      },
+      "AccountInfo": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "username": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "credits": {
+            "type": "object",
+            "properties": {
+              "balance": {
+                "type": "integer",
+                "description": "Current credit balance"
+              },
+              "currency": {
+                "type": "string",
+                "example": "credits"
+              }
+            }
+          },
+          "jobs": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "completed": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "UsageStats": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "days": {
+                "type": "integer"
+              },
+              "start_date": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "end_date": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "requests": {
+                "type": "integer"
+              },
+              "credits_used": {
+                "type": "integer"
+              },
+              "avg_response_time_ms": {
+                "type": "number"
+              }
+            }
+          },
+          "by_endpoint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string"
+                },
+                "requests": {
+                  "type": "integer"
+                },
+                "credits_used": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "by_model": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string"
+                },
+                "requests": {
+                  "type": "integer"
+                },
+                "credits_used": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "requests": {
+                  "type": "integer"
+                },
+                "credits_used": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Evo2Info": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Available generation parameters with their constraints"
+          },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "base_cost": {
+                "type": "integer"
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "credits_available": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Evo2GenerateRequest": {
+        "type": "object",
+        "required": ["sequence"],
+        "properties": {
+          "sequence": {
+            "type": "string",
+            "description": "Input DNA seed sequence. Valid characters: A, T, C, G, N",
+            "minLength": 1,
+            "example": "ATCGATCGATCGATCGATCG"
+          },
+          "num_tokens": {
+            "type": "integer",
+            "description": "Number of nucleotides to generate",
+            "minimum": 1,
+            "maximum": 1200,
+            "default": 128
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling temperature. Higher values produce more diverse outputs.",
+            "minimum": 0,
+            "maximum": 1.3,
+            "default": 0.7
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Top-k sampling. Limits sampling to the k most likely nucleotides.",
+            "minimum": 0,
+            "maximum": 6,
+            "default": 4
+          },
+          "top_p": {
+            "type": "number",
+            "description": "Nucleus sampling. Samples from smallest set of nucleotides with cumulative probability >= p.",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.9
+          },
+          "enable_sampled_probs": {
+            "type": "boolean",
+            "description": "If true, returns probability scores for each generated nucleotide.",
+            "default": false
+          }
+        }
+      },
+      "Evo2GenerateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string",
+            "example": "evo2-40b"
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "string",
+                "description": "The seed sequence provided"
+              },
+              "sequence_length": {
+                "type": "integer"
+              }
+            }
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "string",
+                "description": "The complete sequence (seed + generated)"
+              },
+              "sequence_length": {
+                "type": "integer"
+              },
+              "sampled_probs": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "nullable": true,
+                "description": "Probability scores if enable_sampled_probs was true"
+              }
+            }
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Parameters used for generation"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "credits_used": {
+                "type": "integer"
+              },
+              "response_time_ms": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "PredictRequest": {
+        "type": "object",
+        "required": ["model", "sequence"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": ["esmfold", "alphafold2", "diffdock"],
+            "description": "Model to use for prediction"
+          },
+          "sequence": {
+            "type": "string",
+            "description": "Protein amino acid sequence (single letter codes)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional job name for identification"
+          },
+          "params": {
+            "type": "object",
+            "description": "Model-specific parameters"
+          }
+        }
+      },
+      "PredictResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "job_id": {
+            "type": "string",
+            "description": "Unique job identifier for tracking"
+          },
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "queued", "running", "completed", "failed", "cancelled"]
+          },
+          "credits_used": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "BatchPredictRequest": {
+        "type": "object",
+        "required": ["jobs"],
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "required": ["model", "sequence"],
+              "properties": {
+                "model": {
+                  "type": "string"
+                },
+                "sequence": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "params": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BatchPredictResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "successful": {
+                "type": "integer"
+              },
+              "failed": {
+                "type": "integer"
+              },
+              "total_credits_used": {
+                "type": "integer"
+              }
+            }
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "success": {
+                  "type": "boolean"
+                },
+                "job_id": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string"
+                },
+                "credits_used": {
+                  "type": "integer"
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "JobsList": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobStatus"
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "has_more": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "queued", "running", "completed", "failed", "cancelled"]
+          },
+          "model": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "download_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to download results (only for completed jobs)"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message (only for failed jobs)"
+          }
+        }
+      },
+      "WebhooksList": {
+        "type": "object",
+        "properties": {
+          "webhooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            }
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["job.completed", "job.failed", "job.started"]
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_triggered_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "success_count": {
+                "type": "integer"
+              },
+              "failure_count": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "CreateWebhookRequest": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Webhook URL (must use HTTPS)"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["job.completed", "job.failed", "job.started"]
+            },
+            "default": ["job.completed", "job.failed"],
+            "description": "Events to subscribe to"
+          }
+        }
+      },
+      "WebhookCreated": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/Webhook"
+          }
+        }
+      },
+      "WebhookTestResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "test_result": {
+            "type": "object",
+            "properties": {
+              "status_code": {
+                "type": "integer"
+              },
+              "response_time_ms": {
+                "type": "integer"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error type"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - The request was malformed or contained invalid parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Bad Request",
+              "message": "Invalid sequence: must contain only A, T, C, G, N"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Invalid or missing API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Unauthorized",
+              "message": "Invalid API key. Please check your credentials."
+            }
+          }
+        }
+      },
+      "InsufficientCredits": {
+        "description": "Payment Required - Insufficient credits for this operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "credits_required": {
+                      "type": "integer"
+                    },
+                    "credits_available": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": {
+              "error": "Insufficient Credits",
+              "message": "This operation requires 10 credits. You have 5 credits.",
+              "credits_required": 10,
+              "credits_available": 5
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - The requested resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Not Found",
+              "message": "Job not found or you do not have permission to access it"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too Many Requests - Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Rate Limited",
+              "message": "Too many requests. Please wait before retrying."
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "Bad Gateway - Upstream service returned an error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Bad Gateway",
+              "message": "The upstream service returned an error. Please try again."
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Service Unavailable - The service is temporarily unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Service Unavailable",
+              "message": "The service is temporarily unavailable. Please try again later."
+            }
+          }
+        }
+      },
+      "GatewayTimeout": {
+        "description": "Gateway Timeout - Upstream service took too long to respond",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Gateway Timeout",
+              "message": "The upstream service took too long to respond."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,799 @@
+/* ==========================================================================
+   PHONOS — OPS CONSOLE LAYER (brutalist grid, Palantir/Foundry-style density)
+
+   Loaded LAST in every template. Colours come from variables.css and are not
+   changed here: slate surfaces, emerald primary, per-area accents, the five
+   model-card colours. What changes is structure:
+
+     · square edges (one knob: --r-ui in variables.css)
+     · hard 1 px borders, hard offset shadows, no glow, no blur
+     · a visible grid field behind the content, corner ticks on panels
+     · IBM Plex Mono caps for every label, number and column head
+     · motion that snaps (no float, no spring)
+
+   Undo: remove the <link> to this file (and set --r-ui back to e.g. 6px).
+   ========================================================================== */
+
+:root {
+  --bz-line: var(--border-color, rgba(255, 255, 255, 0.24));
+  --bz-line-strong: var(--border-strong, rgba(245, 248, 250, 0.72));
+  --bz-ink-dim: var(--text-muted, #A3B3C5);
+  --bz-label: 11px;
+  --bz-field: rgba(0, 0, 0, 0.22);         /* inputs, table heads, panel title bars */
+  --bz-grid-minor: var(--grid-line, rgba(245, 248, 250, 0.045));
+  --bz-grid-major: var(--grid-line-major, rgba(245, 248, 250, 0.09));
+  --bz-grid: 32px;
+  --bz-snap: 90ms steps(2, end);
+}
+
+::selection { background: var(--accent-primary, #0F9960); color: #fff; }
+
+/* ---------- Type: labels, numbers ---------- */
+body { font-feature-settings: 'tnum' 1, 'cv11' 1; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { letter-spacing: -0.02em; }
+
+.nav-section-title,
+.dash-v4-stat-title, .dash-v4-panel-title, .dash-v4-chart-tab, .dash-v4-feed-filter,
+.dash-v4-insight-label, .dash-v4-feed-time, .dash-v4-feed-meta,
+.card-title, .modal-title, .form-label,
+.breadcrumb-container, .stats-overview-label, .tab-v2, .table thead th,
+.status-pill, .category-powered-by, .category-meta .category-credits,
+.step-label, .wizard-mode-btn, .header-title {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking, 0.12em);
+}
+.nav-section-title, .dash-v4-stat-title, .dash-v4-insight-label, .dash-v4-feed-time,
+.dash-v4-feed-meta, .stats-overview-label, .table thead th, .status-pill,
+.category-powered-by, .step-label, .form-label { font-size: var(--bz-label); font-weight: 500; }
+
+.dash-v4-stat-value, .stats-overview-value, .dash-v4-insight-value,
+.table td.num, .tab-v2-count, [data-numeric] {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Grid field behind the work area ---------- */
+.main-content, .content-area {
+  background-color: var(--bg-body, #293742);
+  background-image:
+    linear-gradient(var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(var(--bz-grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-minor) 1px, transparent 1px);
+  background-size:
+    calc(var(--bz-grid) * 5) calc(var(--bz-grid) * 5),
+    calc(var(--bz-grid) * 5) calc(var(--bz-grid) * 5),
+    var(--bz-grid) var(--bz-grid),
+    var(--bz-grid) var(--bz-grid);
+  background-attachment: local;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  border-right: 1px solid var(--bz-line-strong);
+  box-shadow: none;
+}
+.sidebar-header { border-bottom: 1px solid var(--bz-line-strong); }
+.sidebar-logo { font-family: var(--font-mono); letter-spacing: 0.02em; }
+.nav-section-title {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--bz-ink-dim);
+}
+.nav-section-title::before {
+  content: ''; width: 6px; height: 6px; flex: none; background: currentColor;
+}
+.nav-item {
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: background-color var(--bz-snap), color var(--bz-snap), border-color var(--bz-snap);
+}
+.nav-item:hover { transform: none; border-color: var(--bz-line); }
+.nav-item:hover .nav-item-icon { transform: none; }
+.nav-item:active { transform: none; }
+.nav-item.active { border-color: rgba(255, 255, 255, 0.55); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45); }
+.nav-item.active::before, .nav-item[data-view].active::before {
+  top: 0; bottom: 0; width: 3px; opacity: 1; border-radius: 0; box-shadow: none; background: #fff;
+}
+
+/* ---------- Header ---------- */
+.header { border-bottom: 1px solid var(--bz-line-strong); box-shadow: none; }
+.header-title { font-size: 12px; font-weight: 500; }
+.breadcrumb-container { font-size: var(--bz-label); border-bottom: 1px solid var(--bz-line); }
+
+/* ---------- Panels: hard border, title bar, corner ticks ---------- */
+.card, .dash-v4-panel, .dash-v4-stat-card, .inline-job-submission, .stats-overview-item {
+  border: 1px solid var(--bz-line);
+  box-shadow: none;
+  position: relative;
+}
+.card::after, .dash-v4-panel::after, .dash-v4-stat-card::after, .inline-job-submission::after {
+  /* four corner ticks, drawn once with eight gradients */
+  content: ''; position: absolute; inset: -1px; pointer-events: none; z-index: 2;
+  --t: var(--bz-line-strong);
+  background:
+    linear-gradient(var(--t), var(--t)) top left / 9px 1px no-repeat,
+    linear-gradient(var(--t), var(--t)) top left / 1px 9px no-repeat,
+    linear-gradient(var(--t), var(--t)) top right / 9px 1px no-repeat,
+    linear-gradient(var(--t), var(--t)) top right / 1px 9px no-repeat,
+    linear-gradient(var(--t), var(--t)) bottom left / 9px 1px no-repeat,
+    linear-gradient(var(--t), var(--t)) bottom left / 1px 9px no-repeat,
+    linear-gradient(var(--t), var(--t)) bottom right / 9px 1px no-repeat,
+    linear-gradient(var(--t), var(--t)) bottom right / 1px 9px no-repeat;
+}
+.card-header, .dash-v4-panel-header, .modal-header, .inline-job-header {
+  background: var(--bz-field);
+  border-bottom: 1px solid var(--bz-line);
+}
+.card-title, .dash-v4-panel-title, .modal-title { font-size: 12px; font-weight: 500; }
+.card:hover, .dash-v4-panel:hover, .dash-v4-stat-card:hover { transform: none; box-shadow: none; }
+
+.dash-v4-stat-card { border-top: 2px solid var(--bz-line-strong); }
+.dash-v4-stat-value { font-size: 2rem; }
+.dash-v4-insight-item, .dash-v4-feed-item, .dash-v4-result-card { border: 1px solid var(--bz-line); box-shadow: none; }
+.dash-v4-feed-item-interactive:hover, .dash-v4-result-card:hover { transform: none; border-color: var(--bz-line-strong); }
+
+/* ---------- Hero banner (colour kept, flat, grid drawn on it) ---------- */
+.hero-banner {
+  --hero-deep: color-mix(in srgb, var(--hero-color, #667eea) 78%, #000);
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 32px;
+  padding: 32px 40px 36px;
+  background: var(--hero-deep);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.hero-banner::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 160px 160px, 160px 160px, 32px 32px, 32px 32px;
+  background-position: -1px -1px;
+}
+.hero-banner::after {
+  content: 'PHONOS // CONSOLE';
+  position: absolute; top: 10px; right: 14px;
+  font: 500 10px/1 var(--font-mono); letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.8);
+}
+.hero-banner__body { position: relative; }
+.hero-banner__head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.hero-banner__head svg { flex: none; }
+.hero-banner__title { margin: 0; color: #fff; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase; }
+.hero-banner__text { margin: 0 0 20px; max-width: 640px; color: #fff; font-size: 15px; line-height: 1.55; }
+.hero-banner__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Model cards: colours kept, edges hard, index number ---------- */
+.simple-category-grid { counter-reset: bzcat; gap: 16px; }
+.simple-category-card {
+  counter-increment: bzcat;
+  border: 1px solid var(--bz-line-strong);
+  box-shadow: none;
+  transition: transform var(--bz-snap), box-shadow var(--bz-snap);
+}
+.simple-category-card::after {
+  content: counter(bzcat, decimal-leading-zero);
+  position: absolute; top: 12px; right: 14px; z-index: 2;
+  font: 500 11px/1 var(--font-mono); letter-spacing: 0.14em; color: var(--bz-ink-dim);
+}
+.simple-category-card .category-card-bg { opacity: 0.18; }
+.simple-category-card:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55); }
+.simple-category-card:active { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55); }
+.simple-category-card .category-icon { border: 1px solid rgba(255, 255, 255, 0.5); }
+.simple-category-card .category-label { text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em; font-size: 18px; }
+.simple-category-card .category-powered-by, .simple-category-card .category-meta > * {
+  border: 1px solid currentColor; padding: 4px 8px; font-size: 10.5px; line-height: 1.2;
+}
+
+/* ---------- Buttons ---------- */
+.btn, .dash-v4-btn, .app-switcher-btn, .user-menu-btn, .cookie-btn, .btn-primary, .btn-secondary {
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  transition: background-color var(--bz-snap), color var(--bz-snap), border-color var(--bz-snap), transform var(--bz-snap), box-shadow var(--bz-snap);
+}
+.btn:not(.btn-ghost):not(.btn-icon):not(.btn-sm), .dash-v4-btn { text-transform: uppercase; }
+.btn::before, .btn-primary::before, .btn-primary::after { display: none; }
+.btn-primary, .dash-v4-btn-primary {
+  border: 1px solid var(--accent-primary-light, #34d399);
+  background: var(--accent-primary, #0F9960);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled), .dash-v4-btn-primary:hover:not(:disabled) {
+  transform: translate(-2px, -2px); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+  background: var(--accent-primary, #0F9960);
+}
+.btn-primary:active:not(:disabled), .dash-v4-btn-primary:active:not(:disabled) { transform: none; box-shadow: none; }
+.btn:disabled, .btn[disabled] { opacity: 0.45; }
+
+/* ---------- Form fields ---------- */
+.form-input, .form-select, .form-textarea, .jobs-search input, select, textarea,
+input[type="text"], input[type="search"], input[type="email"], input[type="password"], input[type="number"] {
+  border-radius: 0;
+  background-color: var(--bz-field);
+  border: 1px solid var(--bz-line);
+  box-shadow: none;
+}
+.form-input:hover, .form-select:hover, .form-textarea:hover { border-color: var(--bz-line-strong); }
+.form-input:focus, .form-select:focus, .form-textarea:focus,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  border-color: var(--accent-primary-light, #34d399);
+  box-shadow: none;
+  outline: 2px solid var(--accent-primary-light, #34d399);
+  outline-offset: 0;
+}
+.form-label { color: var(--bz-ink-dim); }
+
+/* ---------- Tables ---------- */
+.table { border: 1px solid var(--bz-line); border-collapse: collapse; }
+.table thead th {
+  background: var(--bz-field);
+  border-bottom: 1px solid var(--bz-line-strong);
+  border-right: 1px solid var(--bz-line);
+  color: var(--bz-ink-dim);
+}
+.table tbody td { border-bottom: 1px solid var(--bz-line); border-right: 1px solid var(--bz-line); }
+.table th:last-child, .table td:last-child { border-right: 0; }
+.table tbody tr:hover td { background: var(--bg-hover, #3D4F5D); }
+
+/* ---------- Status, tabs, steps ---------- */
+.status-pill, [class*="badge"]:not([class*="badges"]):not(.notification-badge):not(.nav-badge) {
+  border-radius: 0;
+  border: 1px solid currentColor;
+  box-shadow: none;
+}
+.tabs-v2 { border-bottom: 1px solid var(--bz-line-strong); }
+.tab-v2 { border-radius: 0; border: 1px solid transparent; font-size: var(--bz-label); transition: background-color var(--bz-snap), color var(--bz-snap); }
+.tab-v2.active { border-color: var(--bz-line-strong); border-bottom-color: transparent; box-shadow: inset 0 2px 0 var(--accent-primary-light, #34d399); }
+.dash-v4-chart-tab, .dash-v4-feed-filter { border-radius: 0; }
+.step-number { border-radius: 0; font-family: var(--font-mono); }
+.inline-job-step { border-radius: 0; border: 1px solid var(--bz-line); }
+.inline-job-step.active { border-color: var(--bz-line-strong); }
+.inline-job-step-connector { height: 1px; background: var(--bz-line-strong); }
+.wizard-mode-btn { border-radius: 0; font-size: var(--bz-label); }
+
+/* ---------- Modals, menus, toasts ---------- */
+.modal, .modal-content, .dropdown-menu, .toast, .notification-dropdown {
+  border: 1px solid var(--bz-line-strong);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
+}
+.modal-overlay, .modal-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(10, 16, 22, 0.78); }
+.dropdown-item:hover { background: var(--bg-hover, #3D4F5D); }
+
+/* ---------- Scrollbars: square, thin ---------- */
+* { scrollbar-width: thin; scrollbar-color: rgba(245, 248, 250, 0.35) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(245, 248, 250, 0.3); border: 2px solid transparent; background-clip: padding-box; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245, 248, 250, 0.5); background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Motion: snap, don't float ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .simple-category-card, .btn-primary, .dash-v4-btn-primary { transition: none; }
+  .simple-category-card:hover, .btn-primary:hover:not(:disabled) { transform: none; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 720px) {
+  .hero-banner { padding: 24px 20px 26px; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5); }
+  .hero-banner__title { font-size: 22px; }
+  .hero-banner::after { display: none; }
+  .simple-category-card:hover { transform: none; box-shadow: none; }
+  :root { --bz-grid: 24px; }
+}
+
+/* ==========================================================================
+   Second pass: fixes found on the first screenshots
+   ========================================================================== */
+
+/* The dashboard paints its own opaque background; let the grid field show through. */
+.dash-v4, .dash-fullframe { background: transparent; }
+/* Grid children may shrink: the wide chart panel used to run under the right-hand column. */
+.dash-v4-body-grid > *, .dash-v4-charts-row > *, .dash-v4-stats-row > * { min-width: 0; }
+
+/* Panel headers on the dashboard: a rule instead of a floating bar. */
+.dash-v4-panel-header { background: none; border-bottom: 1px solid var(--bz-line); padding-bottom: 10px; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.dash-v4-panel-title { white-space: nowrap; letter-spacing: 0.1em; }
+.dash-v4-chart-tab, .dash-v4-feed-filter { font-family: var(--font-mono); font-size: var(--bz-label); letter-spacing: 0.1em; text-transform: uppercase; }
+.dash-v4-feed-filter { border: 1px solid var(--bz-line); padding: 3px 8px; }
+.dash-v4-feed-filter.active { border-color: var(--accent-primary-light, #34d399); }
+
+/* Job/status pills: lighter text so the 11 px mono caps stay readable on their tinted fill. */
+.status-pill.completed { color: var(--accent-success-light, #34d399); }
+.status-pill.failed { color: var(--accent-danger-light, #f87171); }
+.status-pill.pending { color: var(--accent-warning-light, #fbbf24); }
+.status-pill.running { color: var(--accent-info-light, #22d3ee); }
+.status-pill.processing { color: var(--accent-primary-light, #34d399); }
+.status-pill.queued { color: var(--text-secondary, #C7D0DB); }
+
+/* Jobs / Projects: five stat tiles in one row; the search box carries its icon inside. */
+.stats-overview { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.stats-overview-item { text-align: left; padding: 12px 14px; border-top: 2px solid var(--bz-line-strong); }
+.stats-overview-value { font-size: 1.75rem; display: block; }
+.jobs-search { position: relative; flex: 1 1 280px; min-width: 220px; }
+.jobs-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--bz-ink-dim); pointer-events: none; }
+.jobs-search .form-input { width: 100%; padding-left: 34px; }
+
+/* The wizard card had a soft drop shadow that now draws as a stray bar; keep it flat. */
+.inline-job-submission, .inline-job-submission > *, .inline-job-card { box-shadow: none; }
+
+/* ==========================================================================
+   Entry pages: landing, login, register (the .split-layout pages)
+   They carry their own zinc palette (#09090b) and inline styles, so everything
+   is scoped to .split-layout / body:has(.split-layout) and does not touch the app.
+   ========================================================================== */
+body:has(.split-layout) {
+  --e-line: rgba(250, 250, 250, 0.22);
+  --e-line-strong: rgba(250, 250, 250, 0.7);
+  --e-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  background-color: #09090b;
+  background-image:
+    linear-gradient(rgba(250, 250, 250, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(250, 250, 250, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.03) 1px, transparent 1px);
+  background-size: 200px 200px, 200px 200px, 40px 40px, 40px 40px;
+  background-position: -1px 28px;
+  padding-top: 28px;   /* the status strip */
+}
+body:has(.split-layout)::before {
+  content: 'PHONOS  //  RESEARCH PREVIEW  //  FYREFLY SYSTEMS';
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 28px;
+  display: flex; align-items: center; padding: 0 1.25rem;
+  background: #09090b; border-bottom: 1px solid var(--e-line-strong);
+  font: 500 10px/1 var(--e-mono); letter-spacing: 0.2em; color: #a1a1aa;
+  inset: 0 0 auto 0;
+}
+.split-layout { min-height: calc(100vh - 28px); }
+.split-layout .content-side { background: transparent; }
+.split-layout .brand-name {
+  display: flex; align-items: center; gap: 12px;
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  -webkit-text-fill-color: #fafafa; color: #fafafa;
+  font: 500 1.1rem/1 var(--e-mono); letter-spacing: 0.24em; text-transform: uppercase;
+}
+.split-layout .brand-name::before { content: ''; width: 14px; height: 14px; background: #10B981; flex: none; }
+.split-layout .subheadline {
+  border-left: 3px solid #10B981; padding-left: 1.25rem;
+  font-size: 1.15rem; color: #d4d4d8;
+}
+.split-layout .headline span { background: none; -webkit-text-fill-color: #10B981; color: #10B981; }
+
+.split-layout .btn, .split-layout .btn-primary {
+  border-radius: 0; font-family: var(--e-mono); font-size: 0.8rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  transition: transform var(--bz-snap), box-shadow var(--bz-snap), background-color var(--bz-snap);
+  backdrop-filter: none;
+}
+.split-layout .btn-primary { background: #fafafa; color: #09090b; border: 1px solid #fafafa; }
+.split-layout .btn-primary:hover:not(:disabled) { transform: translate(-3px, -3px); box-shadow: 4px 4px 0 #10B981; background: #fafafa; }
+.split-layout .btn-primary:active:not(:disabled) { transform: none; box-shadow: none; }
+.split-layout .btn-secondary { background: transparent; border: 1px solid var(--e-line-strong); color: #fafafa; }
+.split-layout .btn-secondary:hover { transform: translate(-3px, -3px); box-shadow: 4px 4px 0 rgba(250, 250, 250, 0.35); background: transparent; border-color: #fafafa; }
+
+.split-layout .form-label { font: 500 11px/1.4 var(--e-mono); letter-spacing: 0.14em; text-transform: uppercase; color: #a1a1aa; }
+.split-layout .form-input {
+  border-radius: 0; background: rgba(0, 0, 0, 0.45); border: 1px solid var(--e-line); box-shadow: none;
+}
+.split-layout .form-input:hover { border-color: var(--e-line-strong); }
+.split-layout .form-input:focus { border-color: #10B981; outline: 2px solid #10B981; outline-offset: 0; box-shadow: none; }
+.split-layout .error-toast { border-radius: 0; border: 1px solid #ef4444; border-left-width: 4px; box-shadow: none; }
+.split-layout .lang-toggle { border-radius: 0; font-family: var(--e-mono); letter-spacing: 0.12em; }
+.split-layout .footer-nav, .split-layout .auth-footer { font-family: var(--e-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.split-layout .visual-side {
+  background: rgba(9, 9, 11, 0.55);
+  box-shadow: inset 1px 0 0 var(--e-line-strong), inset -1px 0 0 var(--e-line-strong);
+}
+.split-layout .visual-side::after {
+  content: 'FIG. 01'; position: absolute; left: 2rem; bottom: 1.25rem; z-index: 3;
+  font: 500 11px/1 var(--e-mono); letter-spacing: 0.2em; color: #a1a1aa;
+}
+.split-layout .ambient-glow { display: none; }
+.split-layout .grid-pattern { display: none; }   /* the page itself carries the grid now */
+.split-layout .visual-image-container { position: relative; }
+.split-layout .visual-image {
+  filter: none; border-radius: 0;
+  border: 1px solid var(--e-line-strong);
+  box-shadow: 12px 12px 0 rgba(16, 185, 129, 0.9);
+  background: #09090b;
+}
+
+/* The disclaimer modal on the login page */
+.split-layout ~ .modal-overlay .modal-content, .modal-overlay .modal-content { border-radius: 0; }
+
+@media (max-width: 1024px) {
+  .split-layout .content-side { border-bottom: 1px solid var(--e-line-strong); }
+  .split-layout .visual-image { box-shadow: 8px 8px 0 rgba(16, 185, 129, 0.9); }
+  .split-layout .subheadline { text-align: left; }
+}
+@media (max-width: 560px) {
+  body:has(.split-layout)::before { content: 'PHONOS  //  RESEARCH PREVIEW'; }
+}
+.split-layout .content-side { padding-top: 2.5rem; }
+
+/* ---------- Third pass ---------- */
+.hero-banner h2 { text-transform: uppercase; letter-spacing: -0.02em; }
+/* Only real badges get the hard outline; wrappers named *-badges (rows of badges) do not. */
+[class*="badge"]:not([class*="badges"]):not(.notification-badge):not(.nav-badge) { border-radius: 0; }
+.project-card-v2-badges, [class*="-badges"] { border: 0; box-shadow: none; background: none; }
+.project-card-v2-members { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.avatar { flex: none; }
+
+/* Stand-alone pages (API docs, help desk, Evo2, notebook shell …) get the same grid field on the body. */
+body:not(:has(.app-container)):not(:has(.split-layout)) {
+  background-image:
+    linear-gradient(var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(var(--bz-grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-minor) 1px, transparent 1px);
+  background-size:
+    calc(var(--bz-grid) * 5) calc(var(--bz-grid) * 5),
+    calc(var(--bz-grid) * 5) calc(var(--bz-grid) * 5),
+    var(--bz-grid) var(--bz-grid),
+    var(--bz-grid) var(--bz-grid);
+  background-attachment: fixed;
+}
+
+/* Narrow screens: the dashboard scrolls as one page instead of pinning its panels to the frame
+   (the pinned layout let the right-hand panels draw over the charts on phones). */
+@media (max-width: 1200px) {
+  #content-area.dash-fullframe { overflow-y: auto; }
+  .dash-v4-fit { height: auto; min-height: 100%; overflow: visible; }
+  .dash-v4-fit .dash-v4-body-grid { overflow: visible; }
+  .dash-v4-actions, .dash-v4-command-bar { flex-wrap: wrap; }
+}
+@media (max-width: 720px) {
+  .dash-v4-actions { width: 100%; }
+  .dash-v4-actions .dash-v4-btn { flex: 1 1 130px; justify-content: center; }
+  .dash-v4-stats-row { grid-template-columns: 1fr 1fr; }
+  .dash-v4-stat-value { font-size: 1.4rem; }
+}
+
+/* ==========================================================================
+   Unified legal footer (templates/partials/_legal_footer.html)
+   One component for the legal pages, sign-in/registration/2FA pages and the app sidebar;
+   the website footer uses the same links, order and wording.
+   ========================================================================== */
+.legal-footer {
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 0;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+  font-size: 11px; line-height: 1.5; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted, #a1a1aa);
+}
+.legal-footer__nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.legal-footer a, .legal-footer button {
+  display: inline-flex; align-items: center; min-height: 24px; margin: 0; padding: 2px 0;
+  background: none; border: 0; border-radius: 0; box-shadow: none;
+  color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: none; cursor: pointer;
+}
+.legal-footer a:hover, .legal-footer button:hover { color: var(--text-primary, #fafafa); text-decoration: underline; text-underline-offset: 4px; }
+.legal-footer a:focus-visible, .legal-footer button:focus-visible { outline: 2px solid var(--accent-primary-light, #34d399); outline-offset: 2px; }
+.legal-footer__line { margin: 0; letter-spacing: 0.04em; text-transform: none; opacity: 0.85; }
+.legal-footer-links .legal-footer { align-items: center; margin-top: 12px; text-align: center; }
+.legal-footer-links .legal-footer__nav { justify-content: center; }
+.legal-footer-links .legal-footer a { margin: 0; }   /* the page's own ".legal-footer-links a" spacing is for the old link row */
+.legal-footer--sidebar { margin-top: 8px; padding: 12px 14px 4px; border-top: 1px solid var(--bz-line); font-size: 10.5px; }
+.legal-footer--sidebar .legal-footer__nav { gap: 0 12px; }
+.split-layout .legal-footer { margin-top: 0; }
+form .legal-footer { margin-top: 1.5rem; align-items: center; text-align: center; }
+form .legal-footer__nav { justify-content: center; }
+.split-layout .legal-footer { flex: 1 1 100%; }
+
+/* ==========================================================================
+   Visual pass 2026-10-25: entry pages, stand-alone auth cards, small screens
+   ========================================================================== */
+
+/* Entry pages: stand-alone links and the language toggle reach the 24 px target size (WCAG 2.5.8). */
+.split-layout .link-text { display: inline-flex; align-items: center; min-height: 24px; }
+.split-layout .lang-toggle { min-width: 32px; min-height: 28px; }
+.split-layout .link-text:focus-visible, .split-layout .lang-toggle:focus-visible,
+.split-layout .link-primary:focus-visible, .split-layout a:focus-visible {
+  outline: 2px solid #34d399; outline-offset: 2px;
+}
+.split-layout .link-text { color: #a1a1aa; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(250, 250, 250, 0.25); }
+.split-layout .link-text:hover { color: #fafafa; text-decoration-color: currentColor; }
+.split-layout h1.brand-name { margin: 0; }
+
+/* Registration: single column on phones (two columns cut the placeholders and misaligned wrapped labels). */
+.split-layout .form-grid { align-items: end; }
+.split-layout .form-grid .form-group { margin-bottom: 0.25rem; }
+@media (max-width: 560px) {
+  .split-layout .form-grid { grid-template-columns: 1fr; gap: 0; align-items: stretch; }
+  .split-layout .form-grid .form-group.full-width { grid-column: auto; }
+  .split-layout .form-grid .form-group { margin-bottom: 1rem; }
+}
+
+/* Forgot / reset password: same hard card as the entry pages, readable footer with margins. */
+.auth-card { box-shadow: 8px 8px 0 rgba(16, 185, 129, 0.9); }
+.auth-card .auth-logo { margin: 0 0 var(--space-2, 8px); font-size: 1.5rem; line-height: 1.25; }
+.auth-card .card-body a:not(.btn) { display: inline-flex; align-items: center; min-height: 24px; text-underline-offset: 3px; }
+.auth-card .card-body a:not(.btn):focus-visible { outline: 2px solid var(--accent-primary-light, #34d399); outline-offset: 2px; }
+body:has(.auth-container) > .legal-footer { align-items: center; padding: 16px 24px 24px; text-align: center; position: relative; z-index: 1; }
+body:has(.auth-container) > .legal-footer .legal-footer__nav { justify-content: center; }
+body:has(.auth-container) .auth-container { min-height: calc(100vh - 110px); }
+@media (max-width: 560px) {
+  .auth-card { box-shadow: 5px 5px 0 rgba(16, 185, 129, 0.9); }
+  .auth-card .card-body { padding: var(--space-5, 20px); }
+}
+
+/* API docs: stacked layout on phones (rules live in the template); keep code blocks scrolling inside their box. */
+.code-block-wrapper pre, .code-block-wrapper code { max-width: 100%; }
+body:has(.auth-container) > .legal-footer { background: var(--color-bg-base); }
+@media (max-width: 1024px) {
+  /* keep the FIG. caption below the picture and its hard shadow instead of on top of it */
+  .split-layout .visual-side { padding-bottom: 3.25rem; }
+}
+
+/* ==========================================================================
+   Grid system, 2026-10-27. Shared with fyreflysystems.de (shared/ff/site.css):
+   same tokens, same field, same rules.
+
+     --ff-cell        one grid cell: 32 px, 16 px on phones (≤ 860 px)
+     --ff-cell-major  a stronger line every 4 cells
+     --ff-cols        12 / 8 / 4 columns (≤ 1100 px / ≤ 860 px)
+     --ff-gap         gutter between panels = 1 cell
+     --ff-pad         inside a panel: 16 px (half a cell, one phone cell)
+
+   Every page margin, gutter, section step and panel edge is a whole number of cells, so
+   content sits on the lines of the field behind it. Containers add mod(100%, cell) to their
+   right padding, so their content box is whole cells wide. Two-column tracks round the first
+   column down to whole cells and give the remainder to the last one. Heights depend on
+   content: static/js/grid-snap.js rounds panel heights up to whole cells.
+   ========================================================================== */
+:root {
+  --ff-cell: 32px;
+  --ff-cell-major: 4;
+  --ff-cols: 12;
+  --ff-gap: var(--ff-cell);
+  --ff-pad: 16px;
+  --ff-major: calc(var(--ff-cell) * var(--ff-cell-major));
+  --ff-field:
+    linear-gradient(var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-major) 1px, transparent 1px),
+    linear-gradient(var(--bz-grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bz-grid-minor) 1px, transparent 1px);
+  --ff-field-size: var(--ff-major) var(--ff-major), var(--ff-major) var(--ff-major), var(--ff-cell) var(--ff-cell), var(--ff-cell) var(--ff-cell);
+  --bz-grid: var(--ff-cell);
+  --header-height: 64px;      /* 2 cells (4 on phones) */
+  --sidebar-width: 256px;     /* 8 cells */
+}
+@media (max-width: 1100px) { :root { --ff-cols: 8; } }
+@media (max-width: 860px)  { :root { --ff-cell: 16px; --ff-cols: 4; } }
+
+/* ---------- The field: one definition for the app, the stand-alone pages and the entry pages ---------- */
+.main-content, .content-area {
+  background-image: var(--ff-field);
+  background-size: var(--ff-field-size);
+  background-position: 0 0;
+}
+/* Stand-alone pages: the field scrolls with the page (it was fixed to the window), so it stays
+   under the content it frames. */
+body:not(:has(.app-container)):not(:has(.split-layout)) {
+  background-image: var(--ff-field);
+  background-size: var(--ff-field-size);
+  background-position: 0 0;
+  background-attachment: scroll;
+}
+
+/* ---------- App shell ---------- */
+.header { height: var(--header-height); padding: 0 var(--ff-cell); }
+.content-area {
+  padding: var(--ff-cell);
+  padding-right: calc(var(--ff-cell) + mod(100%, var(--ff-cell)));
+}
+#content-area.dash-fullframe, #content-area.fm-fullframe { padding: 0; }
+/* One accent: the nav icons follow the text colour instead of a colour each. */
+.nav-item .nav-item-icon { color: inherit !important; opacity: 0.75; }
+.nav-item.active .nav-item-icon, .nav-item:hover .nav-item-icon { opacity: 1; }
+
+/* ---------- Dashboard ---------- */
+.dash-v4-fit {
+  padding: var(--ff-cell);
+  padding-right: calc(var(--ff-cell) + mod(100%, var(--ff-cell)));
+  gap: var(--ff-gap);
+}
+.dash-v4-command-bar { height: calc(2 * var(--ff-cell)); min-height: 64px; padding: 0 var(--ff-pad); }
+.dash-v4-greeting { gap: var(--ff-pad); align-items: baseline; }
+.dash-v4-greeting h1 { font-size: 1.125rem; letter-spacing: -0.01em; }
+.dash-v4-greeting-meta { font-family: var(--font-mono); font-size: var(--bz-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bz-ink-dim); }
+.dash-v4-stats-row {
+  gap: var(--ff-gap);
+  grid-template-columns: repeat(3, round(down, calc((100% - 3 * var(--ff-gap)) / 4), var(--ff-cell))) minmax(0, 1fr);
+}
+.dash-v4-stat-card, .dash-v4-fit .dash-v4-stat-card { height: 128px; padding: var(--ff-pad); gap: 8px; justify-content: space-between; }
+/* No decoration on the figures: the icon repeated the label, the sparkline had no axis. */
+.dash-v4-stat-icon, .dash-v4-stat-sparkline, .dash-v4-stat-trend svg { display: none; }
+.dash-v4-stat-trend { font-family: var(--font-mono); font-size: var(--bz-label); letter-spacing: 0.06em; color: var(--bz-ink-dim); }
+.dash-v4-body-grid, .dash-v4-fit .dash-v4-body-grid {
+  gap: var(--ff-gap);
+  grid-template-columns: minmax(0, 1fr) calc(13 * var(--ff-cell));
+}
+.dash-v4-fit .dash-v4-main, .dash-v4-fit .dash-v4-sidebar { padding-right: 0; }
+.dash-v4-charts-row, .dash-v4-fit .dash-v4-charts-row {
+  gap: var(--ff-gap);
+  margin-bottom: var(--ff-gap);
+  grid-template-columns: round(down, calc((100% - var(--ff-gap)) * 0.6), var(--ff-cell)) minmax(0, 1fr);
+}
+.dash-v4-charts-row--half, .dash-v4-fit .dash-v4-charts-row--half {
+  grid-template-columns: round(down, calc((100% - var(--ff-gap)) / 2), var(--ff-cell)) minmax(0, 1fr);
+}
+.dash-v4-chart-container, .dash-v4-fit .dash-v4-chart-container { height: 288px; padding: var(--ff-pad); }  /* 9 cells, 18 on phones */
+.dash-v4-panel { padding: var(--ff-pad); margin-bottom: var(--ff-gap); }
+.dash-v4-panel-header { min-height: 32px; margin-bottom: var(--ff-pad); padding-bottom: 8px; }
+.dash-v4-panel--start { border-color: var(--bz-line-strong); }
+@media (max-width: 1200px) {
+  .dash-v4-body-grid, .dash-v4-fit .dash-v4-body-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .dash-v4-command-bar { height: auto; padding: var(--ff-pad); flex-wrap: wrap; gap: var(--ff-pad); }
+  .dash-v4-stats-row { grid-template-columns: round(down, calc((100% - var(--ff-gap)) / 2), var(--ff-cell)) minmax(0, 1fr); }
+  .dash-v4-stat-card, .dash-v4-fit .dash-v4-stat-card { height: 112px; }   /* 7 phone cells */
+  .dash-v4-charts-row, .dash-v4-fit .dash-v4-charts-row,
+  .dash-v4-charts-row--half, .dash-v4-fit .dash-v4-charts-row--half { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Model pages (_configure_base.html): margins, header and columns in whole cells ---------- */
+.page-container {
+  box-sizing: border-box;
+  max-width: none;
+  width: min(1600px, round(down, 100%, var(--ff-cell)));
+  margin: 0 auto 0 max(0px, round(down, calc((100% - 1600px) / 2), var(--ff-cell)));
+  padding: var(--ff-cell);
+}
+.page-container > .page-header {
+  box-sizing: border-box;
+  min-height: calc(2 * var(--ff-cell));
+  min-height: max(64px, calc(2 * var(--ff-cell)));
+  margin-bottom: var(--ff-gap);
+  padding: 0;
+  align-items: center;
+}
+/* The coloured icon tile repeated the model name; the name carries the page. */
+.page-header .title-icon { display: none; }
+.page-header .page-title h1 { font-size: 1.375rem; letter-spacing: -0.015em; }
+.page-header .page-title p { font-size: 0.875rem; color: var(--bz-ink-dim); }
+.page-header .back-link { min-height: 32px; box-sizing: border-box; }
+.page-container .main-grid {
+  gap: var(--ff-gap);
+  grid-template-columns: calc(15 * var(--ff-cell)) minmax(0, 1fr);   /* 480 px input column */
+}
+.page-container .main-grid > div > .card + .card,
+.page-container .main-grid > div > * + .card { margin-top: var(--ff-gap); }
+.page-container .card-header { box-sizing: border-box; min-height: 64px; padding: var(--ff-pad); }
+.page-container .card-body { padding: var(--ff-pad); }
+@media (max-width: 1200px) {
+  .page-container .main-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Entry pages: sign-in, registration (the public landing page keeps its original look:
+   every rule here skips the page that carries the landing photo) ---------- */
+body:has(.split-layout):not(:has(img[src*="landing-visual"])) {
+  background-image:
+    linear-gradient(rgba(250, 250, 250, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(250, 250, 250, 0.016) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.016) 1px, transparent 1px);
+  background-size: var(--ff-field-size);
+  background-position: 0 0;
+  padding-top: 32px;   /* the status strip: one cell, two on phones */
+}
+body:has(.split-layout):not(:has(img[src*="landing-visual"]))::before { height: 32px; box-sizing: border-box; padding: 0 var(--ff-cell); }
+.split-layout:not(:has(img[src*="landing-visual"])) { min-height: calc(100vh - 32px); }
+.split-layout:not(:has(img[src*="landing-visual"])) .content-side {
+  box-sizing: border-box;
+  flex: 0 0 calc(18 * var(--ff-cell));   /* 576 px */
+  max-width: none;
+  justify-content: flex-start;
+  padding: calc(3 * var(--ff-cell)) calc(2 * var(--ff-cell)) calc(2 * var(--ff-cell));
+}
+.split-layout:not(:has(img[src*="landing-visual"])) .brand-header { margin-bottom: var(--ff-cell); min-height: 32px; }
+.split-layout:not(:has(img[src*="landing-visual"])) .subheadline { margin-bottom: var(--ff-pad); max-width: none; font-size: 1.125rem; line-height: 1.55; }
+.split-layout:not(:has(img[src*="landing-visual"])) .entry-note {
+  margin: 0 0 var(--ff-cell);
+  font: 500 11px/16px var(--e-mono); letter-spacing: 0.12em; text-transform: uppercase; color: #a1a1aa;
+}
+.split-layout:not(:has(img[src*="landing-visual"])) .auth-container { min-height: 0; gap: var(--ff-pad); max-width: calc(12 * var(--ff-cell)); }
+.split-layout:not(:has(img[src*="landing-visual"])) .auth-container .btn { box-sizing: border-box; min-height: 48px; padding-top: 0; padding-bottom: 0; }
+.split-layout:not(:has(img[src*="landing-visual"])) .footer-nav { left: calc(2 * var(--ff-cell)); right: calc(2 * var(--ff-cell)); bottom: var(--ff-cell); }
+
+/* The model table in place of the picture */
+.split-layout:not(:has(img[src*="landing-visual"])) .visual-side--table {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: calc(3 * var(--ff-cell)) calc(2 * var(--ff-cell));
+  padding-right: calc(2 * var(--ff-cell) + mod(100%, var(--ff-cell)));
+  background: rgba(9, 9, 11, 0.6);
+}
+.split-layout:not(:has(img[src*="landing-visual"])) .visual-side--table::after { content: none; }
+.model-table { margin: 0; width: 100%; max-width: calc(22 * var(--ff-cell)); border: 1px solid var(--e-line-strong); background: #09090b; }
+.model-table__caption {
+  display: flex; justify-content: space-between; align-items: center;
+  height: 32px; box-sizing: border-box; padding: 0 var(--ff-pad);
+  border-bottom: 1px solid var(--e-line-strong);
+  font: 500 11px/1 var(--e-mono); letter-spacing: 0.14em; text-transform: uppercase; color: #fafafa;
+}
+.model-table__count { color: #a1a1aa; }
+.model-table__scroll { overflow-x: auto; }
+.model-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.model-table th, .model-table td {
+  height: 32px; box-sizing: border-box; padding: 0 var(--ff-pad);
+  text-align: left; vertical-align: middle; white-space: nowrap;
+  border-bottom: 1px solid var(--e-line);
+}
+.model-table th { font: 500 11px/1 var(--e-mono); letter-spacing: 0.12em; text-transform: uppercase; color: #a1a1aa; background: rgba(250, 250, 250, 0.04); }
+.model-table td:first-child { font: 500 11px/1 var(--e-mono); letter-spacing: 0.1em; text-transform: uppercase; color: #a1a1aa; }
+.model-table td:nth-child(2) { color: #fafafa; font-weight: 500; }
+.model-table td:last-child { color: #d4d4d8; font-family: var(--e-mono); font-size: 12.5px; }
+.model-table tbody tr:last-child td { border-bottom: 0; }
+.model-table__note {
+  margin: 0; min-height: 32px; box-sizing: border-box; padding: 8px var(--ff-pad);
+  border-top: 1px solid var(--e-line-strong);
+  font-size: 12.5px; line-height: 16px; color: #a1a1aa;
+}
+@media (max-width: 1024px) {
+  .split-layout:not(:has(img[src*="landing-visual"])) .content-side { flex: 0 0 auto; width: 100%; padding: calc(2 * var(--ff-cell)) var(--ff-cell); align-items: stretch; text-align: left; }
+  .split-layout:not(:has(img[src*="landing-visual"])) .footer-nav { position: static; justify-content: flex-start; margin-top: calc(2 * var(--ff-cell)); }
+  .split-layout:not(:has(img[src*="landing-visual"])) .visual-side--table { min-height: 0; padding: var(--ff-cell); padding-right: calc(var(--ff-cell) + mod(100%, var(--ff-cell))); }
+  .split-layout:not(:has(img[src*="landing-visual"])) .subheadline { text-align: left; }
+}
+@media (max-width: 860px) {
+  .split-layout:not(:has(img[src*="landing-visual"])) .content-side { padding: calc(3 * var(--ff-cell)) var(--ff-cell) calc(2 * var(--ff-cell)); }
+  .split-layout:not(:has(img[src*="landing-visual"])) .auth-container { max-width: none; }
+  .model-table td, .model-table th { white-space: normal; height: auto; min-height: 32px; padding-top: 8px; padding-bottom: 8px; }
+  .model-table td:last-child { font-size: 12px; }
+}
+
+/* ---------- Cookie dialog: square, on the same field ---------- */
+.cookie-modal-content { border-radius: 0; box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6); }
+.cookie-title { font-family: var(--font-mono, 'IBM Plex Mono', monospace); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; }
+.cookie-option-item, .cookie-btn, .cookie-toggle, .cookie-toggle-slider { border-radius: 0; }
+/* The two dashboard columns are flex stacks: panels carry the one-cell step as margin, so no extra gap. */
+.dash-v4-main, .dash-v4-sidebar { gap: 0; }
+.dash-v4-stat-sparkline { display: none !important; }
+@media (max-width: 860px) {
+  /* Phones: the figure cards grow with their text; grid-snap.js rounds them to whole cells. */
+  .dash-v4-stat-card, .dash-v4-fit .dash-v4-stat-card { height: auto; min-height: 112px; }
+  .dash-v4-stat-value, .dash-v4-fit .dash-v4-stat-value { font-size: 1.25rem; overflow-wrap: anywhere; }
+  .dash-v4-stat-title { font-size: 10.5px; }
+}
+/* Stacked cards in either column (Evo 2 and the other model pages) step by one cell. */
+.page-container .main-grid > * > .card { margin-bottom: 0; }
+.page-container .main-grid > * > .card + .card { margin-top: var(--ff-gap); }
+.page-container .main-grid .output-section { margin-top: var(--ff-gap); }
+.page-container .main-grid .card[style*="margin-top"] { margin-top: var(--ff-gap) !important; }
+
+/* Grid field at half strength (2026-10-27): a quiet guide, not a pattern. Dark lines were
+   0.045 minor / 0.09 major (variables.css --grid-line / --grid-line-major); light mode gets the
+   same weight in ink. Text sits on solid panels, so contrast is unaffected. */
+:root, [data-theme="dark"] {
+  --bz-grid-minor: rgba(245, 248, 250, 0.022);
+  --bz-grid-major: rgba(245, 248, 250, 0.045);
+}
+[data-theme="light"] {
+  --bz-grid-minor: rgba(16, 22, 26, 0.03);
+  --bz-grid-major: rgba(16, 22, 26, 0.06);
+}
+/* The hero banner's own grid (on its colour) follows: 0.16 / 0.06 -> 0.08 / 0.03. */
+.hero-banner::before {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: var(--ff-major) var(--ff-major), var(--ff-major) var(--ff-major), var(--ff-cell) var(--ff-cell), var(--ff-cell) var(--ff-cell);
+  background-position: -1px -1px;
+}

@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include "_i18n_scripts.html" %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="viewer_enhanced.title">Phonos - 3D Molecular Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_molstar_head.html' %}
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --header-height: 48px;
+            --bottom-bar-height: 56px;
+            --panel-bg: rgba(24, 24, 27, 0.98);
+            --panel-border: rgba(63, 63, 70, 0.5);
+            --accent-color: #6366f1;
+            --accent-hover: #818cf8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --tab-active: #6366f1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            overflow: hidden;
+            background: #09090b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #fafafa;
+        }
+
+        .viewer-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Top Header */
+        .viewer-header {
+            height: var(--header-height);
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            flex-shrink: 0;
+            backdrop-filter: blur(12px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #fafafa;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            background: rgba(63, 63, 70, 0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #e4e4e7;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(63, 63, 70, 0.6);
+            border-color: #52525b;
+        }
+
+        .btn.primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Main Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--panel-bg);
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: width 0.3s ease, margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            color: #a1a1aa;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: rgba(9, 9, 11, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #fafafa;
+            font-size: 12px;
+            transition: border-color 0.15s;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .style-btn {
+            padding: 6px;
+            background: rgba(9, 9, 11, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .style-btn:hover {
+            background: rgba(63, 63, 70, 0.4);
+            color: #e4e4e7;
+        }
+
+        .style-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .color-swatches {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .color-swatch {
+            width: 22px;
+            height: 22px;
+            border-radius: var(--r-ui, 0px);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        /* Viewer Container */
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            position: relative;
+        }
+
+        .viewer-canvas-wrapper {
+            flex: 1;
+            position: relative;
+            background: #09090b;
+        }
+
+        .viewer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Floating Toolbar */
+        .floating-toolbar {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(24, 24, 27, 0.9);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: all 0.15s;
+            backdrop-filter: blur(8px);
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(39, 39, 42, 0.95);
+            color: #fafafa;
+        }
+
+        .toolbar-btn.active {
+            background: rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .toolbar-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Atom Tooltip */
+        .atom-tooltip {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            padding: 8px 10px;
+            font-size: 11px;
+            color: #fafafa;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .atom-tooltip.visible {
+            display: block;
+        }
+
+        /* Bottom Bar - Multi-File Tabs */
+        .bottom-bar {
+            height: var(--bottom-bar-height);
+            min-height: var(--bottom-bar-height);
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .file-tabs-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 4px 0;
+        }
+
+        .file-tabs-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .file-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 200px;
+        }
+
+        .file-tab:hover {
+            background: rgba(63, 63, 70, 0.5);
+            color: #e4e4e7;
+        }
+
+        .file-tab.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-color);
+            color: #fafafa;
+        }
+
+        .file-tab-icon {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .file-tab-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .file-tab-close {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--r-ui, 0px);
+            opacity: 0.5;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .file-tab-close:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .file-tab-close svg {
+            width: 10px;
+            height: 10px;
+        }
+
+        .add-file-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px dashed var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #71717a;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .add-file-btn:hover {
+            background: rgba(63, 63, 70, 0.5);
+            border-style: solid;
+            color: #a1a1aa;
+        }
+
+        .add-file-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .bottom-bar-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--panel-border);
+            flex-shrink: 0;
+        }
+
+        .bottom-bar-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 10px;
+            color: #71717a;
+            flex-shrink: 0;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+
+        /* Empty State */
+        .empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #09090b;
+            z-index: 5;
+        }
+
+        .empty-state.hidden {
+            display: none;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .empty-icon svg {
+            width: 32px;
+            height: 32px;
+            color: #6366f1;
+        }
+
+        .empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            font-size: 13px;
+            color: #71717a;
+            text-align: center;
+            max-width: 300px;
+        }
+
+        /* File Picker Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #71717a;
+            cursor: pointer;
+            border-radius: var(--r-ui, 0px);
+            transition: all 0.15s;
+        }
+
+        .modal-close:hover {
+            background: #27272a;
+            color: #fafafa;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .file-item {
+            padding: 10px 12px;
+            background: #09090b;
+            border: 1px solid #27272a;
+            border-radius: var(--r-ui, 0px);
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-item:hover {
+            background: #27272a;
+            border-color: #3f3f46;
+        }
+
+        .file-item.selected {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .file-item-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6366f1;
+            flex-shrink: 0;
+        }
+
+        .file-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #fafafa;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-item-meta {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #27272a;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: var(--header-height);
+                bottom: var(--bottom-bar-height);
+                z-index: 50;
+                width: 280px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                width: 280px;
+                margin-left: 0;
+            }
+
+            .bottom-bar {
+                height: auto;
+                min-height: var(--bottom-bar-height);
+                flex-wrap: wrap;
+                padding: 8px 12px;
+            }
+
+            .file-tabs-wrapper {
+                width: 100%;
+                order: 1;
+            }
+
+            .bottom-bar-divider {
+                display: none;
+            }
+
+            .bottom-bar-info {
+                width: 100%;
+                justify-content: center;
+                order: 2;
+                padding-top: 4px;
+            }
+        }
+
+        /* Keyboard Shortcuts Modal */
+        .shortcuts-modal {
+            max-width: 360px;
+        }
+
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .shortcut-row:last-child {
+            border-bottom: none;
+        }
+
+        .shortcut-desc {
+            font-size: 12px;
+            color: #a1a1aa;
+        }
+
+        .shortcut-key {
+            padding: 4px 8px;
+            background: #27272a;
+            border-radius: var(--r-ui, 0px);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fafafa;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="viewer-layout">
+        <!-- Header -->
+        <header class="viewer-header">
+            <div class="header-left">
+                <a href="{{ url_for('dashboard') }}" class="logo">
+                    <div class="logo-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text" data-i18n="viewer_enhanced.logoText">3D Viewer</span>
+                    </a>
+                    <button class="btn" id="toggle-sidebar" aria-label="Toggle sidebar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    </button>
+                    </div>
+                    <div class="header-actions">
+                    <button class="btn" onclick="showShortcuts()" title="Keyboard Shortcuts" data-i18n="[title]viewer_enhanced.keyboardShortcuts">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span data-i18n="viewer_enhanced.help">Help</span>
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span data-i18n="viewer_enhanced.dashboard">Dashboard</span>
+                    </a>
+                    </div>
+                    </header>
+
+                    <!-- Main Area -->
+                    <div class="main-area">
+                    <!-- Sidebar -->
+                    <aside class="sidebar" id="sidebar">
+                    <div class="sidebar-content">
+                    <!-- Structure Selection -->
+                    <div class="sidebar-section">
+                        <div class="section-title" data-i18n="viewer_enhanced.loadStructure">Load Structure</div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="projects.title">Project</label>
+                            <select class="form-select" id="project-select">
+                                <option value="" data-i18n="viewer_enhanced.selectProject">Select project...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="jobs.title">Job</label>
+                            <select class="form-select" id="job-select" disabled>
+                                <option value="" data-i18n="viewer_enhanced.selectJob">Select job...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="files.title">File</label>
+                            <select class="form-select" id="file-select" disabled>
+                                <option value="" data-i18n="viewer_enhanced.selectFile">Select file...</option>
+                            </select>
+                        </div>
+                        <button class="btn primary" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="loadSelectedFile()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span data-i18n="viewer_enhanced.load">Load</span>
+                        </button>
+                    </div>
+
+                    <!-- Visualization Style -->
+                    <div class="sidebar-section">
+                        <div class="section-title" data-i18n="viewer_enhanced.style">Style</div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="viewer_enhanced.representation">Representation</label>
+                            <div class="style-grid">
+                                <button class="style-btn active" data-style="cartoon" onclick="setStyle('cartoon')" data-i18n="viewer_enhanced.cartoon">Cartoon</button>
+                                <button class="style-btn" data-style="stick" onclick="setStyle('stick')" data-i18n="viewer_enhanced.stick">Stick</button>
+                                <button class="style-btn" data-style="sphere" onclick="setStyle('sphere')" data-i18n="viewer_enhanced.sphere">Sphere</button>
+                                <button class="style-btn" data-style="line" onclick="setStyle('line')" data-i18n="viewer_enhanced.line">Line</button>
+                                <button class="style-btn" data-style="cross" onclick="setStyle('cross')" data-i18n="viewer_enhanced.cross">Cross</button>
+                                <button class="style-btn" data-style="surface" onclick="setStyle('surface')" data-i18n="viewer_enhanced.surface">Surface</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Scheme -->
+                    <div class="sidebar-section">
+                        <div class="section-title" data-i18n="viewer_enhanced.color">Color</div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="viewer_enhanced.scheme">Scheme</label>
+                            <select class="form-select" id="color-scheme" onchange="applyColorScheme()">
+                                <option value="spectrum" data-i18n="viewer_enhanced.spectrum">Spectrum</option>
+                                <option value="chain" data-i18n="viewer_enhanced.chain">By Chain</option>
+                                <option value="ss" data-i18n="viewer_enhanced.ss">Secondary Structure</option>
+                                <option value="residue" data-i18n="viewer_enhanced.residue">By Residue</option>
+                                <option value="element" data-i18n="viewer_enhanced.element">By Element</option>
+                                <option value="bfactor" data-i18n="viewer_enhanced.bfactor">B-Factor / pLDDT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="viewer_enhanced.background">Background</label>
+                            <div class="color-swatches">
+                                <div class="color-swatch active" style="background: #09090b;" data-bg="#09090b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #18181b;" data-bg="#18181b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #1e293b;" data-bg="#1e293b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #0f172a;" data-bg="#0f172a" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #ffffff;" data-bg="#ffffff" onclick="setBackground(this)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="sidebar-section" style="margin-top: auto;">
+                        <a href="{{ url_for('experimental_viewer') }}" class="btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #06b6d4); border-color: #10b981;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+                            </svg>
+                            <span data-i18n="viewer_enhanced.handTracking">Hand Tracking</span>
+                        </a>
+                    </div>
+                    </div>
+                    </aside>
+
+                    <!-- Viewer -->
+                    <div class="viewer-container">
+                    <div class="viewer-canvas-wrapper">
+                    <div class="viewer-canvas" id="viewer-canvas"></div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty-state">
+                        <div class="empty-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                            </svg>
+                        </div>
+                        <div class="empty-title" data-i18n="viewer_enhanced.noStructureLoaded">No structure loaded</div>
+                        <div class="empty-text" data-i18n="viewer_enhanced.emptyStateText">Select a project and file from the sidebar, or click the + button below to add a file.</div>
+                    </div>
+
+                    <!-- Floating Toolbar -->
+                    <div class="floating-toolbar">
+                        <button class="toolbar-btn" onclick="resetView()" title="Reset View (R)" data-i18n="[title]viewer_enhanced.resetViewTitle">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </button>
+                        <button class="toolbar-btn" id="spin-btn" onclick="toggleSpin()" title="Auto Spin (Space)" data-i18n="[title]viewer_enhanced.autoSpinTitle">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                        </button>
+                        <button class="toolbar-btn" onclick="takeScreenshot()" title="Screenshot (S)" data-i18n="[title]viewer_enhanced.screenshotTitle">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 0 12-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Atom Tooltip -->
+                    <div class="atom-tooltip" id="atom-tooltip"></div>
+                    </div>
+
+                    <!-- Bottom Bar with File Tabs -->
+                    <div class="bottom-bar">
+                    <div class="file-tabs-wrapper" id="file-tabs">
+                        <!-- File tabs will be dynamically added here -->
+                    </div>
+                    <button class="add-file-btn" onclick="showFilePicker()" title="Add File" data-i18n="[title]viewer_enhanced.addFile">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </button>
+                    <div class="bottom-bar-divider"></div>
+                    <div class="bottom-bar-info">
+                        <div class="info-item">
+                            <span class="status-dot"></span>
+                            <span id="status-text" data-i18n="viewer_enhanced.ready">Ready</span>
+                        </div>
+                        <div class="info-item" id="atom-count-wrapper" style="display: none;">
+                            <span id="atom-count" data-i18n="viewer_enhanced.atoms">0 atoms</span>
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+
+                    <!-- File Picker Modal -->
+                    <div class="modal-overlay" id="file-picker-modal">
+                    <div class="modal">
+                    <div class="modal-header">
+                    <h2 class="modal-title" data-i18n="viewer_enhanced.selectFileModal">Select File</h2>
+                    <button class="modal-close" onclick="hideFilePicker()" aria-label="Close">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    </button>
+                    </div>
+                    <div class="modal-body">
+                    <div class="file-list" id="modal-file-list">
+                    <p style="color: #71717a; text-align: center; padding: 20px;" data-i18n="viewer_enhanced.selectProjectHint">Select a project first to see available files.</p>
+                    </div>
+                    </div>
+                    <div class="modal-footer">
+                    <button class="btn" onclick="hideFilePicker()" data-i18n="common.cancel">Cancel</button>
+                    <button class="btn primary" onclick="loadSelectedFromModal()" data-i18n="viewer_enhanced.load">Load</button>
+                    </div>
+                    </div>
+                    </div>
+
+                    <!-- Shortcuts Modal -->
+                    <div class="modal-overlay" id="shortcuts-modal">
+                    <div class="modal shortcuts-modal">
+                    <div class="modal-header">
+                    <h2 class="modal-title" data-i18n="viewer_enhanced.keyboardShortcuts">Keyboard Shortcuts</h2>
+                    <button class="modal-close" onclick="hideShortcuts()" aria-label="Close">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    </button>
+                    </div>
+                    <div class="modal-body">
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.resetView">Reset view</span>
+                    <span class="shortcut-key">R</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.screenshot">Screenshot</span>
+                    <span class="shortcut-key">S</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.toggleSpin">Toggle spin</span>
+                    <span class="shortcut-key">Space</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.cartoonStyle">Cartoon style</span>
+                    <span class="shortcut-key">1</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.stickStyle">Stick style</span>
+                    <span class="shortcut-key">2</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.sphereStyle">Sphere style</span>
+                    <span class="shortcut-key">3</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.surfaceStyle">Surface style</span>
+                    <span class="shortcut-key">4</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.toggleSidebar">Toggle sidebar</span>
+                    <span class="shortcut-key">B</span>
+                    </div>
+                    <div class="shortcut-row">
+                    <span class="shortcut-desc" data-i18n="viewer_enhanced.closeActiveTab">Close active tab</span>
+                    <span class="shortcut-key">W</span>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+
+    <script>
+        // State
+        let viewer = null;
+        let currentStyle = 'cartoon';
+        let currentColorScheme = 'spectrum';
+        let isSpinning = false;
+        let loadedFiles = []; // Array of { id, name, data, format, projectId, jobId }
+        let activeFileIndex = -1;
+
+        // Data cache
+        let projectsData = [];
+        let jobsCache = {};
+        let filesCache = {};
+        let selectedModalFile = null;
+
+        // Molecular file extensions
+        const MOLECULAR_EXTENSIONS = ['pdb', 'cif', 'mmcif', 'mol', 'mol2', 'sdf', 'xyz', 'cube'];
+
+        // Initialize
+        async function initViewer() {
+            const container = document.getElementById('viewer-canvas');
+            container.setAttribute('data-phonos-viewer', '');
+            viewer = PhonosViewer.create('viewer-canvas', {
+                hideControls: true,
+                sequencePanel: false,
+                focusPanel: false
+            });
+            window._phonosViewer = viewer;
+
+            // Listen for hover events via PhonosViewer event system
+            viewer.on('hover', function(e) {
+                var d = e.detail;
+                if (d && d.residueName) {
+                    showAtomTooltip({
+                        resn: d.residueName || '',
+                        resi: d.residueNumber || '',
+                        atom: d.atomName || '',
+                        elem: d.element || '',
+                        chain: d.chainId || 'A'
+                    });
+                } else {
+                    hideAtomTooltip();
+                }
+            });
+
+            await loadProjects();
+            handleUrlParams();
+            updateStatus('Ready');
+
+            // Sidebar toggle
+            document.getElementById('toggle-sidebar').addEventListener('click', toggleSidebar);
+        }
+
+        // Load projects
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                projectsData = await response.json();
+                const select = document.getElementById('project-select');
+                select.innerHTML = '<option value="">Select project...</option>';
+                projectsData.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        // Project change handler
+        document.getElementById('project-select').addEventListener('change', async function() {
+            const projectId = this.value;
+            const jobSelect = document.getElementById('job-select');
+            const fileSelect = document.getElementById('file-select');
+
+            jobSelect.innerHTML = '<option value="">Select job...</option>';
+            jobSelect.disabled = true;
+            fileSelect.innerHTML = '<option value="">Select file...</option>';
+            fileSelect.disabled = true;
+
+            if (!projectId) return;
+
+            try {
+                if (!jobsCache[projectId]) {
+                    const response = await fetch(`/api/projects/${projectId}/jobs`);
+                    jobsCache[projectId] = await response.json();
+                }
+
+                const jobs = jobsCache[projectId].filter(j => j.status === 'completed');
+                if (jobs.length > 0) {
+                    jobSelect.disabled = false;
+                    jobs.forEach(job => {
+                        const option = document.createElement('option');
+                        option.value = job.job_id;
+                        option.textContent = job.name || job.job_id;
+                        jobSelect.appendChild(option);
+                    });
+                }
+
+                // Load uploaded files
+                if (!filesCache[projectId]) {
+                    const response = await fetch(`/api/projects/${projectId}/files`);
+                    filesCache[projectId] = await response.json();
+                }
+
+                const files = filesCache[projectId].filter(f => {
+                    if (f.type !== 'upload') return false;
+                    const ext = (f.filename || '').split('.').pop().toLowerCase();
+                    return MOLECULAR_EXTENSIONS.includes(ext);
+                });
+
+                if (files.length > 0) {
+                    fileSelect.disabled = false;
+                    files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = `upload:${file.id}`;
+                        option.textContent = file.filename;
+                        fileSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading project data:', error);
+            }
+        });
+
+        // Job change handler
+        document.getElementById('job-select').addEventListener('change', async function() {
+            const projectId = document.getElementById('project-select').value;
+            const jobId = this.value;
+            const fileSelect = document.getElementById('file-select');
+
+            if (!jobId) return;
+
+            fileSelect.innerHTML = '<option value="">Select file...</option>';
+            fileSelect.disabled = false;
+
+            // Add main job output
+            const mainOption = document.createElement('option');
+            mainOption.value = `job:${jobId}`;
+            mainOption.textContent = 'Main Output (PDB)';
+            fileSelect.appendChild(mainOption);
+
+            // Add additional output files
+            const files = filesCache[projectId] || [];
+            const jobFiles = files.filter(f =>
+                f.type === 'output' &&
+                String(f.job_id) === String(jobId) &&
+                MOLECULAR_EXTENSIONS.includes((f.filename || '').split('.').pop().toLowerCase())
+            );
+
+            jobFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value = `file:${file.id}`;
+                option.textContent = file.filename;
+                fileSelect.appendChild(option);
+            });
+        });
+
+        // Load selected file
+        async function loadSelectedFile() {
+            const fileValue = document.getElementById('file-select').value;
+            if (!fileValue) {
+                alert('Please select a file');
+                return;
+            }
+
+            const selectedOption = document.getElementById('file-select').selectedOptions[0];
+            const fileName = selectedOption?.textContent || 'Structure';
+            const projectId = document.getElementById('project-select').value;
+            const jobId = document.getElementById('job-select').value;
+
+            await loadFileToViewer(fileValue, fileName, projectId, jobId);
+        }
+
+        // Load file to viewer and add to tabs
+        async function loadFileToViewer(fileValue, fileName, projectId, jobId) {
+            updateStatus('Loading...');
+
+            try {
+                const [type, id] = fileValue.split(':');
+                let structureData;
+                let format = 'pdb';
+
+                if (type === 'job') {
+                    const response = await fetch(`/api/jobs/${id}/output_content`, {
+                        headers: { 'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || '' }
+                    });
+                    if (!response.ok) throw new Error('Failed to load job output');
+                    const data = await response.json();
+                    structureData = data.content;
+                } else {
+                    const response = await fetch(`/download_file/${id}?view=true`);
+                    if (!response.ok) throw new Error('Failed to load file');
+                    structureData = await response.text();
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    // Handle various format extensions
+                    if (ext === 'mmcif' || ext === 'cif') {
+                        format = 'cif';
+                    } else if (ext === 'sdf' || ext === 'mol') {
+                        format = 'sdf';
+                    } else if (ext === 'pdb') {
+                        format = 'pdb';
+                    } else {
+                        // Try to detect from content
+                        if (structureData.includes('data_') && structureData.includes('_atom_site')) {
+                            format = 'cif';
+                        } else if (structureData.includes('V2000') || structureData.includes('V3000')) {
+                            format = 'sdf';
+                        } else {
+                            format = 'pdb'; // Default
+                        }
+                    }
+                }
+
+                // Check if file already loaded
+                const existingIndex = loadedFiles.findIndex(f => f.id === fileValue);
+                if (existingIndex >= 0) {
+                    setActiveFile(existingIndex);
+                    updateStatus('File activated');
+                    return;
+                }
+
+                // Add to loaded files
+                const fileData = {
+                    id: fileValue,
+                    name: fileName,
+                    data: structureData,
+                    format: format,
+                    projectId: projectId,
+                    jobId: jobId
+                };
+                loadedFiles.push(fileData);
+
+                // Set as active and render
+                setActiveFile(loadedFiles.length - 1);
+                updateFileTabs();
+                updateStatus('Loaded');
+
+            } catch (error) {
+                console.error('Error loading file:', error);
+                updateStatus('Error loading file');
+                alert('Failed to load file: ' + error.message);
+            }
+        }
+
+        // Set active file
+        function setActiveFile(index) {
+            if (index < 0 || index >= loadedFiles.length) return;
+
+            activeFileIndex = index;
+            const file = loadedFiles[index];
+
+            // Load structure via PhonosViewer (handles clearing previous data internally)
+            viewer.loadData(file.data, file.format);
+            applyCurrentStyle();
+
+            // Update atom count from parsed confidence data if available
+            if (viewer.confidenceData && viewer.confidenceData.scores) {
+                var count = viewer.confidenceData.scores.length;
+                document.getElementById('atom-count').textContent = count.toLocaleString() + ' residues';
+                document.getElementById('atom-count-wrapper').style.display = 'flex';
+            } else {
+                document.getElementById('atom-count').textContent = 'Structure loaded';
+                document.getElementById('atom-count-wrapper').style.display = 'flex';
+            }
+
+            // Hide empty state
+            document.getElementById('empty-state').classList.add('hidden');
+
+            // Update tab styling
+            updateFileTabs();
+        }
+
+        // Update file tabs
+        function updateFileTabs() {
+            const container = document.getElementById('file-tabs');
+            container.innerHTML = '';
+
+            loadedFiles.forEach((file, index) => {
+                const tab = document.createElement('div');
+                tab.className = `file-tab${index === activeFileIndex ? ' active' : ''}`;
+                tab.innerHTML = `
+                    <svg class="file-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                    </svg>
+                    <span class="file-tab-name" title="${file.name}">${file.name}</span>
+                    <span class="file-tab-close" onclick="event.stopPropagation(); closeFile(${index})" title="Close">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </span>
+                `;
+                tab.onclick = () => setActiveFile(index);
+                container.appendChild(tab);
+            });
+        }
+
+        // Close file
+        function closeFile(index) {
+            loadedFiles.splice(index, 1);
+
+            if (loadedFiles.length === 0) {
+                activeFileIndex = -1;
+                // Clear the viewer by loading empty data
+                if (viewer && viewer.instance) {
+                    try { viewer.instance.clear(); } catch (e) {}
+                }
+                document.getElementById('empty-state').classList.remove('hidden');
+                document.getElementById('atom-count-wrapper').style.display = 'none';
+            } else {
+                if (activeFileIndex >= loadedFiles.length) {
+                    activeFileIndex = loadedFiles.length - 1;
+                } else if (activeFileIndex > index) {
+                    activeFileIndex--;
+                }
+                if (index === activeFileIndex || activeFileIndex === loadedFiles.length) {
+                    setActiveFile(Math.max(0, activeFileIndex));
+                }
+            }
+
+            updateFileTabs();
+        }
+
+        // Style functions
+        function setStyle(style) {
+            currentStyle = style;
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.style === style);
+            });
+            applyCurrentStyle();
+        }
+
+        function applyCurrentStyle() {
+            if (!viewer) return;
+            if (viewer.setVisualStyle) {
+                viewer.setVisualStyle(currentStyle);
+            }
+            // PhonosViewer uses coloring methods instead of 3Dmol style objects.
+            // Map the current color scheme to PhonosViewer coloring calls.
+            switch (currentColorScheme) {
+                case 'chain':
+                    viewer.applyChainColoring();
+                    break;
+                case 'bfactor':
+                    viewer.applyConfidenceColoring();
+                    break;
+                default:
+                    viewer.applyDefaultColoring();
+                    break;
+            }
+            // Note: PhonosViewer (Mol*) manages representation styles (cartoon, stick, etc.)
+            // internally. The style buttons now act as coloring scheme toggles since
+            // Mol* does not expose the same per-atom style API as 3Dmol.
+        }
+
+        function applyColorScheme() {
+            currentColorScheme = document.getElementById('color-scheme').value;
+            applyCurrentStyle();
+        }
+
+        function setBackground(el) {
+            const color = el.dataset.bg;
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+            // Parse hex color to RGB for PhonosViewer
+            if (viewer && color) {
+                let hex = color.replace('#', '');
+                if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                viewer.setBgColor(r, g, b);
+            }
+        }
+
+        // View controls
+        function resetView() {
+            if (viewer) viewer.resetView();
+        }
+
+        function toggleSpin() {
+            if (viewer) {
+                isSpinning = viewer.toggleSpin();
+            } else {
+                isSpinning = !isSpinning;
+            }
+            document.getElementById('spin-btn').classList.toggle('active', isSpinning);
+        }
+
+        function takeScreenshot() {
+            if (!viewer) return;
+            viewer.screenshot();
+        }
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            // PhonosViewer with reactive:true handles resize automatically
+        }
+
+        // Atom tooltip
+        function showAtomTooltip(atom) {
+            const tooltip = document.getElementById('atom-tooltip');
+            tooltip.innerHTML = `<strong>${atom.resn} ${atom.resi}</strong><br>${atom.atom} (${atom.elem})<br>Chain ${atom.chain || 'A'}`;
+            tooltip.classList.add('visible');
+            document.addEventListener('mousemove', positionTooltip);
+        }
+
+        function hideAtomTooltip() {
+            document.getElementById('atom-tooltip').classList.remove('visible');
+            document.removeEventListener('mousemove', positionTooltip);
+        }
+
+        function positionTooltip(e) {
+            const tooltip = document.getElementById('atom-tooltip');
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+        }
+
+        // File picker modal
+        function showFilePicker() {
+            document.getElementById('file-picker-modal').classList.add('active');
+            updateModalFileList();
+        }
+
+        function hideFilePicker() {
+            document.getElementById('file-picker-modal').classList.remove('active');
+            selectedModalFile = null;
+        }
+
+        async function updateModalFileList() {
+            const container = document.getElementById('modal-file-list');
+            container.innerHTML = '';
+
+            const projectId = document.getElementById('project-select').value;
+            if (!projectId) {
+                container.innerHTML = '<p style="color: #71717a; text-align: center; padding: 20px;">' + (window.i18n ? window.i18n.t('viewer_enhanced.selectProjectFirst') : 'Select a project first.') + '</p>';
+                return;
+            }
+
+            const files = filesCache[projectId] || [];
+            const molecularFiles = files.filter(f => {
+                const ext = (f.filename || '').split('.').pop().toLowerCase();
+                return MOLECULAR_EXTENSIONS.includes(ext);
+            });
+
+            if (molecularFiles.length === 0) {
+                container.innerHTML = '<p style="color: #71717a; text-align: center; padding: 20px;">' + (window.i18n ? window.i18n.t('viewer_enhanced.noMolecularFiles') : 'No molecular files in this project.') + '</p>';
+                return;
+            }
+
+            molecularFiles.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.dataset.fileId = file.type === 'upload' ? `upload:${file.id}` : `file:${file.id}`;
+                item.dataset.fileName = file.filename;
+                item.innerHTML = `
+                    <div class="file-item-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                        </svg>
+                    </div>
+                    <div class="file-item-info">
+                        <div class="file-item-name">${file.filename}</div>
+                        <div class="file-item-meta">${file.type === 'upload' ? 'Uploaded' : 'Job output'}</div>
+                    </div>
+                `;
+                item.onclick = () => {
+                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedModalFile = { id: item.dataset.fileId, name: item.dataset.fileName };
+                };
+                container.appendChild(item);
+            });
+        }
+
+        function loadSelectedFromModal() {
+            if (!selectedModalFile) {
+                alert('Please select a file');
+                return;
+            }
+            const projectId = document.getElementById('project-select').value;
+            loadFileToViewer(selectedModalFile.id, selectedModalFile.name, projectId, null);
+            hideFilePicker();
+        }
+
+        // Shortcuts modal
+        function showShortcuts() {
+            document.getElementById('shortcuts-modal').classList.add('active');
+        }
+
+        function hideShortcuts() {
+            document.getElementById('shortcuts-modal').classList.remove('active');
+        }
+
+        // Status
+        function updateStatus(text) {
+            document.getElementById('status-text').textContent = text;
+        }
+
+        // URL params
+        function handleUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            const jobId = urlParams.get('job_id');
+            const fileId = urlParams.get('file_id');
+
+            if (projectId) {
+                document.getElementById('project-select').value = projectId;
+                document.getElementById('project-select').dispatchEvent(new Event('change'));
+
+                setTimeout(() => {
+                    if (jobId) {
+                        document.getElementById('job-select').value = jobId;
+                        document.getElementById('job-select').dispatchEvent(new Event('change'));
+
+                        setTimeout(() => {
+                            if (fileId) {
+                                document.getElementById('file-select').value = `file:${fileId}`;
+                            } else {
+                                document.getElementById('file-select').value = `job:${jobId}`;
+                            }
+                            loadSelectedFile();
+                        }, 300);
+                    } else if (fileId) {
+                        document.getElementById('file-select').value = `upload:${fileId}`;
+                        loadSelectedFile();
+                    }
+                }, 300);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch (e.key.toLowerCase()) {
+                case 'r': resetView(); break;
+                case 's': takeScreenshot(); break;
+                case ' ':
+                    e.preventDefault();
+                    toggleSpin();
+                    break;
+                case '1': setStyle('cartoon'); break;
+                case '2': setStyle('stick'); break;
+                case '3': setStyle('sphere'); break;
+                case '4': setStyle('surface'); break;
+                case 'b': toggleSidebar(); break;
+                case 'w':
+                    if (e.metaKey || e.ctrlKey) {
+                        e.preventDefault();
+                        if (activeFileIndex >= 0) closeFile(activeFileIndex);
+                    }
+                    break;
+                case 'escape':
+                    hideFilePicker();
+                    hideShortcuts();
+                    break;
+                case '?': showShortcuts(); break;
+            }
+        });
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', initViewer);
+    </script>
+</body>
+</html>

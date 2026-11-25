@@ -1,0 +1,44 @@
+[Unit]
+Description=Phonos DiffDock Worker
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=phonos
+Group=phonos
+WorkingDirectory=/opt/phonos/diffdock
+Environment="PATH=/opt/conda/envs/diffdock/bin"
+EnvironmentFile=/opt/phonos/diffdock/.env
+
+ExecStart=/opt/conda/envs/diffdock/bin/python node3-diffdock.py
+
+# Restart policy
+Restart=always
+RestartSec=30
+StartLimitInterval=600
+StartLimitBurst=3
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=8192
+# Increase memory limit for ML models
+LimitAS=infinity
+LimitMEMLOCK=infinity
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=diffdock
+
+# GPU access (if using NVIDIA)
+DeviceAllow=/dev/nvidia0 rw
+DeviceAllow=/dev/nvidiactl rw
+DeviceAllow=/dev/nvidia-uvm rw
+
+[Install]
+WantedBy=multi-user.target

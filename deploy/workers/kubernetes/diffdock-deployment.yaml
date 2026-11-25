@@ -1,0 +1,183 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diffdock-worker
+  namespace: phonos-workers
+  labels:
+    app.kubernetes.io/name: phonos
+    app.kubernetes.io/component: diffdock-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: phonos
+      app.kubernetes.io/component: diffdock-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: phonos
+        app.kubernetes.io/component: diffdock-worker
+    spec:
+      containers:
+        - name: diffdock-worker
+          image: phonos/diffdock-worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            # Worker identification
+            - name: WORKER_TYPE
+              value: "type-3"
+            - name: WORKER_ID
+              value: "publisher-node-type-3"
+
+            # GPU Configuration - DiffDock uses GPU 1
+            - name: PREFERRED_GPU
+              value: "1"
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "1"
+
+            # Redis connection from ConfigMap
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: REDIS_DB
+            - name: REDIS_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: REDIS_SSL
+
+            # Secrets
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: phonos-workers-secret
+                  key: REDIS_PASSWORD
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: phonos-workers-secret
+                  key: ENCRYPTION_KEY
+
+            # Worker configuration
+            - name: WORKER_HEARTBEAT_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: WORKER_HEARTBEAT_INTERVAL
+            - name: JOB_TIMEOUT
+              value: "1200"
+
+            # DiffDock specific
+            - name: DIFFDOCK_INSTALL_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: DIFFDOCK_INSTALL_DIR
+            - name: DIFFDOCK_CONDA_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: DIFFDOCK_CONDA_ENV
+            - name: DIFFDOCK_CACHE_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: DIFFDOCK_CACHE_DIR
+
+            # CPU threading
+            - name: OMP_NUM_THREADS
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: MKL_NUM_THREADS
+            - name: MKL_NUM_THREADS
+              valueFrom:
+                configMapKeyRef:
+                  name: phonos-workers-config
+                  key: MKL_NUM_THREADS
+
+          resources:
+            requests:
+              memory: "16Gi"
+              cpu: "4"
+              nvidia.com/gpu: "1"
+            limits:
+              memory: "32Gi"
+              cpu: "8"
+              nvidia.com/gpu: "1"
+
+          volumeMounts:
+            - name: model-cache
+              mountPath: /app/cache
+            - name: diffdock-install
+              mountPath: /opt/DiffDock
+            - name: logs
+              mountPath: /app/logs
+
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import redis; r = redis.Redis(host='${REDIS_HOST}', port=int('${REDIS_PORT}'), password='${REDIS_PASSWORD}'); r.ping()"
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: diffdock-model-cache
+        - name: diffdock-install
+          persistentVolumeClaim:
+            claimName: diffdock-install
+        - name: logs
+          emptyDir: {}
+
+      # Node selector for GPU nodes
+      nodeSelector:
+        nvidia.com/gpu: "true"
+
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: diffdock-model-cache
+  namespace: phonos-workers
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 150Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: diffdock-install
+  namespace: phonos-workers
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard

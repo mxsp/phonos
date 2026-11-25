@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="profileSettings.pageTitle">Phonos - Profile Settings</title>    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/oversight.css') }}?v=72ffc802">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}?v=ec3d893f">
+    {% include '_i18n_scripts.html' %}
+    <script defer src="{{ url_for('static', filename='js/oversight.js') }}?v=aa02e540"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="settings-page">
+        <header class="settings-header">
+            <div class="settings-header-main">
+                {% include '_app_switcher.html' %}
+                <div>
+                    <h1 data-i18n="settings.title">Profile Settings</h1>
+                    <p class="settings-header-sub">Account, integrations and preferences — shared across Phonos, Notebook and 3D Analytics.</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="settings-content">
+
+        <section class="settings-section" id="settings-account">
+            <div class="settings-section-head">
+                <h2>Account</h2>
+                <p>Your identity, public profile and privacy</p>
+            </div>
+        <div class="card" style="margin-bottom: var(--space-4);">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.profilePicture">Profile Picture</h3>
+            </div>
+            <div class="card-body">
+                <div class="profile-pic-section">
+                    <div class="profile-pic-preview" id="profile-pic-preview">
+                        <div class="profile-pic-placeholder" id="profile-pic-placeholder">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <span data-i18n="settings.noPicture">No profile picture</span>
+                        </div>
+                        <img id="profile-pic-img" class="profile-pic-img" src="" alt="Profile Picture" style="display: none;" data-i18n-alt="settings.profilePicture">
+                    </div>
+                    <div class="profile-pic-actions">
+                        <label for="profile-pic-input" class="btn btn-primary" data-i18n="settings.uploadPicture">Upload Picture</label>
+                        <input type="file" id="profile-pic-input" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" style="display: none;">
+                        <button id="remove-pic-btn" class="btn btn-danger" data-i18n="settings.removePicture" style="display: none;">Remove</button>
+                    </div>
+                    <p class="text-muted text-sm" data-i18n="settings.pictureHint">Supported formats: PNG, JPG, GIF, BMP, WebP. Max size: 10MB.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.publicProfile">Public Profile</h3>
+            </div>
+            <div class="card-body">
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="settings.displayName">Display Name</label>
+                        <input type="text" class="form-input" name="display_name" id="display-name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="settings.bio">Bio</label>
+                        <textarea class="form-textarea" name="bio" id="bio" data-i18n-placeholder="settings.bioPlaceholder" placeholder="Tell others about yourself"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="settings.company">Company/Institution</label>
+                        <input type="text" class="form-input" name="company" id="company">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="settings.location">Location</label>
+                        <input type="text" class="form-input" name="location" id="location">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="settings.website">Website</label>
+                        <input type="url" class="form-input" name="website" id="website" data-i18n-placeholder="settings.websitePlaceholder" placeholder="https://example.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-i18n="settings.saveChanges">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.privacySettings">Privacy Settings</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="show_email" id="show-email">
+                        <span data-i18n="settings.showEmail">Show email on public profile</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" name="show_activity" id="show-activity" checked>
+                        <span data-i18n="settings.showActivity">Show recent activity on public profile</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        </section>
+
+        <section class="settings-section" id="settings-integrations">
+            <div class="settings-section-head">
+                <h2>Integrations</h2>
+                <p>Connected services and compute backends</p>
+            </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.connectedAccounts">Connected Accounts</h3>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-color-light);">
+                    <div style="width:36px;height:36px;border-radius: var(--r-ui, 0px);background:var(--accent-orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">W</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:500;color:var(--text-primary);">Wolfram Cloud</div>
+                        <div style="font-size:11px;color:var(--text-tertiary);" id="profile-accounts-wolfram-desc">Not configured</div>
+                    </div>
+                    <span id="profile-accounts-wolfram-badge" class="badge badge-secondary" style="flex-shrink:0;">Not configured</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-color-light);">
+                    <div style="width:36px;height:36px;border-radius: var(--r-ui, 0px);background:var(--accent-blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">Q</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:500;color:var(--text-primary);">IBM Quantum</div>
+                        <div style="font-size:11px;color:var(--text-tertiary);" id="profile-accounts-quantum-desc">Not configured</div>
+                    </div>
+                    <span id="profile-accounts-quantum-badge" class="badge badge-secondary" style="flex-shrink:0;">Not configured</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: var(--space-4);" id="profile-wolfram-card">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.wolframAccount">Wolfram Cloud Account</h3>
+                <span id="profile-wolfram-badge" class="badge badge-secondary" data-i18n="settings.notConfigured" style="margin-left: auto;">Not configured</span>
+            </div>
+            <div class="card-body" id="profile-wolfram-section">
+                <p class="text-muted text-sm" data-i18n="settings.wolframDescription">
+                    Connect your Wolfram Cloud account to enable Wolfram Language cells in notebooks.
+                    Your credentials are encrypted at rest and never shared.
+                </p>
+                <div id="profile-wolfram-status" class="text-muted text-sm" style="margin-bottom: var(--space-3);"></div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="settings.wolframEmail">Wolfram ID (email)</label>
+                    <input type="text" class="form-input" id="profile-wolfram-username" data-i18n-placeholder="settings.wolframEmailPlaceholder" placeholder="your@wolfram-id.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="settings.wolframPassword">Password</label>
+                    <input type="password" class="form-input" id="profile-wolfram-password" data-i18n-placeholder="settings.wolframPasswordPlaceholder" placeholder="Wolfram Cloud password">
+                </div>
+                <div id="profile-wolfram-message" class="nb-account-message"></div>
+                <div style="display: flex; gap: var(--space-2); margin-top: var(--space-2);">
+                    <button id="profile-wolfram-save-btn" class="btn btn-primary" data-i18n="settings.saveAccount">Save Account</button>
+                    <button id="profile-wolfram-verify-btn" class="btn btn-secondary" data-i18n="settings.testConnection">Test Connection</button>
+                    <button id="profile-wolfram-clear-btn" class="btn btn-danger" style="display: none;" data-i18n="settings.removeAccount">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: var(--space-4);" id="profile-quantum-card">
+            <div class="card-header">
+                <h3 class="card-title">Quantum Settings</h3>
+                <span id="profile-quantum-badge" class="badge badge-secondary" style="margin-left: auto;">Simulator</span>
+            </div>
+            <div class="card-body" id="profile-quantum-section">
+                <p class="text-muted text-sm">
+                    Configure your quantum execution environment. Settings apply to all
+                    notebooks that use quantum cells.
+                </p>
+
+                <div id="profile-quantum-status" class="text-muted text-sm" style="margin-bottom: var(--space-3);"></div>
+
+                <!-- Execution Mode -->
+                <div class="form-group">
+                    <label class="form-label">Execution Mode</label>
+                    <div style="display:flex;gap:var(--space-4);margin-top:var(--space-1);">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="profile-quantum-mode" value="simulator" checked>
+                            <span style="font-size:13px;">Simulator</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="profile-quantum-mode" value="hardware">
+                            <span style="font-size:13px;">Real Quantum Hardware</span>
+                        </label>
+                    </div>
+                    <div id="profile-quantum-mode-desc" class="text-muted text-xs" style="margin-top:4px;">
+                        Instant startup, no queue, no usage limits. Recommended for development.
+                    </div>
+                </div>
+
+                <!-- Credential Source -->
+                <div class="form-group">
+                    <label class="form-label">Credential Provider</label>
+                    <div style="display:flex;gap:var(--space-4);margin-top:var(--space-1);">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="profile-quantum-cred-source" value="platform" checked>
+                            <span style="font-size:13px;">Platform Managed Credentials</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="radio" name="profile-quantum-cred-source" value="personal">
+                            <span style="font-size:13px;">Personal IBM Quantum Credentials</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Personal IBM Credentials (visible when personal selected) -->
+                <div id="profile-quantum-personal-section" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">IBM Quantum API Key</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="password" class="form-input" id="profile-quantum-api-key"
+                                   placeholder="Enter your IBM Quantum API key" style="flex:1;">
+                            <button id="profile-quantum-toggle-key-btn" class="btn btn-sm btn-secondary"
+                                    style="flex-shrink:0;" title="Show/Hide">Show</button>
+                        </div>
+                        <div class="text-muted text-xs" style="margin-top:4px;" id="profile-quantum-key-saved-label" style="display:none;">
+                            API Key Saved <span id="profile-quantum-key-mask">**************</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">IBM Instance / CRN <span class="text-muted text-xs">(optional)</span></label>
+                        <input type="text" class="form-input" id="profile-quantum-instance"
+                               placeholder="crn:v1:bluemix:public:quantum-computing:...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preferred Backend <span class="text-muted text-xs">(optional)</span></label>
+                        <select class="form-input" id="profile-quantum-backend-select">
+                            <option value="automatic">Automatic (Recommended)</option>
+                            <option value="ibm_fez">IBM fez</option>
+                            <option value="ibm_marrakesh">IBM marrakesh</option>
+                            <option value="ibm_kingston">IBM kingston</option>
+                        </select>
+                    </div>
+                    <div id="profile-quantum-cred-message" class="nb-account-message"></div>
+                    <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2);">
+                        <button id="profile-quantum-save-creds-btn" class="btn btn-primary">Save Credentials</button>
+                        <button id="profile-quantum-verify-creds-btn" class="btn btn-secondary">Test Connection</button>
+                        <button id="profile-quantum-clear-creds-btn" class="btn btn-danger" style="display:none;">Remove</button>
+                    </div>
+                </div>
+
+                <!-- Session Configuration -->
+                <div class="form-group" style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-color-light);">
+                    <label class="form-label" style="font-weight:600;">Session Configuration</label>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:var(--space-1);">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" id="profile-quantum-auto-session">
+                            <span style="font-size:13px;">Auto Start Session</span>
+                        </label>
+                        <div class="text-muted text-xs">Sessions are created lazily. Enable to start a Runtime session automatically.</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:var(--space-2);">
+                        <label class="form-label" style="font-size:13px;white-space:nowrap;">Session Timeout (s):</label>
+                        <input type="number" class="form-input" id="profile-quantum-session-timeout"
+                               value="60" min="30" max="300" style="width:80px;">
+                        <span class="text-muted text-xs">30–300 seconds</span>
+                    </div>
+                </div>
+
+                <!-- Runtime Status Panel -->
+                <div class="form-group" style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-color-light);">
+                    <label class="form-label" style="font-weight:600;">Runtime Status</label>
+                    <div id="profile-quantum-runtime-status" style="background:var(--bg-card);padding:12px;border-radius:var(--radius-sm);font-size:12px;line-height:1.8;">
+                        <div>Execution Mode: <strong id="profile-rs-mode">Simulator</strong></div>
+                        <div>Credential Source: <strong id="profile-rs-cred-source">Platform Managed</strong></div>
+                        <div>Backend: <strong id="profile-rs-backend">Automatic</strong></div>
+                        <div>Runtime Session: <strong id="profile-rs-session">Inactive</strong></div>
+                        <div id="profile-rs-time-row" style="display:none;">Time Remaining: <strong id="profile-rs-time">—</strong></div>
+                    </div>
+                </div>
+
+                <!-- Save all settings -->
+                <div style="display:flex;gap:var(--space-2);margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--border-color-light);">
+                    <button id="profile-quantum-save-btn" class="btn btn-primary">Save Settings</button>
+                    <button id="profile-quantum-refresh-btn" class="btn btn-secondary">Refresh Status</button>
+                </div>
+                <div id="profile-quantum-message" class="nb-account-message"></div>
+            </div>
+        </div>
+        </section>
+
+        <section class="settings-section" id="settings-preferences">
+            <div class="settings-section-head">
+                <h2>Preferences</h2>
+                <p>Interface language</p>
+            </div>
+        <div class="card" style="margin-top: var(--space-4);">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.language">Language</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="language.selectLanguage">Interface Language</label>
+                    <select id="lang-select" class="form-input" onchange="if(window.i18n)window.i18n.setLanguage(this.value)">
+                        <option value="en" data-i18n="language.english">English</option>
+                        <option value="de" data-i18n="language.german">Deutsch</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        </section>
+
+        <section class="settings-section" id="settings-legal">
+            <div class="settings-section-head">
+                <h2>Legal</h2>
+                <p>Imprint, privacy policy, terms and licenses</p>
+            </div>
+        <div class="card" style="margin-top: var(--space-4);">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="settings.legal">Legal</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                    <a href="{{ url_for('impressum') }}" class="btn btn-ghost" style="text-align: left;" data-i18n="legal.imprint">Imprint (Impressum)</a>
+                    <a href="{{ url_for('datenschutz') }}" class="btn btn-ghost" style="text-align: left;" data-i18n="legal.privacyPolicy">Privacy Policy</a>
+                    <a href="{{ url_for('terms_of_service') }}" class="btn btn-ghost" style="text-align: left;" data-i18n="legal.termsOfService">Terms of Service</a>
+                    <a href="{{ url_for('licenses') }}" class="btn btn-ghost" style="text-align: left;" data-i18n="legal.licenses">Licenses</a>
+                </div>
+            </div>
+        </div>
+        </section>
+        </div>
+    </div>
+
+    <script>
+        const t = (k, fallback) => (window.i18n ? window.i18n.t(k) : fallback);
+
+        // --- Profile Picture Upload ---
+        const picInput = document.getElementById('profile-pic-input');
+        const picImg = document.getElementById('profile-pic-img');
+        const picPlaceholder = document.getElementById('profile-pic-placeholder');
+        const removeBtn = document.getElementById('remove-pic-btn');
+
+        function showPicture(url) {
+            if (url) {
+                picImg.src = url;
+                picImg.style.display = 'block';
+                picPlaceholder.style.display = 'none';
+                removeBtn.style.display = 'inline-block';
+            } else {
+                picImg.style.display = 'none';
+                picPlaceholder.style.display = 'flex';
+                removeBtn.style.display = 'none';
+            }
+        }
+
+        picInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert(t('settings.fileTooLarge', 'File size must be under 10MB'));
+                picInput.value = '';
+                return;
+            }
+
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert(t('settings.invalidFormat', 'Unsupported file format. Allowed: PNG, JPG, GIF, BMP, WebP'));
+                picInput.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+
+            try {
+                const response = await fetch('/upload_profile_picture', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showPicture(result.url);
+                    alert(t('auth.profileUpdated', 'Profile picture updated successfully'));
+                } else {
+                    alert(result.message || t('auth.profileUpdateFailed', 'Failed to update profile picture'));
+                }
+            } catch (error) {
+                alert(t('auth.errorSaving', 'Error uploading profile picture'));
+            }
+        });
+
+        removeBtn.addEventListener('click', async () => {
+            if (!confirm(t('settings.confirmRemove', 'Are you sure you want to remove your profile picture?'))) return;
+
+            try {
+                const response = await fetch('/remove_profile_picture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    showPicture(null);
+                    alert(t('auth.profileUpdated', 'Profile picture removed'));
+                } else {
+                    alert(result.message || t('auth.profileUpdateFailed', 'Failed to remove profile picture'));
+                }
+            } catch (error) {
+                alert(t('auth.errorSaving', 'Error removing profile picture'));
+            }
+        });
+
+        // --- Profile Settings Form ---
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (response.ok) {
+                    alert(t('auth.profileUpdated', 'Profile updated successfully'));
+                } else {
+                    alert(t('auth.profileUpdateFailed', 'Failed to update profile'));
+                }
+            } catch (error) {
+                alert(t('auth.errorSaving', 'Error saving profile'));
+            }
+        });
+
+        // Load current settings
+        fetch('/api/settings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.display_name) document.getElementById('display-name').value = data.display_name;
+                if (data.bio) document.getElementById('bio').value = data.bio;
+                if (data.company) document.getElementById('company').value = data.company;
+                if (data.location) document.getElementById('location').value = data.location;
+                if (data.website) document.getElementById('website').value = data.website;
+            });
+
+        // Load current user info for profile picture
+        // (/api/account never existed; the own public profile carries the picture URL)
+        fetch('/api/profile/{{ session.get("user_id", 0)|int }}', { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : null)
+            .then(res => {
+                const data = (res && res.user) || {};
+                if (data.profile_picture_url) {
+                    let url = data.profile_picture_url;
+                    if (!url.startsWith('http')) {
+                        url = '/uploads/' + url.replace(/^\/+/, '');
+                    }
+                    showPicture(url);
+                }
+            });
+
+        // --- Wolfram Account Management ---
+        (function() {
+            var usernameEl = document.getElementById('profile-wolfram-username');
+            var passwordEl = document.getElementById('profile-wolfram-password');
+            var saveBtn = document.getElementById('profile-wolfram-save-btn');
+            var verifyBtn = document.getElementById('profile-wolfram-verify-btn');
+            var clearBtn = document.getElementById('profile-wolfram-clear-btn');
+            var messageEl = document.getElementById('profile-wolfram-message');
+            var statusEl = document.getElementById('profile-wolfram-status');
+            var badgeEl = document.getElementById('profile-wolfram-badge');
+
+            function setMsg(text, type) {
+                if (!messageEl) return;
+                messageEl.textContent = text;
+                messageEl.className = 'nb-account-message' + (type ? ' ' + type : '');
+            }
+
+            function renderMeta(meta) {
+                if (!badgeEl) return;
+                var acctBadge = document.getElementById('profile-accounts-wolfram-badge');
+                var acctDesc = document.getElementById('profile-accounts-wolfram-desc');
+                if (meta.is_admin) {
+                    badgeEl.textContent = t('notebook.wolframBadgeAdmin', 'Server account');
+                    badgeEl.className = 'badge badge-success';
+                    if (statusEl) statusEl.textContent = t('notebook.wolframAdminNote', 'Using global server account.');
+                    if (usernameEl) usernameEl.disabled = true;
+                    if (passwordEl) passwordEl.disabled = true;
+                    if (saveBtn) saveBtn.style.display = 'none';
+                    if (verifyBtn) verifyBtn.style.display = 'none';
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    if (acctBadge) { acctBadge.textContent = 'Server account'; acctBadge.className = 'badge badge-success'; }
+                    if (acctDesc) acctDesc.textContent = 'Using global server Wolfram account.';
+                    return;
+                }
+                if (usernameEl) usernameEl.disabled = false;
+                if (passwordEl) passwordEl.disabled = false;
+                if (saveBtn) saveBtn.style.display = '';
+                if (verifyBtn) verifyBtn.style.display = '';
+
+                if (meta.configured) {
+                    badgeEl.textContent = t('notebook.wolframBadgeConfigured', 'Configured');
+                    badgeEl.className = 'badge badge-success';
+                    var when = meta.last_verified_at ? new Date(meta.last_verified_at).toLocaleString() : 'never';
+                    var emailPart = meta.wolfram_id_email ? ' (' + meta.wolfram_id_email + ')' : '';
+                    if (statusEl) {
+                        statusEl.textContent = 'Account saved' + emailPart + '. Last verified: ' + when + '.';
+                        if (meta.last_error) statusEl.textContent += ' Last error: ' + meta.last_error;
+                    }
+                    if (usernameEl && !usernameEl.value && meta.wolfram_id_email) {
+                        usernameEl.value = meta.wolfram_id_email;
+                    }
+                    if (clearBtn) clearBtn.style.display = '';
+                    if (acctBadge) { acctBadge.textContent = 'Configured'; acctBadge.className = 'badge badge-success'; }
+                    if (acctDesc) acctDesc.textContent = (meta.wolfram_id_email || 'Account') + ' — last verified ' + when;
+                } else {
+                    badgeEl.textContent = t('notebook.wolframBadgeNotSet', 'Not configured');
+                    badgeEl.className = 'badge badge-secondary';
+                    if (statusEl) statusEl.textContent = t('notebook.wolframStatusNotConfigured', 'No Wolfram Cloud account configured.');
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    if (acctBadge) { acctBadge.textContent = 'Not configured'; acctBadge.className = 'badge badge-secondary'; }
+                    if (acctDesc) acctDesc.textContent = 'Configure Wolfram Cloud to enable Wolfram Language cells.';
+                }
+            }
+
+            function refresh() {
+                fetch('/api/notebooks/wolfram/credentials', { credentials: 'same-origin' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(meta) { renderMeta(meta); })
+                    .catch(function() {});
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    var username = (usernameEl ? usernameEl.value : '').trim();
+                    var password = passwordEl ? passwordEl.value : '';
+                    if (!username || !password) {
+                        setMsg('Wolfram ID and password are required.', 'error');
+                        return;
+                    }
+                    setMsg('Saving...', 'pending');
+                    fetch('/api/notebooks/wolfram/credentials', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ username: username, password: password }),
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success || data.success === undefined) {
+                            setMsg('Account saved.', 'success');
+                            if (passwordEl) passwordEl.value = '';
+                            refresh();
+                        } else {
+                            setMsg(data.error || 'Save failed.', 'error');
+                        }
+                    })
+                    .catch(function(e) { setMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (verifyBtn) {
+                verifyBtn.addEventListener('click', function() {
+                    setMsg('Testing connection...', 'pending');
+                    fetch('/api/notebooks/wolfram/credentials/verify', {
+                        method: 'POST', credentials: 'same-origin',
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success) {
+                            setMsg('Verified OK.', 'success');
+                        } else {
+                            setMsg(data.error || 'Verification failed.', 'error');
+                        }
+                        refresh();
+                    })
+                    .catch(function(e) { setMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (!confirm('Remove your Wolfram Cloud account from Phonos?')) return;
+                    setMsg('Removing...', 'pending');
+                    fetch('/api/notebooks/wolfram/credentials', {
+                        method: 'DELETE', credentials: 'same-origin',
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success || data.success === undefined) {
+                            setMsg('Removed.', 'success');
+                            if (usernameEl) usernameEl.value = '';
+                            if (passwordEl) passwordEl.value = '';
+                            refresh();
+                        } else {
+                            setMsg(data.error || 'Remove failed.', 'error');
+                        }
+                    })
+                    .catch(function(e) { setMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            refresh();
+        })();
+
+        // --- Quantum Settings Management ---
+        (function() {
+            var modeRadios = document.querySelectorAll('input[name="profile-quantum-mode"]');
+            var credRadios = document.querySelectorAll('input[name="profile-quantum-cred-source"]');
+            var apiKeyEl = document.getElementById('profile-quantum-api-key');
+            var instanceEl = document.getElementById('profile-quantum-instance');
+            var backendSelect = document.getElementById('profile-quantum-backend-select');
+            var autoSessionEl = document.getElementById('profile-quantum-auto-session');
+            var timeoutEl = document.getElementById('profile-quantum-session-timeout');
+            var saveBtn = document.getElementById('profile-quantum-save-btn');
+            var saveCredsBtn = document.getElementById('profile-quantum-save-creds-btn');
+            var verifyCredsBtn = document.getElementById('profile-quantum-verify-creds-btn');
+            var clearCredsBtn = document.getElementById('profile-quantum-clear-creds-btn');
+            var refreshBtn = document.getElementById('profile-quantum-refresh-btn');
+            var toggleKeyBtn = document.getElementById('profile-quantum-toggle-key-btn');
+            var messageEl = document.getElementById('profile-quantum-message');
+            var credMessageEl = document.getElementById('profile-quantum-cred-message');
+            var statusEl = document.getElementById('profile-quantum-status');
+            var badgeEl = document.getElementById('profile-quantum-badge');
+            var keySavedLabel = document.getElementById('profile-quantum-key-saved-label');
+            var personalSection = document.getElementById('profile-quantum-personal-section');
+            var modeDesc = document.getElementById('profile-quantum-mode-desc');
+
+            function setMsg(text, type) {
+                if (!messageEl) return;
+                messageEl.textContent = text;
+                messageEl.className = 'nb-account-message' + (type ? ' ' + type : '');
+            }
+            function setCredMsg(text, type) {
+                if (!credMessageEl) return;
+                credMessageEl.textContent = text;
+                credMessageEl.className = 'nb-account-message' + (type ? ' ' + type : '');
+            }
+
+            function getSelectedMode() {
+                for (var i = 0; i < modeRadios.length; i++) {
+                    if (modeRadios[i].checked) return modeRadios[i].value;
+                }
+                return 'simulator';
+            }
+
+            function getSelectedCredSource() {
+                for (var i = 0; i < credRadios.length; i++) {
+                    if (credRadios[i].checked) return credRadios[i].value;
+                }
+                return 'platform';
+            }
+
+            function updateModeDescription() {
+                var mode = getSelectedMode();
+                if (mode === 'simulator') {
+                    modeDesc.textContent = 'Instant startup, no queue, no usage limits. Recommended for development.';
+                } else {
+                    modeDesc.textContent = 'Runs on actual IBM quantum computers. Suitable for research and validation.';
+                }
+            }
+
+            function updatePersonalSectionVisibility() {
+                var show = getSelectedCredSource() === 'personal';
+                personalSection.style.display = show ? 'block' : 'none';
+            }
+
+            for (var mi = 0; mi < modeRadios.length; mi++) {
+                modeRadios[mi].addEventListener('change', updateModeDescription);
+            }
+            for (var ci = 0; ci < credRadios.length; ci++) {
+                credRadios[ci].addEventListener('change', updatePersonalSectionVisibility);
+            }
+
+            function updateRuntimeStatus(settings, status) {
+                if (!status) return;
+                document.getElementById('profile-rs-mode').textContent = status.execution_mode || 'Simulator';
+                document.getElementById('profile-rs-cred-source').textContent = status.credential_source || 'Platform Managed';
+                document.getElementById('profile-rs-backend').textContent = status.backend || 'Automatic';
+                document.getElementById('profile-rs-session').textContent = status.runtime_session || 'Inactive';
+                var timeRow = document.getElementById('profile-rs-time-row');
+                var timeEl = document.getElementById('profile-rs-time');
+                if (status.time_remaining != null) {
+                    timeRow.style.display = '';
+                    timeEl.textContent = status.time_remaining + ' Seconds';
+                } else {
+                    timeRow.style.display = 'none';
+                }
+            }
+
+            function populateFromSettings(settings) {
+                if (!settings) return;
+                // Mode
+                for (var mi = 0; mi < modeRadios.length; mi++) {
+                    modeRadios[mi].checked = (modeRadios[mi].value === settings.execution_mode);
+                }
+                updateModeDescription();
+                // Cred source
+                for (var ci = 0; ci < credRadios.length; ci++) {
+                    credRadios[ci].checked = (credRadios[ci].value === settings.credential_source);
+                }
+                updatePersonalSectionVisibility();
+                // Backend
+                if (backendSelect) backendSelect.value = settings.preferred_backend || 'automatic';
+                // Session
+                if (autoSessionEl) autoSessionEl.checked = settings.auto_start_session || false;
+                if (timeoutEl) timeoutEl.value = settings.session_timeout_sec || 60;
+                // Badge
+                if (badgeEl) {
+                    badgeEl.textContent = settings.execution_mode === 'hardware' ? 'Hardware' : 'Simulator';
+                    badgeEl.className = settings.execution_mode === 'hardware' ? 'badge badge-warning' : 'badge badge-secondary';
+                }
+            }
+
+            function populateCredMeta(meta) {
+                if (!meta) meta = {};
+                var hasKey = meta.has_key || false;
+                var acctBadge = document.getElementById('profile-accounts-quantum-badge');
+                var acctDesc = document.getElementById('profile-accounts-quantum-desc');
+
+                if (hasKey) {
+                    if (clearCredsBtn) clearCredsBtn.style.display = '';
+                    if (keySavedLabel) keySavedLabel.style.display = 'block';
+                    if (apiKeyEl) apiKeyEl.placeholder = 'Enter new API key to replace existing';
+                    var when = meta.last_verified_at ? new Date(meta.last_verified_at).toLocaleString() : 'never';
+                    if (statusEl) statusEl.textContent = 'IBM Quantum credentials saved. Last verified: ' + when + (meta.last_error ? ' Error: ' + meta.last_error : '');
+                    if (instanceEl && meta.instance_crn) instanceEl.value = meta.instance_crn || '';
+                    if (backendSelect && meta.preferred_backend) backendSelect.value = meta.preferred_backend;
+                    if (acctBadge) { acctBadge.textContent = 'Configured'; acctBadge.className = 'badge badge-success'; }
+                    if (acctDesc) acctDesc.textContent = 'IBM Quantum — last verified ' + when;
+                } else {
+                    if (clearCredsBtn) clearCredsBtn.style.display = 'none';
+                    if (keySavedLabel) keySavedLabel.style.display = 'none';
+                    if (apiKeyEl) { apiKeyEl.value = ''; apiKeyEl.placeholder = 'Enter your IBM Quantum API key'; }
+                    if (acctBadge) { acctBadge.textContent = 'Not configured'; acctBadge.className = 'badge badge-secondary'; }
+                    if (acctDesc) acctDesc.textContent = 'Configure IBM Quantum to enable quantum cells.';
+                }
+            }
+
+            function loadAll() {
+                fetch('/api/quantum/settings', { credentials: 'same-origin' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.settings) populateFromSettings(data.settings);
+                        if (data.status) updateRuntimeStatus(data.settings, data.status);
+                    })
+                    .catch(function() {});
+                fetch('/api/quantum/credentials', { credentials: 'same-origin' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(meta) { populateCredMeta(meta); })
+                    .catch(function() {});
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function() {
+                    var payload = {
+                        execution_mode: getSelectedMode(),
+                        credential_source: getSelectedCredSource(),
+                        preferred_backend: backendSelect ? backendSelect.value : 'automatic',
+                        auto_start_session: autoSessionEl ? autoSessionEl.checked : false,
+                        session_timeout_sec: timeoutEl ? parseInt(timeoutEl.value) || 60 : 60,
+                    };
+                    setMsg('Saving...', 'pending');
+                    fetch('/api/quantum/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(payload),
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success || data.success === undefined) {
+                            setMsg('Settings saved.', 'success');
+                            if (data.settings) populateFromSettings(data.settings);
+                            loadAll();
+                        } else {
+                            setMsg(data.error || 'Save failed.', 'error');
+                        }
+                    })
+                    .catch(function(e) { setMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (saveCredsBtn) {
+                saveCredsBtn.addEventListener('click', function() {
+                    var apiKey = apiKeyEl ? apiKeyEl.value.trim() : '';
+                    if (!apiKey) { setCredMsg('API key is required.', 'error'); return; }
+                    var payload = { api_key: apiKey };
+                    if (instanceEl && instanceEl.value.trim()) payload.instance_crn = instanceEl.value.trim();
+                    if (backendSelect && backendSelect.value) payload.preferred_backend = backendSelect.value;
+                    setCredMsg('Saving credentials...', 'pending');
+                    fetch('/api/quantum/credentials', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(payload),
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success || data.success === undefined) {
+                            setCredMsg('Credentials saved. Key encrypted at rest.', 'success');
+                            if (apiKeyEl) apiKeyEl.value = '';
+                            loadAll();
+                        } else {
+                            setCredMsg(data.error || 'Save failed.', 'error');
+                        }
+                    })
+                    .catch(function(e) { setCredMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (verifyCredsBtn) {
+                verifyCredsBtn.addEventListener('click', function() {
+                    setCredMsg('Testing credentials...', 'pending');
+                    fetch('/api/quantum/credentials/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ test_personal: true }),
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success) {
+                            setCredMsg('Verified OK. ' + (data.backend_count || '') + ' backends available.', 'success');
+                        } else {
+                            setCredMsg(data.error || 'Verification failed.', 'error');
+                        }
+                        loadAll();
+                    })
+                    .catch(function(e) { setCredMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (clearCredsBtn) {
+                clearCredsBtn.addEventListener('click', function() {
+                    if (!confirm('Remove your personal IBM Quantum credentials?')) return;
+                    setCredMsg('Removing...', 'pending');
+                    fetch('/api/quantum/credentials', {
+                        method: 'DELETE',
+                        credentials: 'same-origin',
+                    })
+                    .then(function(r) { return r.json().catch(function() { return {}; }); })
+                    .then(function(data) {
+                        if (data.success || data.success === undefined) {
+                            setCredMsg('Credentials removed.', 'success');
+                            loadAll();
+                        } else {
+                            setCredMsg(data.error || 'Remove failed.', 'error');
+                        }
+                    })
+                    .catch(function(e) { setCredMsg('Network error: ' + e, 'error'); });
+                });
+            }
+
+            if (toggleKeyBtn) {
+                toggleKeyBtn.addEventListener('click', function() {
+                    if (apiKeyEl.type === 'password') {
+                        apiKeyEl.type = 'text';
+                        toggleKeyBtn.textContent = 'Hide';
+                    } else {
+                        apiKeyEl.type = 'password';
+                        toggleKeyBtn.textContent = 'Show';
+                    }
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    setMsg('Refreshing...', 'pending');
+                    loadAll();
+                    setTimeout(function() { setMsg(''); }, 1000);
+                });
+            }
+
+            loadAll();
+        })();
+
+        // Sync language dropdown with current selection
+        function syncLang() {
+            var sel = document.getElementById('lang-select');
+            if (sel && window.i18n) sel.value = window.i18n.getLanguage();
+        }
+        if (window.i18n) syncLang();
+        else window.addEventListener('i18n:ready', syncLang);
+    </script>
+</body>
+</html>

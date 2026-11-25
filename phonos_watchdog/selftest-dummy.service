@@ -1,0 +1,7 @@
+[Unit]
+Description=Phonos Watchdog self-test dummy (disposable, safe to stop)
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sleep infinity
+# No Restart= so it stays stopped until something explicitly restarts it.

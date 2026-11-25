@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}" data-theme="dark">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="index.pageTitle">Phonos: AI-Powered Molecular Discovery &amp; 3D Bio-AI Workbench</title>
+    <meta name="description" content="Self-hosted computational biology workbench unifying Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, custom BYOM endpoints, Mol* 3D analysis, Python notebooks, and Discovery Copilot.">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    {% include '_i18n_scripts.html' %}
+    <style>
+        :root {
+            --bg: #09090b;
+            --bg-panel: #111115;
+            --bg-card: rgba(24, 24, 29, 0.78);
+            --border: rgba(255, 255, 255, 0.09);
+            --text: #fafafa;
+            --muted: #a1a1aa;
+            --accent: #10b981;
+            --accent-bright: #34d399;
+            --blue: #3b82f6;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
+        body { min-height: 100dvh; display: flex; flex-direction: column; }
+
+        .hero-shell {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(380px, 1.05fr) minmax(420px, 1.15fr);
+            min-height: 100dvh;
+        }
+
+        /* Left Column */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: clamp(1.5rem, 3.8vh, 3rem) clamp(1.75rem, 4vw, 4rem);
+            position: relative;
+            z-index: 5;
+        }
+        .top-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+        .brand-mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: grid; place-items: center; font-weight: 800; color: #042f1e;
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+        }
+        .brand-title {
+            font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #ffffff 0%, #6ee7b7 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .top-badges { display: flex; align-items: center; gap: 0.5rem; }
+        .oss-pill {
+            font-size: 0.72rem; font-weight: 600; color: var(--accent-bright);
+            background: rgba(16, 185, 129, 0.11); border: 1px solid rgba(16, 185, 129, 0.28);
+            padding: 4px 10px; border-radius: 999px; letter-spacing: 0.02em;
+        }
+        .lang-toggle {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted);
+            border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+        }
+        .lang-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.28); }
+
+        .hero-copy { margin: auto 0; padding: 1.25rem 0; max-width: 580px; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.78rem; font-weight: 600; color: #d4d4d8;
+            margin-bottom: 0.9rem;
+        }
+        .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        h1.headline {
+            font-size: clamp(2.15rem, 4.2vw, 3.35rem);
+            font-weight: 800; line-height: 1.07; letter-spacing: -0.035em;
+            margin-bottom: 1rem;
+        }
+        h1.headline span {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 55%, #60a5fa 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        p.lead {
+            font-size: clamp(0.95rem, 1.3vw, 1.08rem);
+            color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem;
+        }
+
+        .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.6rem; }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
+            padding: 0.78rem 1.35rem; border-radius: 9px; font-weight: 600; font-size: 0.94rem;
+            text-decoration: none; border: 1px solid transparent; transition: all 0.18s ease; cursor: pointer;
+        }
+        .btn-primary { background: var(--text); color: #09090b; }
+        .btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.16); }
+        .btn-secondary { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.32); }
+        .btn-secondary:hover { background: rgba(16, 185, 129, 0.2); transform: translateY(-1px); }
+        .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text); border-color: var(--border); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.09); }
+
+        .pillars {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;
+        }
+        .pillar {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+            padding: 0.7rem 0.85rem;
+        }
+        .pillar strong { display: block; font-size: 0.82rem; color: #f4f4f5; margin-bottom: 2px; }
+        .pillar span { font-size: 0.75rem; color: var(--muted); line-height: 1.35; display: block; }
+
+        .bottom-bar { font-size: 0.78rem; color: var(--muted); }
+        .legal-footer__nav { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 0.3rem; }
+        .legal-footer__nav a { color: var(--muted); text-decoration: none; }
+        .legal-footer__nav a:hover { color: var(--text); }
+        .legal-footer__line { font-size: 0.72rem; color: #71717a; }
+
+        /* Right Column: Interactive 3D Molecular Ribbon & Discovery HUD */
+        .right-col {
+            background: radial-gradient(circle at 55% 42%, rgba(16, 185, 129, 0.14), rgba(59, 130, 246, 0.06) 45%, transparent 75%), var(--bg-panel);
+            border-left: 1px solid var(--border);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+        .grid-bg {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image: linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+            background-size: 36px 36px;
+        }
+        .canvas-stage {
+            position: relative; flex: 1; min-height: 320px; display: grid; place-items: center; cursor: grab;
+        }
+        .canvas-stage:active { cursor: grabbing; }
+        #mol-hero-canvas { width: 100%; height: 100%; max-height: 62vh; display: block; }
+
+        .hud-top {
+            position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+        }
+        .hud-chip {
+            background: rgba(9, 9, 11, 0.82); border: 1px solid var(--border); backdrop-filter: blur(10px);
+            padding: 6px 11px; border-radius: 8px; font-size: 0.75rem; color: #e4e4e7; display: flex; align-items: center; gap: 8px;
+        }
+        .plddt-legend { display: flex; gap: 8px; align-items: center; font-size: 0.71rem; color: var(--muted); }
+        .plddt-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 3px; }
+
+        .model-dock {
+            position: relative; z-index: 3;
+            background: rgba(9, 9, 11, 0.84); border: 1px solid var(--border); backdrop-filter: blur(12px);
+            border-radius: 11px; padding: 0.85rem 1rem;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem;
+        }
+        .m-item { font-size: 0.74rem; }
+        .m-item b { display: block; color: #fafafa; font-size: 0.79rem; }
+        .m-item em { font-style: normal; color: var(--accent-bright); font-size: 0.7rem; }
+
+        @media (max-width: 1024px) {
+            .hero-shell { grid-template-columns: 1fr; }
+            .right-col { border-left: none; border-top: 1px solid var(--border); min-height: 440px; }
+            .model-dock { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+            .pillars { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="hero-shell">
+        <!-- Left Content -->
+        <section class="left-col">
+            <div class="top-row">
+                <a href="/" class="brand">
+                    <div class="brand-mark">P</div>
+                    <span class="brand-title" data-i18n="common.phonos">Phonos</span>
+                </a>
+                <div class="top-badges">
+                    <span class="oss-pill">Self-Hosted · Linux · Windows · Docker</span>
+                    <button class="lang-toggle" id="lang-toggle" onclick="window.i18n && window.i18n.toggleLanguage()" title="Switch language">DE</button>
+                </div>
+            </div>
+
+            <div class="hero-copy">
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    <span>Open Molecular Discovery &amp; Bio-AI Workbench</span>
+                </div>
+                <h1 class="headline">
+                    From Sequence to <span>3D Structure &amp; Lead Design</span>
+                </h1>
+                <p class="lead" data-i18n="landing.subtitle">
+                    Run Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, or plug in your own custom GPU endpoints—unified with interactive Mol* 3D analysis, local Python notebooks, and a Gimel-grade Discovery Copilot.
+                </p>
+
+                <div class="cta-row">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary" data-i18n="auth.signInCta">Open Workbench →</a>
+                    <a href="/setup" class="btn btn-secondary">First-Run Lab Setup</a>
+                    <a href="https://github.com/mxsp/phonos" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">GitHub</a>
+                </div>
+
+                <div class="pillars">
+                    <div class="pillar">
+                        <strong>🧬 Bring Your Own Model (BYOM)</strong>
+                        <span>Connect FastAPI/PyTorch servers, self-hosted NIMs, Hugging Face, or Ollama with sealed keys.</span>
+                    </div>
+                    <div class="pillar">
+                        <strong>🔬 Mol* 3D &amp; Distance Ruler</strong>
+                        <span>pLDDT confidence bands, pocket isolation, Ångström atom ruler, and 4K transparent renders.</span>
+                    </div>
+                    <div class="pillar">
+                        <strong>📓 Zero-Docker Python Notebooks</strong>
+                        <span>Instant stateful Biopython &amp; RDKit execution out of the box on Linux, Windows &amp; Docker.</span>
+                    </div>
+                    <div class="pillar">
+                        <strong>✨ Discovery Copilot</strong>
+                        <span>70+ typed bio-tools, Lipinski/QED ADMET screening, loop redesign audits, and routines.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-bar">
+                {% include 'partials/_legal_footer.html' %}
+            </div>
+        </section>
+
+        <!-- Right Interactive 3D Molecular Canvas -->
+        <section class="right-col" aria-label="Interactive 3D Molecular Preview">
+            <div class="grid-bg"></div>
+
+            <div class="hud-top">
+                <div class="hud-chip">
+                    <span style="color:var(--accent);">●</span>
+                    <span>Interactive 3D Complex Preview (drag to rotate)</span>
+                </div>
+                <div class="hud-chip plddt-legend">
+                    <span><i class="plddt-dot" style="background:#0053d6;"></i>&gt;90 Very High</span>
+                    <span><i class="plddt-dot" style="background:#65cbf3;"></i>70–90</span>
+                    <span><i class="plddt-dot" style="background:#ffdb13;"></i>50–70</span>
+                    <span><i class="plddt-dot" style="background:#10b981;"></i>Docked Ligand</span>
+                </div>
+            </div>
+
+            <div class="canvas-stage" id="canvas-stage">
+                <canvas id="mol-hero-canvas"></canvas>
+            </div>
+
+            <div class="model-dock">
+                <div class="m-item">
+                    <b>Structure</b>
+                    <span>Boltz-2 · OpenFold3</span>
+                    <em>Complex + pLDDT</em>
+                </div>
+                <div class="m-item">
+                    <b>De Novo Design</b>
+                    <span>RFdiffusion · MPNN</span>
+                    <em>Backbone → Seq</em>
+                </div>
+                <div class="m-item">
+                    <b>Docking &amp; Leads</b>
+                    <span>DiffDock · GenMol</span>
+                    <em>Poses + ADMET</em>
+                </div>
+                <div class="m-item">
+                    <b>Custom BYOM</b>
+                    <span>REST · NIM · Local</span>
+                    <em>Your Endpoints</em>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            var updateLangToggle = function () {
+                var btn = document.getElementById('lang-toggle');
+                if (!btn || !window.i18n) return;
+                btn.textContent = window.i18n.getLanguage() === 'en' ? 'DE' : 'EN';
+            };
+            document.addEventListener('DOMContentLoaded', function () {
+                updateLangToggle();
+                window.addEventListener('i18n:change', updateLangToggle);
+            });
+
+            // Lightweight 60fps interactive 3D protein helix + ligand pocket preview
+            var canvas = document.getElementById('mol-hero-canvas');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var nodes = [];
+            var bonds = [];
+            // Build two alpha-helices + connecting loop + central docked small-molecule pocket
+            for (var i = 0; i < 68; i++) {
+                var t = i / 67;
+                var x, y, z, col, rad;
+                if (i < 28) {
+                    var a1 = i * 1.02;
+                    x = -58 + i * 2.1;
+                    y = Math.cos(a1) * 34 - 22;
+                    z = Math.sin(a1) * 34;
+                    col = i > 4 && i < 25 ? '#0053d6' : '#65cbf3';
+                    rad = 5.4;
+                } else if (i < 40) {
+                    var lt = (i - 28) / 12;
+                    x = 2 + Math.sin(lt * Math.PI) * 42;
+                    y = -22 + lt * 52;
+                    z = Math.cos(lt * Math.PI) * 28;
+                    col = (i >= 32 && i <= 36) ? '#ffdb13' : '#65cbf3';
+                    rad = 4.6;
+                } else {
+                    var j = i - 40;
+                    var a2 = j * 1.02;
+                    x = 18 - j * 2.4;
+                    y = Math.sin(a2) * 32 + 28;
+                    z = Math.cos(a2) * 32;
+                    col = j < 22 ? '#0053d6' : '#65cbf3';
+                    rad = 5.4;
+                }
+                nodes.push({ x: x, y: y, z: z, color: col, r: rad, kind: 'ca' });
+                if (i > 0) bonds.push([i - 1, i, 'backbone']);
+                if (i >= 4 && i < 28) bonds.push([i - 4, i, 'hbond']);
+                if (i >= 44) bonds.push([i - 4, i, 'hbond']);
+            }
+            // Central docked ligand ring atoms
+            var ligBase = nodes.length;
+            for (var k = 0; k < 8; k++) {
+                var la = (k / 8) * Math.PI * 2;
+                var lr = k < 6 ? 15 : 26;
+                nodes.push({
+                    x: -8 + Math.cos(la) * lr,
+                    y: 4 + Math.sin(la) * (k < 6 ? 13 : 6),
+                    z: Math.sin(la * 2) * 8,
+                    color: k === 6 ? '#f43f5e' : (k === 7 ? '#38bdf8' : '#10b981'),
+                    r: 6.4,
+                    kind: 'lig'
+                });
+                if (k > 0 && k < 6) bonds.push([ligBase + k - 1, ligBase + k, 'lig']);
+            }
+            bonds.push([ligBase + 5, ligBase, 'lig']);
+            bonds.push([ligBase + 2, ligBase + 6, 'lig']);
+            bonds.push([ligBase + 5, ligBase + 7, 'lig']);
+            bonds.push([14, ligBase + 6, 'pocket']);
+            bonds.push([51, ligBase + 7, 'pocket']);
+
+            var rotY = 0.4, rotX = 0.22, dragging = false, lx = 0, ly = 0;
+            function resize() {
+                var rect = canvas.parentElement.getBoundingClientRect();
+                var dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(300, rect.width) * dpr;
+                canvas.height = Math.max(280, rect.height) * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            canvas.addEventListener('pointerdown', function (e) { dragging = true; lx = e.clientX; ly = e.clientY; });
+            window.addEventListener('pointerup', function () { dragging = false; });
+            window.addEventListener('pointermove', function (e) {
+                if (!dragging) return;
+                rotY += (e.clientX - lx) * 0.008;
+                rotX = Math.max(-1.1, Math.min(1.1, rotX + (e.clientY - ly) * 0.008));
+                lx = e.clientX; ly = e.clientY;
+            });
+
+            function project(n, w, h, cy, sy, cx, sx) {
+                var x1 = n.x * cy - n.z * sy;
+                var z1 = n.x * sy + n.z * cy;
+                var y2 = n.y * cx - z1 * sx;
+                var z2 = n.y * sx + z1 * cx;
+                var scale = 290 / (290 + z2 + 120);
+                var zoom = Math.min(w, h) / 215;
+                return { sx: w / 2 + x1 * scale * zoom, sy: h / 2 + y2 * scale * zoom, z: z2, s: scale * zoom };
+            }
+
+            function draw() {
+                if (!dragging) rotY += 0.0045;
+                var w = canvas.clientWidth || 500, h = canvas.clientHeight || 400;
+                ctx.clearRect(0, 0, w, h);
+                var cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);
+                var pts = nodes.map(function (n) { return project(n, w, h, cy, sy, cx, sx); });
+
+                bonds.forEach(function (b) {
+                    var p1 = pts[b[0]], p2 = pts[b[1]], kind = b[2];
+                    ctx.beginPath();
+                    ctx.moveTo(p1.sx, p1.sy);
+                    ctx.lineTo(p2.sx, p2.sy);
+                    if (kind === 'backbone') {
+                        ctx.strokeStyle = 'rgba(148, 197, 255, 0.52)';
+                        ctx.lineWidth = 3.2 * ((p1.s + p2.s) * 0.35);
+                        ctx.setLineDash([]);
+                    } else if (kind === 'lig') {
+                        ctx.strokeStyle = 'rgba(52, 211, 153, 0.9)';
+                        ctx.lineWidth = 3.4;
+                        ctx.setLineDash([]);
+                    } else {
+                        ctx.strokeStyle = 'rgba(250, 204, 21, 0.42)';
+                        ctx.lineWidth = 1.3;
+                        ctx.setLineDash([4, 4]);
+                    }
+                    ctx.stroke();
+                });
+                ctx.setLineDash([]);
+
+                var order = nodes.map(function (_, idx) { return idx; }).sort(function (a, b) { return pts[b].z - pts[a].z; });
+                order.forEach(function (idx) {
+                    var n = nodes[idx], p = pts[idx];
+                    var r = Math.max(2.5, n.r * p.s * 0.72);
+                    if (n.kind === 'lig') {
+                        ctx.beginPath();
+                        ctx.arc(p.sx, p.sy, r * 2.1, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+                        ctx.fill();
+                    }
+                    ctx.beginPath();
+                    ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+                    ctx.fillStyle = n.color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(9,9,11,0.65)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+                requestAnimationFrame(draw);
+            }
+            requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+</html>

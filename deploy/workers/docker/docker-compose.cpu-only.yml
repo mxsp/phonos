@@ -1,0 +1,95 @@
+version: '3.8'
+
+# Phonos CPU-Only Worker Deployment
+# For systems without GPU - uses CPU for all inference
+#
+# Usage:
+#   docker-compose -f docker-compose.cpu-only.yml up -d
+#
+# Note: CPU inference is significantly slower than GPU
+
+services:
+  esmfold-worker:
+    build:
+      context: ../../../node1-esm
+      dockerfile: Dockerfile
+    image: phonos/esmfold-worker:latest
+    container_name: phonos-esmfold-worker
+    restart: unless-stopped
+    environment:
+      - WORKER_TYPE=type-0
+      - WORKER_ID=publisher-node-type-0
+      - WORKER_HEARTBEAT_INTERVAL=${WORKER_HEARTBEAT_INTERVAL:-30}
+      - JOB_TIMEOUT=${ESMFOLD_JOB_TIMEOUT:-1200}
+      # Force CPU mode
+      - CUDA_VISIBLE_DEVICES=
+      - PREFERRED_GPU=cpu
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SSL=${REDIS_SSL:-false}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - TRANSFORMERS_CACHE=/app/cache
+      - TORCH_HOME=/app/cache
+      - OMP_NUM_THREADS=${OMP_NUM_THREADS:-8}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - esmfold-cache:/app/cache
+      - esmfold-logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+          cpus: '8'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+
+  diffdock-worker:
+    build:
+      context: ../../../diffdock
+      dockerfile: Dockerfile
+    image: phonos/diffdock-worker:latest
+    container_name: phonos-diffdock-worker
+    restart: unless-stopped
+    environment:
+      - WORKER_TYPE=type-3
+      - WORKER_ID=publisher-node-type-3
+      - WORKER_HEARTBEAT_INTERVAL=${WORKER_HEARTBEAT_INTERVAL:-30}
+      - JOB_TIMEOUT=${DIFFDOCK_JOB_TIMEOUT:-2400}
+      # Force CPU mode
+      - CUDA_VISIBLE_DEVICES=
+      - PREFERRED_GPU=cpu
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SSL=${REDIS_SSL:-false}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DIFFDOCK_INSTALL_DIR=/opt/DiffDock
+      - DIFFDOCK_CONDA_ENV=diffdock
+      - OMP_NUM_THREADS=${OMP_NUM_THREADS:-6}
+      - MKL_NUM_THREADS=${MKL_NUM_THREADS:-6}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - diffdock-cache:/app/cache
+      - diffdock-install:/opt/DiffDock
+      - diffdock-logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+          cpus: '8'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+
+volumes:
+  esmfold-cache:
+  esmfold-logs:
+  diffdock-cache:
+  diffdock-install:
+  diffdock-logs:

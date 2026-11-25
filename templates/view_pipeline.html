@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Phonos - Pipeline: {{ pipeline.name or pipeline.pipeline_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}?v=709660b6">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-left">
+            <a href="/dashboard" class="nav-back-btn" title="Back to Dashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </a>
+            <div class="nav-breadcrumb">
+                <a href="/dashboard" data-i18n="nav.dashboard">Dashboard</a>
+                <span>/</span>
+                <span>{{ project_name }}</span>
+                <span>/</span>
+                <span data-i18n="pipeline.pipeline">Pipeline</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pipe-wrap">
+        <div class="pipe-hero">
+            <h1>{{ pipeline.name or pipeline.pipeline_id }}</h1>
+            <p>
+                <span class="pipe-pill pipe-status-{{ pipeline.status }}">{{ pipeline.status }}</span>
+                &middot; Stage {{ (pipeline.current_stage or 0) + 1 }}/{{ pipeline.total_stages }}
+                &middot; {{ pipeline.completed_jobs or 0 }}/{{ pipeline.total_jobs or 0 }} jobs
+                &middot; {{ pipeline.cost }} credits
+            </p>
+        </div>
+
+        {% if pipeline.metadata and pipeline.metadata.stall_reason %}
+        <div class="vpipe-banner">
+            <strong data-i18n="pipeline.stoppedEarly">Pipeline stopped early.</strong> {{ pipeline.metadata.stall_reason }}
+        </div>
+        {% endif %}
+
+        {% for stage in stages %}
+        {% set is_terminal = loop.last %}
+        <div class="vpipe-stage">
+            <div class="vpipe-stage-head">
+                <span class="pipe-stage-num">{{ stage.index + 1 }}</span>
+                <span>{{ stage.category|replace('_', ' ')|title }}</span>
+                <span style="color: var(--color-text-secondary, #8a94a6); font-weight: 400;">— {{ stage.model_name }}</span>
+                <span style="margin-left: auto; color: var(--color-text-secondary, #8a94a6); font-weight: 400;">{{ stage.jobs|length }} job(s)</span>
+            </div>
+            <div class="vpipe-stage-body">
+                {% if not stage.jobs %}
+                    <p class="pipe-muted" data-i18n="pipeline.waiting">Waiting…</p>
+                {% elif is_terminal and stage.jobs|length > 1 %}
+                    {# Matrix grid for the final fan-out stage #}
+                    <table class="vpipe-grid">
+                        <thead><tr><th>Combination</th><th>Status</th><th>Score</th><th>Output</th></tr></thead>
+                        <tbody>
+                        {% for job in stage.jobs|sort(attribute='rank_score', reverse=True) %}
+                            <tr>
+                                <td>{{ job.combo_label or job.job_name }}</td>
+                                <td><span class="vpipe-dot vpipe-{{ job.status }}"></span>{{ job.status }}</td>
+                                <td>{{ '%.3f'|format(job.rank_score) if job.rank_score is not none else '—' }}</td>
+                                <td>
+                                    {% if job.status == 'completed' %}
+                                        <a href="/view_output/{{ job.job_id }}">View →</a>
+                                    {% else %}—{% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="vpipe-jobs">
+                        {% for job in stage.jobs %}
+                        <div class="vpipe-job">
+                            <div>
+                                <span class="vpipe-dot vpipe-{{ job.status }}"></span>
+                                {{ job.combo_label or job.job_name or job.job_id }}
+                                {% if job.rank_score is not none %}
+                                    <span style="color: var(--color-text-secondary, #8a94a6);">· {{ '%.3f'|format(job.rank_score) }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if job.status == 'completed' %}
+                                    <a href="/view_output/{{ job.job_id }}">View output →</a>
+                                {% else %}
+                                    <span class="pipe-muted">{{ job.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <style>
+        .vpipe-banner { background: rgba(234,179,8,.12); border: 1px solid rgba(234,179,8,.4); color: #facc15; border-radius: var(--r-ui, 0px); padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
+        .vpipe-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #94a3b8; }
+        .vpipe-completed { background: #4ade80; }
+        .vpipe-failed { background: #f87171; }
+        .vpipe-processing, .vpipe-submitted, .vpipe-queued { background: #60a5fa; }
+    </style>
+
+    {% if pipeline.status in ['running', 'pending'] %}
+    <script>
+        // Auto-refresh while the pipeline is still progressing.
+        setTimeout(function () { window.location.reload(); }, 10000);
+    </script>
+    {% endif %}
+</body>
+</html>

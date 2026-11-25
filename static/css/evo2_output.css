@@ -1,0 +1,304 @@
+/* Evo2 job output view — templates/partials/_evo2_*.html, static/js/evo2_output.js */
+
+.evo2-view {
+    /* Probability bins: two warm steps below 50 %, two green steps above.
+       Tints for base backgrounds, solid versions for chart bars and the strip. */
+    --evo2-bin-0: rgba(217, 130, 43, 0.55);
+    --evo2-bin-1: rgba(217, 130, 43, 0.22);
+    --evo2-bin-2: rgba(15, 153, 96, 0.24);
+    --evo2-bin-3: rgba(15, 153, 96, 0.58);
+    --evo2-bin-solid-0: #D9822B;
+    --evo2-bin-solid-1: #8f6a3f;
+    --evo2-bin-solid-2: #2f7d5c;
+    --evo2-bin-solid-3: #14b876;
+    --evo2-seed: rgba(175, 189, 204, 0.18);
+    --evo2-nt-A: #3fb950;
+    --evo2-nt-C: #58a6ff;
+    --evo2-nt-G: #e3b341;
+    --evo2-nt-T: #f47067;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: var(--text-primary);
+}
+
+/* ---- intro + actions ------------------------------------------------- */
+
+.evo2-intro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.evo2-lede {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.evo2-lede span:first-child { color: var(--text-primary); font-weight: 600; }
+.evo2-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.evo2-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---- stat tiles ------------------------------------------------------ */
+
+.evo2-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+}
+.evo2-stat {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    padding: 12px 14px;
+}
+.evo2-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+.evo2-stat-value {
+    margin-top: 4px;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.evo2-unit { margin-left: 4px; font-size: 13px; font-weight: 500; color: var(--text-tertiary); }
+.evo2-stat-sub { margin-top: 2px; font-size: 12px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* ---- cards ----------------------------------------------------------- */
+
+.evo2-card {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    padding: 14px 16px;
+}
+.evo2-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.evo2-card-head h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+.evo2-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+.evo2-chart { position: relative; height: 220px; }
+.evo2-hint, .evo2-note { margin: 10px 0 0; font-size: 12px; color: var(--text-tertiary); }
+.evo2-note a { color: var(--accent-primary-light, #34d399); }
+
+/* ---- legend ---------------------------------------------------------- */
+
+.evo2-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+.evo2-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.evo2-legend[hidden] { display: none; }
+.evo2-swatch { display: inline-block; width: 14px; height: 10px; border-radius: var(--r-ui, 0px); }
+.evo2-swatch.evo2-bin-0 { background: var(--evo2-bin-solid-0); }
+.evo2-swatch.evo2-bin-1 { background: var(--evo2-bin-solid-1); }
+.evo2-swatch.evo2-bin-2 { background: var(--evo2-bin-solid-2); }
+.evo2-swatch.evo2-bin-3 { background: var(--evo2-bin-solid-3); }
+.evo2-seed-swatch { background: var(--evo2-seed); outline: 1px dashed var(--text-tertiary); outline-offset: -1px; }
+.evo2-line { display: inline-block; width: 16px; height: 2px; background: var(--text-primary); }
+
+/* ---- composition ----------------------------------------------------- */
+
+.evo2-comp-row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 12px; margin-bottom: 10px; }
+.evo2-comp-label { font-size: 13px; color: var(--text-secondary); }
+.evo2-comp-label small { color: var(--text-tertiary); margin-left: 4px; }
+.evo2-comp-bar {
+    display: flex;
+    height: 24px;
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+    gap: 2px;
+    background: var(--bg-card);
+}
+.evo2-comp-bar span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0d1117;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.evo2-nt-A { background: var(--evo2-nt-A); }
+.evo2-nt-C { background: var(--evo2-nt-C); }
+.evo2-nt-G { background: var(--evo2-nt-G); }
+.evo2-nt-T { background: var(--evo2-nt-T); }
+
+/* ---- lowest-probability table ---------------------------------------- */
+
+.evo2-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.evo2-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    padding: 0 8px 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+.evo2-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-color); }
+.evo2-table tr:last-child td { border-bottom: none; }
+.evo2-table .num { text-align: right; }
+.evo2-table tbody tr { cursor: pointer; }
+.evo2-table tbody tr:hover, .evo2-table tbody tr:focus-visible { background: var(--bg-card-hover); outline: none; }
+.evo2-mono { font-family: var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.04em; }
+.evo2-table mark { color: #0d1117; border-radius: var(--r-ui, 0px); padding: 0 2px; font-weight: 700; }
+
+/* ---- sequence toolbar ------------------------------------------------ */
+
+.evo2-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+.evo2-seg {
+    display: inline-flex;
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+}
+.evo2-seg button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.evo2-seg button + button { border-left: 1px solid var(--border-color); }
+.evo2-seg button[aria-checked="true"] { background: var(--accent-primary); color: #fff; }
+.evo2-seg button:focus-visible { outline: 2px solid var(--border-color-focus); outline-offset: -2px; }
+.evo2-find {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 260px;
+    max-width: 420px;
+    color: var(--text-tertiary);
+}
+.evo2-find input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+.evo2-find input::placeholder { text-transform: none; font-family: var(--font-sans, sans-serif); }
+.evo2-find input:focus { outline: none; border-color: var(--border-color-focus); }
+.evo2-find-count { font-size: 12px; min-width: 64px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---- strip + sequence grid ------------------------------------------- */
+
+.evo2-strip { width: 100%; height: 14px; border-radius: var(--r-ui, 0px); cursor: pointer; display: block; }
+
+.evo2-seq {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    padding: 12px 8px;
+    max-height: 460px;
+    overflow: auto;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 13px;
+    line-height: 1;
+}
+.evo2-seq:focus-visible { outline: 2px solid var(--border-color-focus); }
+.evo2-row { display: flex; align-items: center; gap: 12px; padding: 2px 0; white-space: nowrap; }
+.evo2-row-pos, .evo2-row-end {
+    flex: 0 0 auto;
+    width: 5ch;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+.evo2-row-end { text-align: left; }
+.evo2-row-bases { display: inline-flex; gap: 10px; }
+.evo2-group { display: inline-flex; }
+.evo2-b {
+    display: inline-block;
+    width: 1.25ch;
+    padding: 4px 0;
+    text-align: center;
+    border-radius: var(--r-ui, 0px);
+    cursor: pointer;
+}
+.evo2-b.is-seed { color: var(--text-tertiary); background: var(--evo2-seed); }
+
+/* colour modes */
+.evo2-seq[data-color="prob"] .evo2-b.evo2-bin-0 { background: var(--evo2-bin-0); }
+.evo2-seq[data-color="prob"] .evo2-b.evo2-bin-1 { background: var(--evo2-bin-1); }
+.evo2-seq[data-color="prob"] .evo2-b.evo2-bin-2 { background: var(--evo2-bin-2); }
+.evo2-seq[data-color="prob"] .evo2-b.evo2-bin-3 { background: var(--evo2-bin-3); }
+.evo2-seq[data-color="base"] .evo2-b:not(.is-seed) { font-weight: 600; }
+.evo2-seq[data-color="base"] .evo2-nt-text-A:not(.is-seed), .evo2-legend .evo2-nt-text-A { color: var(--evo2-nt-A); }
+.evo2-seq[data-color="base"] .evo2-nt-text-C:not(.is-seed), .evo2-legend .evo2-nt-text-C { color: var(--evo2-nt-C); }
+.evo2-seq[data-color="base"] .evo2-nt-text-G:not(.is-seed), .evo2-legend .evo2-nt-text-G { color: var(--evo2-nt-G); }
+.evo2-seq[data-color="base"] .evo2-nt-text-T:not(.is-seed), .evo2-legend .evo2-nt-text-T { color: var(--evo2-nt-T); }
+
+.evo2-b:hover { box-shadow: inset 0 0 0 1px var(--text-secondary); }
+.evo2-b.is-match { box-shadow: inset 0 -2px 0 var(--accent-info, #06b6d4); }
+.evo2-b.is-match-current { background: var(--accent-info, #06b6d4) !important; color: #0d1117; }
+.evo2-b.is-selected { box-shadow: inset 0 0 0 2px var(--text-primary); }
+
+/* ---- info bar -------------------------------------------------------- */
+
+.evo2-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    background: var(--bg-body);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.evo2-info.is-pinned { border-color: var(--border-color-light); }
+.evo2-info-empty { color: var(--text-tertiary); }
+.evo2-info-ctx { color: var(--text-secondary); }
+
+@media (max-width: 640px) {
+    .evo2-comp-row { grid-template-columns: 1fr; gap: 4px; }
+    .evo2-seq { font-size: 12px; }
+    .evo2-row-bases { gap: 6px; }
+}

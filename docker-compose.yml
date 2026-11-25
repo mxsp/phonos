@@ -1,0 +1,125 @@
+# Phonos Dual-Mode Stack: Playground Sandbox (:5040) + Production Lab (:5041)
+#
+# Start BOTH side by side:
+#   docker compose up -d --build
+#
+# Start ONLY Playground (http://127.0.0.1:5040, SQLite + pre-seeded 3D & Notebook):
+#   docker compose up -d playground
+#
+# Start Production Lab with PostgreSQL + Redis + ZeroMQ MRS Broker:
+#   docker compose up -d postgres redis mrs production
+
+services:
+  playground:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phonos:latest
+    container_name: phonos-playground
+    command: ["--mode", "playground", "--host", "0.0.0.0", "--port", "5040", "--no-browser"]
+    environment:
+      PHONOS_MODE: playground
+      PHONOS_PORT: "5040"
+      PHONOS_LOCALNET_ONLY: ${PHONOS_LOCALNET_ONLY:-1}
+      LOCAL_LAB_MODE: "true"
+      ENABLE_2FA: "false"
+    ports:
+      - "${PHONOS_BIND_HOST:-0.0.0.0}:5040:5040"
+    volumes:
+      - phonos_playground_data:/data
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: phonos-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phonos}
+      POSTGRES_USER: ${POSTGRES_USER:-phonos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+    volumes:
+      - phonos_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-phonos} -d ${POSTGRES_DB:-phonos}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: phonos-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - phonos_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mrs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phonos:latest
+    container_name: phonos-mrs
+    entrypoint: ["python", "production/mrs.py"]
+    command: []
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PHONOS_DATA_DIR: /data/production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-phonos}:${POSTGRES_PASSWORD:-change-me-in-production}@postgres:5432/${POSTGRES_DB:-phonos}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      MRS_HOST: 0.0.0.0
+      SECRET_KEY: ${SECRET_KEY:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+    volumes:
+      - phonos_production_data:/data
+    restart: unless-stopped
+
+  production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: phonos:latest
+    container_name: phonos-production
+    command: ["--mode", "production", "--host", "0.0.0.0", "--port", "5041", "--no-browser"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PHONOS_MODE: production
+      PHONOS_PORT: "5041"
+      PHONOS_LOCALNET_ONLY: ${PHONOS_LOCALNET_ONLY:-1}
+      PHONOS_LOCALNET_ALLOW: ${PHONOS_LOCALNET_ALLOW:-}
+      LOCAL_LAB_MODE: ${LOCAL_LAB_MODE:-true}
+      ENABLE_2FA: ${ENABLE_2FA:-false}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-phonos}:${POSTGRES_PASSWORD:-change-me-in-production}@postgres:5432/${POSTGRES_DB:-phonos}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      MRS_HOST: mrs
+      SECRET_KEY: ${SECRET_KEY:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      PHONOS_ADMIN_USER: ${PHONOS_ADMIN_USER:-}
+      PHONOS_ADMIN_PASSWORD: ${PHONOS_ADMIN_PASSWORD:-}
+      PHONOS_LAB_NAME: ${PHONOS_LAB_NAME:-Phonos Lab}
+    ports:
+      - "${PHONOS_BIND_HOST:-0.0.0.0}:5041:5041"
+    volumes:
+      - phonos_production_data:/data
+    restart: unless-stopped
+
+volumes:
+  phonos_playground_data:
+  phonos_production_data:
+  phonos_pg_data:
+  phonos_redis_data:

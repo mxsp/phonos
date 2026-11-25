@@ -1,0 +1,93 @@
+{# Oversight — the post-login launcher.
+
+   Three product cards over one backend: Phonos, Notebook (Bureau) and 3D
+   Analytics all share this session, these settings, and the same project
+   database. The card gradients are pure CSS (no image assets to ship or
+   cache-bust). A settings control sits in the bottom corner. #}
+<!DOCTYPE html>
+<html lang="{{ g.lang | default('en') }}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overview · Phonos</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/oversight.css') }}?v=72ffc802">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body class="oversight-body" data-page="oversight">
+    <main class="oversight-shell">
+        <header class="oversight-header">
+            <div class="oversight-brand">
+                <img src="{{ url_for('static', filename='logo-small.png') }}" alt="" width="26" height="26">
+                <span>Phonos</span>
+            </div>
+            <div class="oversight-user">
+                {% if current_user_name %}<span class="oversight-pill">{{ current_user_name }}</span>{% endif %}
+                <a class="oversight-pill is-link" href="{{ url_for('logout') }}">Sign out</a>
+            </div>
+        </header>
+
+        <div class="oversight-intro">
+            <h1>Where do you want to work?</h1>
+            <p>Three products, one workspace — the same projects, files and settings across all of them.</p>
+        </div>
+
+        <div class="oversight-grid">
+            <a class="oversight-card is-phonos" href="{{ url_for('dashboard') }}" data-surface="phonos">
+                <span class="oversight-card-art" aria-hidden="true"></span>
+                <span class="oversight-card-body">
+                    <span class="oversight-card-title">Phonos</span>
+                    <span class="oversight-card-desc">Run structure prediction, docking and design models. Track jobs, pipelines and credits.</span>
+                    <span class="oversight-card-meta" data-default-badge hidden>Default</span>
+                </span>
+                <button type="button" class="oversight-card-default" data-set-default="phonos"
+                        title="Open this by default after signing in"
+                        aria-label="Set Phonos as default landing page">Set as default</button>
+            </a>
+
+            <a class="oversight-card is-notebook" href="{{ url_for('notebook_page') }}" data-surface="notebook">
+                <span class="oversight-card-art" aria-hidden="true"></span>
+                <span class="oversight-card-body">
+                    <span class="oversight-card-title">Notebook</span>
+                    <span class="oversight-card-desc">Notebooks, kernels, terminals and your project files in one IDE.</span>
+                    <span class="oversight-card-meta" data-default-badge hidden>Default</span>
+                </span>
+                <button type="button" class="oversight-card-default" data-set-default="notebook"
+                        title="Open this by default after signing in"
+                        aria-label="Set Notebook as default landing page">Set as default</button>
+            </a>
+
+            <a class="oversight-card is-analytics" href="{{ url_for('analytics') }}" data-surface="analytics">
+                <span class="oversight-card-art" aria-hidden="true"></span>
+                <span class="oversight-card-body">
+                    <span class="oversight-card-title">3D Analytics</span>
+                    <span class="oversight-card-desc">Explore structures in 3D with ligand interaction diagrams and binding-site analytics.</span>
+                    <span class="oversight-card-meta" data-default-badge hidden>Default</span>
+                </span>
+                <button type="button" class="oversight-card-default" data-set-default="analytics"
+                        title="Open this by default after signing in"
+                        aria-label="Set 3D Analytics as default landing page">Set as default</button>
+            </a>
+        </div>
+    </main>
+
+    <a class="oversight-settings" href="{{ url_for('profile_settings') }}"
+       title="Settings" aria-label="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Settings</span>
+    </a>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script defer src="{{ url_for('static', filename='js/oversight.js') }}?v=aa02e540"></script>
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta name="google-site-verification" content="m6QhsowHql2zXDca8N7AU7iUzt-pi4OmbGAT19G1VpE" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="login.pageTitle">Sign In - Phonos</title>
+    <meta name="description" content="Sign in to Phonos to access AI-powered protein structure prediction, molecular docking, protein design, and your collaborative team workspace.">
+    <meta name="author" content="Maximilian S-Peter">
+    <link rel="canonical" href="{{ url_for('login', _external=True) }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    {% include '_i18n_scripts.html' %}
+    <style>
+        :root {
+            --color-bg: #09090b;
+            --color-bg-subtle: #18181b;
+            --color-text-main: #fafafa;
+            --color-text-muted: #a1a1aa;
+            --color-primary: #10B981;
+            --color-primary-glow: rgba(16, 185, 129, 0.5);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--color-bg);
+            color: var(--color-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Split Layout - Individualistic Touch: Row Reverse for Login */
+        .split-layout {
+            display: flex;
+            flex: 1;
+            min-height: 100vh;
+            flex-direction: row-reverse; /* Visual on Left, Content on Right */
+        }
+
+        /* Content Side */
+        .content-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+            background: var(--color-bg); /* Ensure contrast */
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #34D399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--r-ui, 0px);
+            color: var(--color-text-main);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--color-primary);
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 0 4px var(--color-primary-glow);
+        }
+
+        .form-error {
+            font-size: 0.8125rem;
+            color: #ef4444;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-input.is-invalid {
+            border-color: #ef4444;
+        }
+
+        .form-input.is-invalid + .form-error {
+            display: block;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: var(--color-text-main);
+            color: var(--color-bg);
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Links */
+        .auth-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .link-text {
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link-text:hover {
+            color: var(--color-text-main);
+        }
+
+        .link-primary {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-primary:hover {
+            text-decoration: underline;
+        }
+
+        .lang-toggle {
+            background: none;
+            border: 1px solid var(--color-text-muted);
+            border-radius: var(--r-ui, 0px);
+            color: var(--color-text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 1px 7px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.5;
+        }
+        .lang-toggle:hover {
+            color: var(--color-text-main);
+            border-color: var(--color-text-main);
+        }
+
+        /* Error Toast */
+        .error-toast {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: var(--r-ui, 0px);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        /* Visual Side */
+        .visual-side {
+            flex: 1.4;
+            background: var(--color-bg-subtle);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        .visual-image-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visual-image {
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+            border-radius: var(--r-ui, 0px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .grid-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #18181b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--r-ui, 0px);
+            padding: 2rem;
+            max-width: 440px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-text {
+            color: #a1a1aa;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .split-layout {
+                flex-direction: column-reverse; /* Content on top (visually) for mobile usually means Stacked */
+                /* Actually for mobile we want Content visible first. 
+                   Row-reverse on Desktop means Visual(Left) Content(Right).
+                   Column-reverse means Content(Bottom) Visual(Top)? No.
+                   Let's just use column and order.
+                */
+                flex-direction: column;
+            }
+            
+            .content-side {
+                padding: 3rem 1.5rem;
+                max-width: 100%;
+                justify-content: flex-start;
+            }
+
+            .visual-side {
+                min-height: 40vh;
+                padding: 1rem;
+                display: none; /* Often hidden on mobile for auth pages to save space, or kept small */
+            }
+            
+            /* Show visual on mobile? Optional. Let's keep it hidden for cleaner auth on small screens or simple. */
+            .visual-side {
+                display: flex;
+                min-height: 300px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist-legacy.css') }}?v=cdf47d51">
+</head>
+<body>
+    <main class="split-layout">
+        <!-- Content Side (Right on Desktop due to row-reverse) -->
+        <div class="content-side">
+            <header class="brand-header">
+                <h1 class="brand-name" data-i18n="common.phonos">Phonos</h1>
+            </header>
+
+            {% if error %}
+            <div class="error-toast">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}" id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username" data-i18n="auth.emailOrUsername">Email or Username</label>
+                    <input type="text" class="form-input" id="username" name="username" required autocomplete="username" data-i18n-placeholder="auth.enterEmailOrUsername" placeholder="name@example.com">
+                    <span class="form-error" data-i18n="auth.pleaseEnterUsername">Please enter your email or username</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password" data-i18n="auth.password">Password</label>
+                    <input type="password" class="form-input" id="password" name="password" required autocomplete="current-password" data-i18n-placeholder="auth.enterPassword" placeholder="••••••••">
+                    <span class="form-error" data-i18n="auth.pleaseEnterPassword">Please enter your password</span>
+                </div>
+
+                <label class="remember-me" for="remember_me" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--color-text-muted); cursor: pointer; user-select: none; margin-top: 0.25rem;">
+                    <input type="checkbox" id="remember_me" name="remember_me" value="on" style="width: 1rem; height: 1rem; accent-color: var(--color-primary); cursor: pointer;">
+                    <span data-i18n="auth.rememberMe">Keep me signed in</span>
+                </label>
+
+                <button type="submit" class="btn-primary" id="login-submit-btn" data-i18n="auth.signIn">Sign In</button>
+
+                {% set mode = 'login' %}
+                {% include 'partials/_google_button.html' %}
+
+                <div class="auth-links">
+                    <a href="{{ url_for('forgot_password') }}" class="link-text" data-i18n="auth.forgotPassword">Forgot password?</a>
+                </div>
+            </form>
+
+            <div style="margin-top: auto; padding-top: 3rem; font-size: 0.75rem; color: var(--color-text-muted); display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                {% include 'partials/_legal_footer.html' %}
+                <button class="lang-toggle" id="lang-toggle" onclick="window.i18n.toggleLanguage()" title="Switch language">DE</button>
+            </div>
+
+            <script>
+                (function() {
+                    var updateLangToggle = function() {
+                        var btn = document.getElementById('lang-toggle');
+                        if (!btn || !window.i18n) return;
+                        btn.textContent = window.i18n.getLanguage() === 'en' ? 'DE' : 'EN';
+                    };
+                    document.addEventListener('DOMContentLoaded', function() {
+                        updateLangToggle();
+                        window.addEventListener('i18n:change', updateLangToggle);
+                    });
+                })();
+            </script>
+        </div>
+
+        <!-- Visual Side (Left on Desktop) -->
+        <div class="visual-side">
+            <div class="visual-image-container">
+                <img src="{{ url_for('static', filename='img/login-visual.png') }}" alt="Phonos Login Visualization" class="visual-image">
+            </div>
+        </div>
+    </main>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #f59e0b;">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span data-i18n="disclaimer.title">Important Notice</span>
+            </div>
+            <div class="modal-text">
+                <p><strong data-i18n="disclaimer.pleaseBeAware">Please be aware:</strong></p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                    <li data-i18n="disclaimer.aiDisclaimer">AI models can make mistakes. Always verify important results.</li>
+                    <li data-i18n="disclaimer.featureDisclaimer">Some features may require time for proper display.</li>
+                </ul>
+            </div>
+            <button id="disclaimer-accept" class="btn-primary" style="margin-top: 0;" data-i18n="disclaimer.understand">I Understand</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('disclaimer-modal');
+            const acceptBtn = document.getElementById('disclaimer-accept');
+            const hasAccepted = sessionStorage.getItem('disclaimer-accepted');
+
+            if (!hasAccepted) {
+                modal.classList.add('active');
+            }
+
+            acceptBtn.addEventListener('click', function() {
+                sessionStorage.setItem('disclaimer-accepted', 'true');
+                modal.classList.remove('active');
+            });
+
+            // Validation
+            const form = document.getElementById('login-form');
+            const inputs = form.querySelectorAll('input[required]');
+
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => {
+                    if (!input.value.trim()) input.classList.add('is-invalid');
+                    else input.classList.remove('is-invalid');
+                });
+                input.addEventListener('input', () => input.classList.remove('is-invalid'));
+            });
+
+            form.addEventListener('submit', (e) => {
+                let valid = true;
+                inputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        valid = false;
+                    }
+                });
+                if (!valid) e.preventDefault();
+                else {
+                    const btn = document.getElementById('login-submit-btn');
+                    btn.disabled = true;
+                    // Drop the data-i18n key so the i18n repaint doesn't revert
+                    // this loading label back to "Sign In" / "Anmelden".
+                    btn.removeAttribute('data-i18n');
+                    const sendingText = (window.i18n && window.i18n.t) ? window.i18n.t('auth.signingIn') : 'Signing In...';
+                    btn.innerText = sendingText;
+                }
+            });
+        });
+
+    </script>
+    <!-- Cookie Consent Modal -->
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

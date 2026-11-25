@@ -1,0 +1,201 @@
+:root {
+    /* ========================================
+       PHONOS DESIGN SYSTEM v5 - UNIFIED DARK
+       Deep Space Theme with Emerald Green
+       ======================================== */
+
+    /* Background Colors - Deep Space */
+    --bg-body: #293742;
+    --bg-surface: #30404D;
+    --bg-card: #30404D;
+    --bg-card-hover: #394B59;
+    --bg-elevated: #394B59;
+    --bg-hover: #3D4F5D;
+    --bg-active: #465968;
+
+    /* Border Colors */
+    --border-color: rgba(255, 255, 255, 0.24);
+    --border-color-light: rgba(255, 255, 255, 0.40);
+    --border-strong: rgba(245, 248, 250, 0.72);
+    --border-color-focus: rgba(16, 185, 129, 0.7);
+
+    /* Text Colors */
+    --text-primary: #F5F8FA;
+    --text-secondary: #C7D0DB;
+    --text-tertiary: #AFBDCC;
+    --text-muted: #A3B3C5;
+
+    /* Primary Accent - Emerald Green */
+    --accent-primary: #0F9960;
+    --accent-primary-light: #34d399;
+    --accent-primary-dark: #0A6B43;
+    --accent-primary-glow: rgba(16, 185, 129, 0.5);
+    --accent-primary-muted: rgba(16, 185, 129, 0.15);
+    --accent-primary-10: rgba(16, 185, 129, 0.1);
+    --accent-primary-20: rgba(16, 185, 129, 0.2);
+    --accent-primary-30: rgba(16, 185, 129, 0.3);
+
+    /* Secondary Accent - Purple */
+    --accent-secondary: #8b5cf6;
+    --accent-secondary-light: #a78bfa;
+    --accent-secondary-dark: #7c3aed;
+    --accent-secondary-glow: rgba(139, 92, 246, 0.4);
+    --accent-secondary-muted: rgba(139, 92, 246, 0.15);
+
+    /* Tertiary Accent - Cyan (IoT, Visualizer) */
+    --accent-cyan: #06b6d4;
+    --accent-cyan-light: #22d3ee;
+    --accent-cyan-dark: #0891b2;
+    --accent-cyan-glow: rgba(6, 182, 212, 0.4);
+    --accent-cyan-muted: rgba(6, 182, 212, 0.15);
+    --accent-cyan-10: rgba(6, 182, 212, 0.1);
+    --accent-cyan-20: rgba(6, 182, 212, 0.2);
+
+    /* Quaternary Accent - Orange (Notebook) */
+    --accent-orange: #f97316;
+    --accent-orange-light: #fb923c;
+    --accent-orange-dark: #ea580c;
+    --accent-orange-glow: rgba(249, 115, 22, 0.4);
+    --accent-orange-muted: rgba(249, 115, 22, 0.15);
+
+    /* Status Colors */
+    --accent-success: #0F9960;
+    --accent-success-light: #34d399;
+    --accent-success-glow: rgba(16, 185, 129, 0.4);
+    --accent-success-dark: #0A6B43;
+    --accent-success-muted: rgba(16, 185, 129, 0.15);
+
+    --accent-warning: #D9822B;
+    --accent-warning-light: #fbbf24;
+    --accent-warning-glow: rgba(245, 158, 11, 0.4);
+    --accent-warning-muted: rgba(245, 158, 11, 0.15);
+
+    --accent-danger: #DB3737;
+    --accent-danger-light: #f87171;
+    --accent-danger-glow: rgba(239, 68, 68, 0.4);
+    --accent-danger-muted: rgba(239, 68, 68, 0.15);
+
+    --accent-info: #06b6d4;
+    --accent-info-light: #22d3ee;
+    --accent-info-glow: rgba(6, 182, 212, 0.4);
+    --accent-info-muted: rgba(6, 182, 212, 0.15);
+
+    /* Nav Icon Colors - Muted palette for sidebar */
+    --nav-dashboard: #6b73c7;
+    --nav-projects: #8b7bc7;
+    --nav-files: #3ba8b8;
+    --nav-jobs: #c9a030;
+    --nav-usage: #2d9d78;
+    --nav-submit: #c75a5a;
+    --nav-viewer: #c06898;
+    --nav-teams: #36a89a;
+    --nav-settings: #7c7f87;
+    --nav-admin: #c97a3a;
+    --nav-preview: #8c52c9;
+    --nav-visualizer: #22b8cf;
+    --nav-search: #9478d8;
+    --nav-databases: #2da87a;
+    --nav-iot: #22b8cf;
+    --nav-logout: #b85858;
+
+    /* Nav Active Backgrounds - Gradient start colors */
+    --nav-active-dashboard: #5558c7;
+    --nav-active-projects: #7352c7;
+    --nav-active-files: #0897a8;
+    --nav-active-jobs: #b8940e;
+    --nav-active-usage: #0d8a60;
+    --nav-active-submit: #c24848;
+    --nav-active-viewer: #b8488a;
+    --nav-active-teams: #0d8f80;
+    --nav-active-settings: #5a5d65;
+    --nav-active-admin: #c06a20;
+    --nav-active-preview: #8040c0;
+    --nav-active-visualizer: #088fa8;
+    --nav-active-search: #7352c7;
+    --nav-active-databases: #0d8a60;
+    --nav-active-iot: #088fa8;
+
+    /* Shadows */
+    /* Hard, offset shadows only: no blur, no glow (the brutalist overlay in brutalist.css relies on this).
+       Glow tokens stay defined as an invisible shadow so lists like `var(--shadow-md), var(--shadow-glow)` remain valid. */
+    --shadow-sm: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    --shadow-md: 3px 3px 0 rgba(0, 0, 0, 0.45);
+    --shadow-lg: 6px 6px 0 rgba(0, 0, 0, 0.5);
+    --shadow-xl: 8px 8px 0 rgba(0, 0, 0, 0.55);
+    --shadow-glow: 0 0 0 0 transparent;
+    --shadow-glow-success: 0 0 0 0 transparent;
+    --shadow-glow-warning: 0 0 0 0 transparent;
+    --shadow-glow-danger: 0 0 0 0 transparent;
+    --shadow-glow-info: 0 0 0 0 transparent;
+
+    /* Border Radius — one knob: --r-ui. 0 = square (brutalist). Raise it to soften the whole app again. */
+    --r-ui: 0px;
+    --radius-xs: var(--r-ui);
+    --radius-sm: var(--r-ui);
+    --radius-md: var(--r-ui);
+    --radius-lg: var(--r-ui);
+    --radius-xl: var(--r-ui);
+    --radius-2xl: var(--r-ui);
+    --radius-full: 9999px;   /* dots, switches, avatars */
+
+    /* Spacing Scale */
+    --space-0: 0;
+    --space-1: 0.125rem;
+    --space-2: 0.25rem;
+    --space-3: 0.5rem;
+    --space-4: 0.75rem;
+    --space-5: 1rem;
+    --space-6: 1.25rem;
+    --space-8: 1.5rem;
+    --space-10: 2rem;
+    --space-12: 2.5rem;
+    --space-16: 3rem;
+
+    /* Z-Index Scale */
+    --z-base: 1;
+    --z-dropdown: 10;
+    --z-sticky: 20;
+    --z-header: 40;
+    --z-sidebar: 50;
+    --z-overlay: 100;
+    --z-modal: 200;
+    --z-toast: 300;
+    --z-tooltip: 400;
+
+    /* Grid field (brutalist.css): cell size and line colours */
+    --grid-size: 32px;
+    --grid-line: rgba(245, 248, 250, 0.045);
+    --grid-line-major: rgba(245, 248, 250, 0.09);
+    --label-tracking: 0.12em;
+
+    /* Layout */
+    --header-height: 52px;
+    --sidebar-width: 260px;
+
+    /* Font Weights */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    /* Font Family */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+    /* Transitions */
+    --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+    --transition-slow: 350ms ease;
+
+    /* Typography Scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 2rem;
+}

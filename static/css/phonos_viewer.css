@@ -1,0 +1,794 @@
+/* ===================================================================
+   PhonosViewer — Focus Panel & Viewer Styles
+   Deep Space Dark theme integration for Mol* (pdbe-molstar)
+   =================================================================== */
+
+/* ---- Mol* overrides for Dark Theme ---- */
+.msp-plugin {
+    --msp-layout-background: transparent !important;
+}
+
+.msp-plugin .msp-layout-expanded {
+    border: none !important;
+}
+
+/* Hide ALL Mol* canvas overlay buttons — PhonosViewer provides its own controls */
+.msp-plugin .msp-viewport-controls,
+.msp-plugin .msp-controls-overlay,
+.msp-plugin .msp-btn-screenshot,
+.msp-plugin .msp-btn-expand,
+.msp-plugin .msp-btn-animation-toggle {
+    display: none !important;
+}
+
+/* Sequence panel — dark theme integration */
+.msp-plugin .msp-sequence-wrapper,
+.msp-plugin .msp-sequence {
+    background: rgba(9, 9, 11, 0.95) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 11px !important;
+    max-height: 50px !important;
+    overflow-y: auto !important;
+    /* Do NOT use pointer-events:none or overflow:hidden — breaks click-to-highlight */
+}
+
+.msp-plugin .msp-sequence-number {
+    color: rgba(161, 161, 170, 0.6) !important;
+    font-size: 10px !important;
+}
+
+.msp-plugin .msp-sequence-residue {
+    color: #a1a1aa !important;
+    cursor: pointer !important;
+    transition: color 0.1s, background 0.1s !important;
+}
+
+.msp-plugin .msp-sequence-residue:hover {
+    color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-radius: var(--r-ui, 0px) !important;
+}
+
+.msp-plugin .msp-sequence-residue.msp-sequence-residue-has-highlight {
+    color: #34d399 !important;
+    background: rgba(16, 185, 129, 0.25) !important;
+    border-radius: var(--r-ui, 0px) !important;
+}
+
+/* Focus panel top offset is set by JS when sequence panel is active (see _buildPanel) */
+
+/* ---- Focus Panel ---- */
+
+.phonos-focus-panel {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 240px;
+    max-height: calc(100% - 16px);
+    background: rgba(9, 9, 11, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-ui, 0px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    transition: width 0.2s ease, opacity 0.2s ease;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    color: #e4e4e7;
+}
+
+.phonos-focus-panel.collapsed {
+    width: 44px;
+    border-radius: var(--r-ui, 0px);
+}
+
+.phonos-focus-panel.collapsed .pfp-body {
+    display: none;
+}
+
+.phonos-focus-panel.collapsed .pfp-header span {
+    display: none;
+}
+
+.phonos-focus-panel.collapsed .pfp-collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+/* Header */
+.pfp-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.pfp-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.pfp-header svg {
+    flex-shrink: 0;
+    color: #10b981;
+}
+
+.pfp-header span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fafafa;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.pfp-collapse-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #71717a;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+    flex-shrink: 0;
+}
+
+.pfp-collapse-btn:hover {
+    color: #e4e4e7;
+}
+
+.pfp-collapse-btn svg {
+    color: inherit;
+    transition: transform 0.2s;
+}
+
+/* Body */
+.pfp-body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    padding-bottom: 4px;
+}
+
+.pfp-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.pfp-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-ui, 0px);
+}
+
+/* Sections */
+.pfp-section {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.pfp-section:last-child {
+    border-bottom: none;
+}
+
+.pfp-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #10b981;
+    margin-bottom: 8px;
+}
+
+/* ---- Confidence Bar ---- */
+
+.pfp-confidence-bar {
+    margin-bottom: 6px;
+}
+
+.pfp-cbar-track {
+    display: flex;
+    height: 14px;
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+    cursor: crosshair;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pfp-cbar-seg {
+    min-width: 0;
+    transition: opacity 0.1s;
+}
+
+.pfp-cbar-seg:hover {
+    opacity: 0.7;
+}
+
+.pfp-confidence-stats {
+    font-size: 10px;
+    color: #71717a;
+    margin-bottom: 6px;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+    line-height: 1.4;
+}
+
+.pfp-confidence-legend {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pfp-confidence-legend span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #a1a1aa;
+}
+
+.pfp-confidence-legend i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--r-ui, 0px);
+    flex-shrink: 0;
+}
+
+/* ---- Region Focus Fields ---- */
+
+.pfp-field-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.pfp-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.pfp-field:first-child {
+    flex: 0 0 48px;
+}
+
+.pfp-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 600;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
+.pfp-input {
+    width: 100%;
+    padding: 5px 7px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-ui, 0px);
+    color: #fafafa;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Monaco', monospace;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.pfp-input:focus {
+    border-color: #10b981;
+}
+
+.pfp-input::placeholder {
+    color: #52525b;
+}
+
+/* ---- Buttons ---- */
+
+.pfp-btn-row {
+    display: flex;
+    gap: 4px;
+}
+
+.pfp-btn {
+    flex: 1;
+    padding: 6px 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--r-ui, 0px);
+    color: #a1a1aa;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+
+.pfp-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fafafa;
+}
+
+.pfp-btn-accent {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.pfp-btn-accent:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+
+/* ---- Quick Focus Grid ---- */
+
+.pfp-quick-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+}
+
+.pfp-qbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--r-ui, 0px);
+    color: #a1a1aa;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.pfp-qbtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fafafa;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pfp-qbtn i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--r-ui, 0px);
+    flex-shrink: 0;
+}
+
+/* ---- Visibility Checkboxes ---- */
+
+.pfp-check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+}
+
+.pfp-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #a1a1aa;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.15s;
+}
+
+.pfp-check:hover {
+    color: #e4e4e7;
+}
+
+.pfp-check input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: #10b981;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ---- Color Buttons ---- */
+
+.pfp-color-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* With 5 coloring / representation options a single flex line squeezes labels to
+   the point of truncation — let them wrap onto a second row instead. */
+.pfp-color-row .pfp-cbtn {
+    flex: 1 1 30%;
+    min-width: 56px;
+}
+
+.pfp-cbtn {
+    flex: 1;
+    padding: 5px 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--r-ui, 0px);
+    color: #71717a;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+
+.pfp-cbtn:hover {
+    color: #e4e4e7;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pfp-cbtn.active {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #10b981;
+}
+
+/* ---- Tool Buttons ---- */
+
+.pfp-tool-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.pfp-tbtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 7px 4px 5px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--r-ui, 0px);
+    color: #71717a;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pfp-tbtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fafafa;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pfp-tbtn:hover svg {
+    color: #10b981;
+}
+
+.pfp-tbtn.active {
+    background: rgba(14, 116, 144, 0.3);
+    border-color: rgba(125, 211, 252, 0.5);
+    color: #7dd3fc;
+}
+
+.pfp-tbtn svg {
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+
+.pfp-tbtn span {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ---- Toast ---- */
+
+.pfp-toast {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    padding: 6px 10px;
+    background: rgba(2, 6, 23, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: var(--r-ui, 0px);
+    color: #e2e8f0;
+    font-size: 11px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.pfp-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 768px) {
+    .phonos-focus-panel {
+        width: 200px;
+        top: 4px;
+        right: 4px;
+        max-height: calc(100% - 8px);
+    }
+
+    .pfp-quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pfp-tool-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .phonos-focus-panel {
+        width: 180px;
+    }
+}
+
+/* ---- Fullscreen adjustments ---- */
+
+:fullscreen .phonos-focus-panel {
+    top: 12px;
+    right: 12px;
+}
+
+/* ---- Rendering quality buttons ---- */
+
+.pfp-quality-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+}
+
+/* ---- Loading / error overlay ---- */
+
+.pfp-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(9, 9, 11, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 45;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+    pointer-events: none;
+}
+
+.pfp-loading-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.pfp-spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.12);
+    border-top-color: #10b981;
+    animation: pfp-spin 0.8s linear infinite;
+}
+
+@keyframes pfp-spin {
+    to { transform: rotate(360deg); }
+}
+
+.pfp-loading-msg {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #e4e4e7;
+    letter-spacing: 0.02em;
+    text-align: center;
+    max-width: 80%;
+}
+
+.pfp-loading-overlay.error .pfp-spinner {
+    display: none;
+}
+
+.pfp-loading-overlay.error {
+    background: rgba(9, 9, 11, 0.72);
+}
+
+.pfp-loading-overlay.error .pfp-loading-msg {
+    color: #fca5a5;
+}
+
+.pfp-loading-overlay.error .pfp-loading-msg::before {
+    content: '\26A0';
+    display: block;
+    font-size: 22px;
+    margin-bottom: 6px;
+    color: #f87171;
+}
+
+/* ---- Viewer container defaults ---- */
+
+[data-phonos-viewer] {
+    position: relative;
+    overflow: hidden;
+    outline: none;
+}
+
+/* Hide the QoL dock when PhonosViewer panel is active (avoid double controls) */
+[data-phonos-viewer] .phonos-viewer-qol-dock {
+    display: none !important;
+}
+
+/* ---- Chain chips ---- */
+
+.pfp-chain-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.pfp-chain-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 7px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--r-ui, 0px);
+    color: #a1a1aa;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pfp-chain-chip:hover {
+    color: #e4e4e7;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pfp-chain-chip.active {
+    border-color: rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.14);
+    color: #e4e4e7;
+}
+
+.pfp-chain-chip i {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--r-ui, 0px);
+    flex: none;
+}
+
+.pfp-chain-chip em {
+    font-style: normal;
+    font-size: 9px;
+    color: #71717a;
+    font-variant-numeric: tabular-nums;
+}
+
+.pfp-hint {
+    margin-top: 6px;
+    font-size: 9px;
+    color: #52525b;
+    letter-spacing: 0.02em;
+}
+
+/* ---- Continuous-scheme legend (rainbow / hydrophobicity) ---- */
+
+.pfp-ramp-legend {
+    margin-top: 8px;
+}
+
+.pfp-ramp-bar {
+    height: 7px;
+    border-radius: var(--r-ui, 0px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pfp-ramp-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 9px;
+    color: #71717a;
+}
+
+/* ---- Keyboard shortcut sheet ---- */
+
+.pfp-shortcuts {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -48%);
+    width: min(320px, calc(100% - 32px));
+    background: rgba(9, 9, 11, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-ui, 0px);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+    padding: 12px 14px 14px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    backdrop-filter: blur(6px);
+}
+
+.pfp-shortcuts.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%);
+}
+
+.pfp-shortcuts-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+}
+
+.pfp-shortcuts-close {
+    background: none;
+    border: none;
+    color: #71717a;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+.pfp-shortcuts-close:hover {
+    color: #e4e4e7;
+}
+
+.pfp-shortcuts-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+}
+
+.pfp-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #d4d4d8;
+}
+
+.pfp-shortcut kbd {
+    flex: none;
+    min-width: 34px;
+    text-align: center;
+    padding: 2px 5px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom-width: 2px;
+    border-radius: var(--r-ui, 0px);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px;
+    color: #e4e4e7;
+}
+
+.pfp-shortcuts-hint {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    color: #71717a;
+}

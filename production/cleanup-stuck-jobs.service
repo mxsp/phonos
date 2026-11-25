@@ -1,0 +1,29 @@
+# Phonos stuck-jobs cleanup systemd unit TEMPLATE.
+#
+# The __PHONOS_*__ tokens are placeholders; render before installing. Example:
+#
+#   sed -e "s|__PHONOS_USER__|$(id -un)|g" \
+#       -e "s|__PHONOS_GROUP__|$(id -gn)|g" \
+#       -e "s|__PHONOS_DIR__|$HOME/phonos|g" \
+#       -e "s|__PHONOS_PYTHON__|$HOME/phonos/venv/bin/python3|g" \
+#       cleanup-stuck-jobs.service | sudo tee /etc/systemd/system/cleanup-stuck-jobs.service
+[Unit]
+Description=Cleanup stuck Redis jobs
+Documentation=file://__PHONOS_DIR__/production/CLEANUP_JOBS_README.md
+After=network.target redis.service
+
+[Service]
+Type=oneshot
+User=__PHONOS_USER__
+Group=__PHONOS_GROUP__
+WorkingDirectory=__PHONOS_DIR__/production
+ExecStart=__PHONOS_PYTHON__ __PHONOS_DIR__/production/cleanup_stuck_jobs.py --stuck-hours 8 --dead-hours 24
+StandardOutput=append:__PHONOS_DIR__/production/logs/cleanup_stuck_jobs.log
+StandardError=append:__PHONOS_DIR__/production/logs/cleanup_stuck_jobs.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

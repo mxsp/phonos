@@ -1,0 +1,388 @@
+{% extends "_configure_base.html" %}
+{% from "partials/_model_badges.html" import runs_at with context %}
+
+{% block model_id %}molmim{% endblock %}
+
+{% block title_i18n %}molmim.title{% endblock %}
+{% block page_title_text %}Phonos - MolMIM Molecule Generation{% endblock %}
+
+{% block molstar_head %}{% endblock %}
+
+{% block head_extra %}
+<style>
+.examples-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+.example-item { background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); padding: 10px 14px; cursor: pointer; transition: all 0.2s; }
+.example-item:hover { border-color: var(--cfg-accent); }
+.example-name { font-size: 12px; font-weight: 600; color: var(--cfg-text); }
+.example-smiles { font-size: 11px; color: var(--cfg-text-3); font-family: monospace; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.results-panel { display: none; }
+.mol-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mol-table th { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--cfg-border); color: var(--cfg-text-3); font-size: 12px; font-weight: 500; }
+.mol-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--cfg-text-2); }
+.mol-table tr:last-child td { border-bottom: none; }
+.mol-table tr:hover td { background: rgba(255,255,255,0.02); }
+.smiles-cell { font-family: monospace; font-size: 12px; color: var(--cfg-text); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.score-pill { display: inline-block; padding: 2px 8px; border-radius: var(--r-ui, 0px); font-size: 11px; font-weight: 600; }
+.score-high { background: var(--cfg-success-bg); color: var(--cfg-success); }
+.score-mid { background: rgba(245,158,11,0.15); color: var(--cfg-warning); }
+.score-low { background: var(--cfg-error-bg); color: var(--cfg-error); }
+.credits-info { font-size: 12px; color: var(--cfg-text-4); padding: 8px 0; }
+.credits-info span { color: var(--cfg-accent); font-weight: 600; }
+.toggle-row { display: flex; align-items: center; gap: 12px; }
+.toggle-label { font-size: 13px; color: var(--cfg-text-2); }
+</style>
+{% endblock %}
+
+{% block model_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>{% endblock %}
+{% block model_name %}<span data-i18n="molmim.heading">MolMIM Molecule Generation</span>{% endblock %}
+{% block model_tagline %}<span data-i18n="molmim.subheading">Generate novel drug-like molecules via latent space optimization</span>{% endblock %}
+{% block header_badge %}{{ runs_at('molmim') }}{% endblock %}
+{% block credits %}{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="molmim.parameters">Generation Parameters</h2></div>
+                    <div class="card-body">
+                        <form id="generate-form">
+                            <div class="form-group">
+                                <label class="form-label" for="smiles-input" data-i18n="molmim.inputSmiles">Input SMILES</label>
+                                <input type="text" id="smiles-input" class="form-input" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O" value="CC(=O)Oc1ccccc1C(=O)O">
+                                <div class="form-hint" data-i18n="molmim.smilesHint">Seed molecule in SMILES format. Generated molecules will be similar to this structure.</div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="num-molecules" data-i18n="molmim.numMolecules">Num Molecules</label>
+                                    <input type="number" id="num-molecules" class="form-input" value="10" min="1" max="100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="min-similarity" data-i18n="molmim.minSimilarity">Min Similarity</label>
+                                    <input type="number" id="min-similarity" class="form-input" value="0.3" min="0" max="1" step="0.05">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="algorithm" data-i18n="molmim.algorithm">Algorithm</label>
+                                <select id="algorithm" class="form-select">
+                                    <option value="CMA-ES" selected data-i18n="molmim.cmaes">CMA-ES (Recommended)</option>
+                                    <option value="SGA" data-i18n="molmim.sga">SGA</option>
+                                    <option value="Greedy" data-i18n="molmim.greedy">Greedy</option>
+                                    <option value="Random" data-i18n="molmim.random">Random</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="property-name" data-i18n="molmim.optimizeProperty">Optimize Property</label>
+                                <select id="property-name" class="form-select">
+                                    <option value="QED" selected data-i18n="molmim.qed">QED (Drug-likeness)</option>
+                                    <option value="plogp" data-i18n="molmim.plogp">pLogP (Lipophilicity)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="iterations" data-i18n="molmim.iterations">Iterations</label>
+                                    <input type="number" id="iterations" class="form-input" value="10" min="1" max="100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="particles" data-i18n="molmim.particles">Particles</label>
+                                    <input type="number" id="particles" class="form-input" value="30" min="1" max="200">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="toggle-row">
+                                    <input type="checkbox" id="minimize-prop">
+                                    <label class="toggle-label" for="minimize-prop" data-i18n="molmim.minimizeProp">Minimize property (instead of maximize)</label>
+                                </div>
+                            </div>
+
+                            <span id="user-credits" hidden>{{ user_credits }}</span>
+
+                            <div class="status-bar" id="status-bar">
+                                <div class="status-dot idle" id="status-dot"></div>
+                                <span id="status-text" style="color:#71717a;" data-i18n="common.ready">Ready</span>
+                            </div>
+
+                            <button type="submit" class="btn-primary" id="submit-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                                <span data-i18n="molmim.generate">Generate Molecules</span>
+                            </button>
+                        </form>
+
+                        <div style="margin-top: 20px;">
+                            <div class="form-label" data-i18n="boltz2.quickExamplesTitle">Quick Examples</div>
+                            <div class="examples-list" id="examples-list">
+                                <div class="example-item" data-smiles="CC(=O)Oc1ccccc1C(=O)O">
+                                    <div class="example-name" data-i18n="molmim.exampleAspirin">Aspirin</div>
+                                    <div class="example-smiles">CC(=O)Oc1ccccc1C(=O)O</div>
+                                </div>
+                                <div class="example-item" data-smiles="CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C">
+                                    <div class="example-name" data-i18n="molmim.exampleTestosterone">Testosterone</div>
+                                    <div class="example-smiles">CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C</div>
+                                </div>
+                                <div class="example-item" data-smiles="c1ccc2c(c1)cc1ccc3cccc4ccc2c1c34">
+                                    <div class="example-name" data-i18n="molmim.examplePyrene">Pyrene</div>
+                                    <div class="example-smiles">c1ccc2c(c1)cc1ccc3cccc4ccc2c1c34</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 data-i18n="molmim.generatedMolecules">Generated Molecules</h2>
+                        <div id="header-actions" style="display:none;">
+                            <button class="download-btn" onclick="downloadCSV()" data-i18n="molmim.downloadCsv">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="empty-state" style="text-align:center;padding:60px 0;color:#52525b;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                            <div style="font-size:14px;" data-i18n="molmim.placeholder">Submit a SMILES to generate novel molecules</div>
+                        </div>
+
+                        <div id="results-content" style="display:none;">
+                            <div class="metrics-grid" id="metrics-grid"></div>
+                            <div style="overflow-x:auto;">
+                                <table class="mol-table" id="mol-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th data-i18n="common.smiles">SMILES</th>
+                                            <th data-i18n="molmim.score">Score</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mol-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+    (function() {
+        var allMolecules = [];
+        var taskId = null;
+        var pollTimer = null;
+
+        function getCsrf() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
+        }
+
+        function setStatus(state, msg) {
+            var dot = document.getElementById('status-dot');
+            var text = document.getElementById('status-text');
+            dot.className = 'status-dot ' + state;
+            text.textContent = msg;
+            text.style.color = state === 'error' ? '#ef4444' : state === 'success' ? '#10b981' : '#a1a1aa';
+        }
+
+        function clearChildren(el) {
+            while (el.firstChild) { el.removeChild(el.firstChild); }
+        }
+
+        document.querySelectorAll('.example-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                var smiles = item.getAttribute('data-smiles');
+                if (smiles) { document.getElementById('smiles-input').value = smiles; }
+            });
+        });
+
+        document.getElementById('generate-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var smi = document.getElementById('smiles-input').value.trim();
+            if (!smi) { setStatus('error', 'Please enter a SMILES string'); return; }
+
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            setStatus('running', 'Generating molecules...');
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+            var payload = {
+                smi: smi,
+                num_molecules: parseInt(document.getElementById('num-molecules').value) || 10,
+                algorithm: document.getElementById('algorithm').value,
+                property_name: document.getElementById('property-name').value,
+                minimize: document.getElementById('minimize-prop').checked,
+                min_similarity: parseFloat(document.getElementById('min-similarity').value) || 0.3,
+                iterations: parseInt(document.getElementById('iterations').value) || 10,
+                particles: parseInt(document.getElementById('particles').value) || 30
+            };
+
+            fetch('/api/molmim/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                body: JSON.stringify(payload)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) { throw new Error(data.message || 'Generation failed'); }
+                if (data.task_id || data.status === 'pending') {
+                    taskId = data.task_id;
+                    setStatus('running', 'Processing async task...');
+                    pollStatus();
+                } else {
+                    handleResult(data);
+                    btn.disabled = false;
+                }
+            })
+            .catch(function(err) { setStatus('error', 'Error: ' + err.message); btn.disabled = false; });
+        });
+
+        function pollStatus() {
+            if (!taskId) return;
+            pollTimer = setInterval(function() {
+                fetch('/api/molmim/status/' + encodeURIComponent(taskId), { headers: { 'X-CSRF-Token': getCsrf() } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) { clearInterval(pollTimer); setStatus('error', data.message || 'Task failed'); document.getElementById('submit-btn').disabled = false; return; }
+                    if (data.status === 'pending') { return; }
+                    clearInterval(pollTimer);
+                    handleResult(data);
+                    document.getElementById('submit-btn').disabled = false;
+                })
+                .catch(function(err) { clearInterval(pollTimer); setStatus('error', 'Poll error: ' + err.message); document.getElementById('submit-btn').disabled = false; });
+            }, 3000);
+        }
+
+        function parseMolecules(data) {
+            var mols = data.molecules || data.samples || [];
+            if (typeof mols === 'string') {
+                try { mols = JSON.parse(mols); } catch(_) { mols = []; }
+            }
+            if (!Array.isArray(mols)) { mols = []; }
+            return mols;
+        }
+
+        function handleResult(data) {
+            var mols = parseMolecules(data);
+            allMolecules = mols;
+
+            if (!mols.length) {
+                setStatus('error', 'No molecules generated');
+                document.getElementById('submit-btn').disabled = false;
+                return;
+            }
+
+            buildMetrics(mols, data.score_type || 'QED');
+            buildTable(mols);
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('results-content').style.display = '';
+            document.getElementById('header-actions').style.display = '';
+            setStatus('success', mols.length + ' molecules generated');
+        }
+
+        function buildMetrics(mols, scoreType) {
+            var grid = document.getElementById('metrics-grid');
+            clearChildren(grid);
+
+            var scores = mols.map(function(m) { return typeof m.score === 'number' ? m.score : null; }).filter(function(s) { return s !== null; });
+            var best = scores.length ? Math.max.apply(null, scores).toFixed(3) : 'N/A';
+            var avg = scores.length ? (scores.reduce(function(a,b){return a+b;},0)/scores.length).toFixed(3) : 'N/A';
+
+            [
+                { val: String(mols.length), label: 'Generated' },
+                { val: String(best), label: 'Best ' + scoreType, color: '#10b981' },
+                { val: String(avg), label: 'Avg ' + scoreType }
+            ].forEach(function(m) {
+                var card = document.createElement('div');
+                card.className = 'metric-card';
+                var v = document.createElement('div');
+                v.className = 'metric-value';
+                v.textContent = m.val;
+                if (m.color) { v.style.color = m.color; }
+                var l = document.createElement('div');
+                l.className = 'metric-label';
+                l.textContent = m.label;
+                card.appendChild(v);
+                card.appendChild(l);
+                grid.appendChild(card);
+            });
+        }
+
+        function buildTable(mols) {
+            var tbody = document.getElementById('mol-tbody');
+            clearChildren(tbody);
+
+            mols.slice(0, 100).forEach(function(mol, i) {
+                var smiles = mol.sample || mol.smiles || mol.smi || '';
+                var score = typeof mol.score === 'number' ? mol.score : null;
+
+                var tr = document.createElement('tr');
+
+                var tdNum = document.createElement('td');
+                tdNum.style.color = '#52525b';
+                tdNum.textContent = String(i + 1);
+
+                var tdSmiles = document.createElement('td');
+                tdSmiles.className = 'smiles-cell';
+                tdSmiles.title = smiles;
+                tdSmiles.textContent = smiles;
+
+                var tdScore = document.createElement('td');
+                if (score !== null) {
+                    var pill = document.createElement('span');
+                    pill.className = 'score-pill ' + (score >= 0.7 ? 'score-high' : score >= 0.4 ? 'score-mid' : 'score-low');
+                    pill.textContent = score.toFixed(3);
+                    tdScore.appendChild(pill);
+                } else {
+                    tdScore.textContent = '-';
+                }
+
+                var tdCopy = document.createElement('td');
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'download-btn';
+                copyBtn.style.padding = '3px 8px';
+                copyBtn.style.fontSize = '11px';
+                copyBtn.textContent = 'Copy';
+                var capturedSmiles = smiles;
+                copyBtn.addEventListener('click', function() {
+                    navigator.clipboard.writeText(capturedSmiles).then(function() {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(function() { copyBtn.textContent = 'Copy'; }, 1500);
+                    });
+                });
+                tdCopy.appendChild(copyBtn);
+
+                tr.appendChild(tdNum);
+                tr.appendChild(tdSmiles);
+                tr.appendChild(tdScore);
+                tr.appendChild(tdCopy);
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.downloadCSV = function() {
+            if (!allMolecules.length) { return; }
+            var lines = ['#,SMILES,Score'];
+            allMolecules.forEach(function(mol, i) {
+                var smiles = mol.sample || mol.smiles || mol.smi || '';
+                var score = typeof mol.score === 'number' ? mol.score.toFixed(4) : '';
+                lines.push((i+1) + ',' + JSON.stringify(smiles) + ',' + score);
+            });
+            var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'molmim_molecules.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    })();
+    </script>
+{% endblock %}

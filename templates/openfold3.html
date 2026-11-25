@@ -1,0 +1,326 @@
+{% extends "_configure_base.html" %}
+{% from "partials/_model_badges.html" import runs_at with context %}
+
+{% block model_id %}openfold3{% endblock %}
+
+{% block title_i18n %}openfold3.title{% endblock %}
+{% block page_title_text %}Phonos - OpenFold3 Structure Prediction{% endblock %}
+
+{% block model_icon %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+</svg>
+{% endblock %}
+
+{% block model_name %}OpenFold3{% endblock %}
+{% block model_tagline %}Biomolecular Structure Prediction{% endblock %}
+
+{% block header_badge %}{{ runs_at('openfold3', 'badge badge-teal') }}{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cfg-accent)" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            Input Configuration
+                        </h2>
+                        <p>Enter your sequence and configure prediction parameters</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="prediction-form" onsubmit="event.preventDefault(); submitPrediction();">
+
+                            <!-- Molecule Type Selection -->
+                            <div class="form-group">
+                                <label class="form-label">Molecule Type</label>
+                                <div class="molecule-tabs">
+                                    <button type="button" class="molecule-tab active" data-type="protein">Protein</button>
+                                    <button type="button" class="molecule-tab" data-type="dna">DNA</button>
+                                    <button type="button" class="molecule-tab" data-type="rna">RNA</button>
+                                </div>
+                            </div>
+
+                            <!-- Sequence Input -->
+                            <div class="form-group">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label class="form-label" for="sequence" style="margin-bottom: 0;">
+                                        Sequence <span class="required">*</span>
+                                        <span id="seq-length-label" style="font-size: 11px; color: #52525b; margin-left: 8px;">0 / 1000</span>
+                                    </label>
+                                    <div class="mode-switch" id="mode-switch">
+                                        <button type="button" class="mode-switch-btn active" data-mode="monomer">Monomer</button>
+                                        <button type="button" class="mode-switch-btn" data-mode="multimer">Multimer</button>
+                                        <button type="button" class="mode-switch-btn" data-mode="batch">Batch</button>
+                                    </div>
+                                </div>
+
+                                <!-- Monomer Mode (default) -->
+                                <div id="monomer-input">
+                                    <textarea
+                                        id="sequence"
+                                        class="form-textarea"
+                                        placeholder="Enter protein sequence (amino acids) or paste FASTA format...&#10;&#10;Example: GIVEQCCTSICSLYQLENYCN"
+                                        spellcheck="false"
+                                    ></textarea>
+                                    <div class="form-hint">Paste raw sequence or FASTA format. Max 1000 residues for OpenFold3.</div>
+                                </div>
+
+                                <!-- Multimer Mode -->
+                                <div id="multimer-input" class="hidden">
+                                    <div class="multimer-info">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="12" y1="16" x2="12" y2="12"/>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                        </svg>
+                                        Define multiple chains for a single complex prediction. Max 1000 residues per chain.
+                                    </div>
+                                    <div id="chains-container">
+                                        <!-- Chain entries will be added here by JS -->
+                                    </div>
+                                    <button type="button" class="add-chain-btn" id="add-chain-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                        Add Chain
+                                    </button>
+                                </div>
+
+                                <!-- Batch Mode -->
+                                <div id="batch-input" class="hidden">
+                                    <div class="multimer-info">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                        </svg>
+                                        Queue multiple structures &mdash; each structure is one multimer complex with its own chains, submitted as a batch of jobs. Supports Multi-FASTA or CSV (name,chainA,chainB,...).
+                                    </div>
+                                    <div id="batch-items-container">
+                                        <!-- Batch structures will be added here by JS -->
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                        <button type="button" class="add-chain-btn" id="add-batch-item-btn" style="flex: 1;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                            </svg>
+                                            Add Structure
+                                        </button>
+                                        <button type="button" class="add-chain-btn" id="upload-batch-btn" style="flex: 1; border-style: solid;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="17 8 12 3 7 8"/>
+                                                <line x1="12" y1="3" x2="12" y2="15"/>
+                                            </svg>
+                                            Upload CSV/FASTA
+                                        </button>
+                                        <input type="file" id="batch-file-input" class="hidden" accept=".fasta,.fa,.csv,.txt">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ligand Section -->
+                            <div class="form-group">
+                                <label class="form-label">Ligand (Optional)</label>
+                                <div class="ligand-toggle">
+                                    <button type="button" class="ligand-btn active" data-ligand="none">None</button>
+                                    <button type="button" class="ligand-btn" data-ligand="ccd">CCD Code</button>
+                                    <button type="button" class="ligand-btn" data-ligand="smiles">SMILES</button>
+                                </div>
+
+                                <!-- CCD Ligand Grid -->
+                                <div id="ligand-ccd-panel" class="hidden">
+                                    <div class="ligands-grid" id="ligands-grid">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                    <div style="margin-top: 8px;">
+                                        <input type="text" id="custom-ccd" class="form-input" placeholder="Or type custom CCD code (e.g., ATP)" style="font-size: 12px;">
+                                    </div>
+                                </div>
+
+                                <!-- SMILES Input -->
+                                <div id="ligand-smiles-panel" class="hidden">
+                                    <input
+                                        type="text"
+                                        id="ligand-smiles-input"
+                                        class="form-input"
+                                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O (Aspirin)"
+                                    >
+                                    <div class="form-hint">Enter SMILES notation for a small molecule ligand.</div>
+                                    <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                                        <button type="button" class="smiles-example-btn" data-smiles="CC(=O)OC1=CC=CC=C1C(=O)O" style="padding: 4px 10px; background: #09090b; border: 1px solid #3f3f46; border-radius: var(--r-ui, 0px); color: #a1a1aa; font-size: 11px; cursor: pointer;">Aspirin</button>
+                                        <button type="button" class="smiles-example-btn" data-smiles="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O" style="padding: 4px 10px; background: #09090b; border: 1px solid #3f3f46; border-radius: var(--r-ui, 0px); color: #a1a1aa; font-size: 11px; cursor: pointer;">Ibuprofen</button>
+                                        <button type="button" class="smiles-example-btn" data-smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C" style="padding: 4px 10px; background: #09090b; border: 1px solid #3f3f46; border-radius: var(--r-ui, 0px); color: #a1a1aa; font-size: 11px; cursor: pointer;">Caffeine</button>
+                                    </div>
+                                    <div class="cfg-loader">
+                                        <label class="cfg-loader-label">…or load an SDF / MOL from a project</label>
+                                        <div class="cfg-loader-row">
+                                            <select id="of3-ligand-project" class="form-select">
+                                                <option value="">Select project…</option>
+                                            </select>
+                                            <select id="of3-ligand-file" class="form-select" disabled>
+                                                <option value="">Select file…</option>
+                                            </select>
+                                        </div>
+                                        <div id="of3-ligand-convert-status" class="cfg-loader-status">Converted to SMILES automatically (RDKit).</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Output Format -->
+                            <div class="form-group">
+                                <label class="form-label">Output Format</label>
+                                <div class="format-toggle">
+                                    <button type="button" class="format-btn active" data-format="pdb">PDB</button>
+                                    <button type="button" class="format-btn" data-format="mmcif">mmCIF</button>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Parameters -->
+                            <details class="cfg-advanced">
+                                <summary class="cfg-advanced-summary">
+                                    <span class="cfg-advanced-summary-label">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3"/>
+                                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                        </svg>
+                                        Advanced Parameters
+                                    </span>
+                                    <svg class="cfg-advanced-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </summary>
+                                <div class="cfg-advanced-body">
+
+                                <!-- Chain ID -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label class="form-label" for="chain-id" style="font-size: 12px;">Chain ID</label>
+                                        <input type="text" id="chain-id" class="form-input" value="A" maxlength="2" style="text-transform: uppercase;">
+                                    </div>
+                                    <div id="ligand-id-group" class="hidden">
+                                        <label class="form-label" for="ligand-id" style="font-size: 12px;">Ligand ID</label>
+                                        <input type="text" id="ligand-id" class="form-input" value="L" maxlength="2" style="text-transform: uppercase;">
+                                    </div>
+                                </div>
+
+                                <!-- MSA Input -->
+                                <div class="msa-section" id="msa-section" style="margin-top: 12px;">
+                                    <label class="form-label" style="font-size: 12px;">Multiple Sequence Alignment (MSA)</label>
+                                    <textarea id="msa-csv" class="msa-textarea" placeholder="Paste MSA in CSV format (key,sequence)...&#10;e.g., -1,GIVEQCCTSICSLYQLENYCN"></textarea>
+                                    <div class="form-hint">Optional. Protein sequences only. Format: key,sequence (CSV). Improves prediction accuracy.</div>
+                                </div>
+                                </div>
+                            </details>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-primary" id="submit-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                Predict Structure
+                            </button>
+                        </form>
+
+                        <!-- Example Sequences -->
+                        <div class="form-group" style="margin-top: 24px;">
+                            <label class="form-label">Quick Examples</label>
+                            <div class="examples-grid">
+                                <div class="example-card" data-example="insulin">
+                                    <div class="example-title">Insulin Chain A</div>
+                                    <div class="example-desc">Protein (21 aa)</div>
+                                </div>
+                                <div class="example-card" data-example="ubiquitin">
+                                    <div class="example-title">Ubiquitin</div>
+                                    <div class="example-desc">Protein (76 aa)</div>
+                                </div>
+                                <div class="example-card" data-example="dna">
+                                    <div class="example-title">DNA Helix</div>
+                                    <div class="example-desc">12 base pairs</div>
+                                </div>
+                                <div class="example-card" data-example="insulin-complex">
+                                    <div class="example-title">Insulin Complex</div>
+                                    <div class="example-desc">Multimer (A+B chains)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div id="result-panel" class="hidden">
+                    <div class="result-container">
+                        <!-- 3D Viewer -->
+                        <div class="viewer-container">
+                            <div id="structure-viewer"></div>
+                            <div class="viewer-controls">
+                                <button class="viewer-btn" onclick="resetView()">Reset View</button>
+                                <button class="viewer-btn" onclick="downloadStructure()">Download</button>
+                                <button class="viewer-btn" onclick="toggleColorMode()">Color Mode</button>
+                            </div>
+                        </div>
+
+                        <!-- Metrics -->
+                        <div class="metrics-grid" id="metrics-grid"></div>
+
+                        <!-- Confidence Legend -->
+                        <div id="confidence-legend" class="confidence-panel hidden">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #71717a;">
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #0053D6; border-radius: var(--r-ui, 0px); display: inline-block;"></span>Very High (&ge;90)</span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #65CBF3; border-radius: var(--r-ui, 0px); display: inline-block;"></span>High (70-89)</span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #FFDB13; border-radius: var(--r-ui, 0px); display: inline-block;"></span>Low (50-69)</span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #FF7D45; border-radius: var(--r-ui, 0px); display: inline-block;"></span>Very Low (&lt;50)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder -->
+                <div id="placeholder-panel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="loading-container">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #3f3f46;">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                <div style="text-align: center;">
+                                    <h3 style="font-size: 16px; color: #fafafa; margin-bottom: 8px;">Ready to Predict</h3>
+                                    <p style="font-size: 13px; color: #71717a;">Enter a sequence and click "Predict Structure" to begin</p>
+                                    <p style="font-size: 11px; color: #52525b; margin-top: 8px;">OpenFold3 supports proteins, DNA, RNA, and ligand complexes (up to 1000 residues)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-panel" class="hidden">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="loading-container">
+                                <div class="spinner"></div>
+                                <div class="loading-text">Predicting structure...</div>
+                                <p style="font-size: 12px; color: #52525b; text-align: center; max-width: 300px;">
+                                    This typically takes under 1 minute depending on sequence length
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ url_for('static', filename='js/multimer-batch.js') }}?v=319a2091"></script>
+    <script src="{{ url_for('static', filename='js/openfold3.js') }}?v=f5cbcef7"></script>
+{% endblock %}

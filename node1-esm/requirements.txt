@@ -1,0 +1,19 @@
+# Node1-ESM Worker Dependencies
+# ESMFold protein structure prediction worker
+
+# Redis communication
+redis==5.0.1
+hiredis==2.3.2
+
+# Machine Learning
+torch==2.1.0
+transformers==4.35.0
+
+# Utilities
+python-dotenv==1.0.0
+
+# Cryptography
+cryptography==41.0.7
+
+# Production monitoring
+psutil>=5.9.0

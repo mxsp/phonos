@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>
+        const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="adminHelpDesk.pageTitle">Phonos - Admin Help Desk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div style="padding: var(--space-6); max-width: 1200px; margin: 0 auto;">
+        <div class="flex justify-between items-center" style="margin-bottom: var(--space-6);">
+            <div>
+                <h1 data-i18n="helpdesk.adminTitle">Admin Help Desk</h1>
+                <p class="text-muted" data-i18n="helpdesk.manageTickets">Manage support tickets</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary" data-i18n="helpdesk.backToAdmin">Back to Admin</a>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom: var(--space-6);">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-sm text-muted" data-i18n="helpdesk.openTickets">Open Tickets</div>
+                    <div style="font-size: var(--text-2xl); font-weight: 600;" id="open-count">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-sm text-muted" data-i18n="helpdesk.inProgress">In Progress</div>
+                    <div style="font-size: var(--text-2xl); font-weight: 600;" id="progress-count">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-sm text-muted" data-i18n="helpdesk.resolvedToday">Resolved Today</div>
+                    <div style="font-size: var(--text-2xl); font-weight: 600;" id="resolved-count">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-sm text-muted" data-i18n="helpdesk.totalTickets">Total Tickets</div>
+                    <div style="font-size: var(--text-2xl); font-weight: 600;" id="total-count">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" data-i18n="helpdesk.allTickets">All Tickets</h3>
+                <div class="flex gap-2">
+                    <select class="form-select" id="status-filter" style="width: 150px;">
+                        <option value="" data-i18n="helpdesk.allStatus">All Status</option>
+                        <option value="open" data-i18n="helpdesk.open">Open</option>
+                        <option value="in_progress" data-i18n="helpdesk.inProgress">In Progress</option>
+                        <option value="resolved" data-i18n="helpdesk.resolved">Resolved</option>
+                        <option value="closed" data-i18n="helpdesk.closed">Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="helpdesk.ticketId">ID</th>
+                            <th data-i18n="helpdesk.user">User</th>
+                            <th data-i18n="helpdesk.subject">Subject</th>
+                            <th data-i18n="helpdesk.category">Category</th>
+                            <th data-i18n="helpdesk.status">Status</th>
+                            <th data-i18n="helpdesk.created">Created</th>
+                            <th data-i18n="helpdesk.actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-body">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted" style="padding: var(--space-6);" data-i18n="common.loading">
+                                Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadTickets() {
+            try {
+                const response = await fetch('/api/admin/helpdesk/tickets');
+                const data = await response.json();
+
+                // Update stats
+                document.getElementById('open-count').textContent = data.stats?.open || 0;
+                document.getElementById('progress-count').textContent = data.stats?.in_progress || 0;
+                document.getElementById('resolved-count').textContent = data.stats?.resolved_today || 0;
+                document.getElementById('total-count').textContent = data.tickets?.length || 0;
+
+                // Render tickets
+                if (!data.tickets || data.tickets.length === 0) {
+                    const noTicketsText = window.i18n ? window.i18n.t('helpdesk.noTicketsFound') : 'No tickets found';
+                    document.getElementById('tickets-body').innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center text-muted" style="padding: var(--space-6);">
+                                ${noTicketsText}
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                const viewText = window.i18n ? window.i18n.t('helpdesk.view') : 'View';
+
+                document.getElementById('tickets-body').innerHTML = data.tickets.map(t => `
+                    <tr>
+                        <td>#${t.id}</td>
+                        <td>${escapeHtml(t.username)}</td>
+                        <td>${escapeHtml(t.subject)}</td>
+                        <td>${escapeHtml(t.category)}</td>
+                        <td><span class="badge badge-${getStatusBadge(t.status)}">${escapeHtml(t.status)}</span></td>
+                        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <a href="/admin/helpdesk/${t.id}" class="btn btn-ghost btn-sm">${viewText}</a>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+            }
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'open': 'warning',
+                'in_progress': 'info',
+                'resolved': 'success',
+                'closed': 'primary'
+            };
+            return badges[status] || 'primary';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTickets);
+    </script>
+</body>
+</html>

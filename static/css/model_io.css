@@ -1,0 +1,336 @@
+/* ===================================================================
+   PhonosModelIO — "use this output as another model's input" picker
+   Self-contained so it can be dropped onto any page (SPA or server
+   rendered) without depending on that page's modal system.
+   =================================================================== */
+
+.mio-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: mio-fade 0.14s ease-out;
+}
+
+@keyframes mio-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.mio-dialog {
+    width: min(640px, 100%);
+    max-height: min(80vh, 760px);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card, #18181b);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
+    border-radius: var(--r-ui, 0px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    color: var(--text-primary, #f4f4f5);
+    font-size: 13px;
+}
+
+.mio-loading {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 13px;
+}
+
+/* ---- Header ---- */
+
+.mio-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.mio-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.mio-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.mio-subtitle {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--text-tertiary, #a1a1aa);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow-wrap: anywhere;
+}
+
+.mio-close {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: var(--r-ui, 0px);
+    background: transparent;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.mio-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary, #f4f4f5);
+}
+
+/* ---- Body ---- */
+
+.mio-body {
+    padding: 14px 18px 18px;
+    overflow-y: auto;
+}
+
+.mio-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.mio-chip {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--accent-primary-muted, rgba(16, 185, 129, 0.15));
+    border: 1px solid var(--accent-primary-30, rgba(16, 185, 129, 0.3));
+    color: var(--accent-primary-light, #34d399);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+}
+
+.mio-section {
+    margin-bottom: 16px;
+}
+
+.mio-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mio-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-tertiary, #a1a1aa);
+    margin-bottom: 7px;
+}
+
+.mio-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary, #c7d0db);
+    margin: 10px 0 6px;
+}
+
+.mio-link {
+    background: none;
+    border: none;
+    color: var(--accent-primary-light, #34d399);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mio-link:hover {
+    text-decoration: underline;
+}
+
+/* ---- Payload rows ---- */
+
+.mio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 210px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.mio-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: var(--r-ui, 0px);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+}
+
+.mio-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mio-row input {
+    flex: none;
+    accent-color: var(--accent-primary, #10b981);
+}
+
+.mio-row-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.mio-row-name {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mio-row-seq {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px;
+    color: var(--text-tertiary, #a1a1aa);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mio-row-meta {
+    font-size: 10px;
+    color: var(--text-muted, #71717a);
+}
+
+.mio-copy {
+    flex: none;
+    padding: 3px 8px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: var(--r-ui, 0px);
+    background: transparent;
+    color: var(--text-tertiary, #a1a1aa);
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.mio-copy:hover {
+    color: var(--text-primary, #f4f4f5);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.mio-summary {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-muted, #71717a);
+}
+
+.mio-note {
+    margin: 10px 0;
+    padding: 8px 10px;
+    border-radius: var(--r-ui, 0px);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 11px;
+    color: var(--text-tertiary, #a1a1aa);
+}
+
+/* ---- Targets ---- */
+
+.mio-target-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 6px;
+}
+
+.mio-target {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 9px 11px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: var(--r-ui, 0px);
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mio-target:hover {
+    border-color: var(--accent-primary, #10b981);
+    background: var(--accent-primary-10, rgba(16, 185, 129, 0.1));
+}
+
+.mio-target-name {
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.mio-target-meta {
+    font-size: 10px;
+    color: var(--text-muted, #71717a);
+}
+
+/* ---- Empty state ---- */
+
+.mio-empty {
+    padding: 18px 4px 6px;
+    text-align: center;
+}
+
+.mio-empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.mio-empty-hint {
+    font-size: 11px;
+    color: var(--text-tertiary, #a1a1aa);
+    line-height: 1.5;
+    margin-bottom: 14px;
+}
+
+.mio-btn {
+    display: inline-block;
+    padding: 7px 14px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
+    border-radius: var(--r-ui, 0px);
+    color: var(--text-primary, #f4f4f5);
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.mio-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---- Trigger button used on output pages / file rows ---- */
+
+.mio-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+@media (max-width: 560px) {
+    .mio-overlay { padding: 12px; }
+    .mio-target-grid { grid-template-columns: 1fr; }
+}

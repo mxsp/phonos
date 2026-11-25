@@ -1,0 +1,115 @@
+{# Evo2 job output — Overview tab. Data: evo2_view (phonos_app/helpers/evo2_view.py). #}
+{% set st = evo2_view.stats %}
+<div class="evo2-view" id="evo2-overview">
+    <div class="evo2-intro">
+        <p class="evo2-lede">
+            {% if st.seed_length %}
+            <span data-i18n="viewOutput.evo2.ledeSeeded" data-i18n-params='{{ {"seed": st.seed_length, "generated": st.generated_length} | tojson }}'>Evo2 extended the {{ st.seed_length }} bp seed by {{ st.generated_length }} bases.</span>
+            {% else %}
+            <span data-i18n="viewOutput.evo2.ledeUnseeded" data-i18n-params='{{ {"generated": st.generated_length} | tojson }}'>Evo2 generated {{ st.generated_length }} bases.</span>
+            {% endif %}
+            {% if evo2_view.has_probs %}
+            <span data-i18n="viewOutput.evo2.ledeProbs">Probability is how likely the model found each base it picked; low values mark places where other bases were nearly as likely.</span>
+            {% endif %}
+        </p>
+        <div class="evo2-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="Evo2View.copy('generated')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span data-i18n="viewOutput.evo2.copyGenerated">Copy generated</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="Evo2View.downloadFasta('full')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span data-i18n="viewOutput.evo2.downloadFasta">Download FASTA</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="evo2-stats">
+        <div class="evo2-stat">
+            <div class="evo2-stat-label" data-i18n="viewOutput.evo2.generated">Generated</div>
+            <div class="evo2-stat-value">{{ st.generated_length }}<span class="evo2-unit">bp</span></div>
+            <div class="evo2-stat-sub">
+                {% if st.seed_length %}<span data-i18n="viewOutput.evo2.totalWithSeed" data-i18n-params='{{ {"total": st.total_length} | tojson }}'>{{ st.total_length }} bp with seed</span>{% else %}&nbsp;{% endif %}
+            </div>
+        </div>
+        {% if evo2_view.has_probs %}
+        <div class="evo2-stat">
+            <div class="evo2-stat-label" data-i18n="viewOutput.evo2.meanProb">Mean probability</div>
+            <div class="evo2-stat-value">{{ st.mean_prob }}<span class="evo2-unit">%</span></div>
+            <div class="evo2-stat-sub"><span data-i18n="viewOutput.evo2.median">median</span> {{ st.median_prob }}% · {{ st.min_prob }}–{{ st.max_prob }}%</div>
+        </div>
+        <div class="evo2-stat">
+            <div class="evo2-stat-label" data-i18n="viewOutput.evo2.lowProbBases">Low-probability bases</div>
+            <div class="evo2-stat-value">{{ st.low_count }}<span class="evo2-unit">{{ st.low_pct }}%</span></div>
+            <div class="evo2-stat-sub" data-i18n="viewOutput.evo2.below50">below 50%</div>
+        </div>
+        {% endif %}
+        <div class="evo2-stat">
+            <div class="evo2-stat-label" data-i18n="viewOutput.evo2.gcContent">GC content</div>
+            <div class="evo2-stat-value">{{ st.generated.gc_pct }}<span class="evo2-unit">%</span></div>
+            <div class="evo2-stat-sub">
+                {% if st.seed %}<span data-i18n="viewOutput.evo2.seedGc" data-i18n-params='{{ {"gc": st.seed.gc_pct} | tojson }}'>seed {{ st.seed.gc_pct }}%</span>{% else %}&nbsp;{% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if evo2_view.has_probs %}
+    <section class="evo2-card">
+        <header class="evo2-card-head">
+            <h4 data-i18n="viewOutput.evo2.probAlong">Probability along the sequence</h4>
+            <div class="evo2-legend" aria-hidden="true">
+                <span><i class="evo2-swatch evo2-bin-0"></i>&lt;30%</span>
+                <span><i class="evo2-swatch evo2-bin-1"></i>30–50%</span>
+                <span><i class="evo2-swatch evo2-bin-2"></i>50–80%</span>
+                <span><i class="evo2-swatch evo2-bin-3"></i>≥80%</span>
+                <span><i class="evo2-line"></i><span data-i18n="viewOutput.evo2.rollingMean">10-bp average</span></span>
+            </div>
+        </header>
+        <div class="evo2-chart"><canvas id="evo2-prob-chart" aria-label="Probability per generated base"></canvas></div>
+        <p class="evo2-hint" data-i18n="viewOutput.evo2.chartHint">Click a bar to show that base in the Sequence tab.</p>
+    </section>
+    {% endif %}
+
+    <div class="evo2-grid">
+        <section class="evo2-card">
+            <header class="evo2-card-head"><h4 data-i18n="viewOutput.evo2.composition">Composition</h4></header>
+            {% for row_label, comp, key in [('Seed', st.seed, 'seed'), ('Generated', st.generated, 'generatedRow')] if comp %}
+            <div class="evo2-comp-row">
+                <div class="evo2-comp-label"><span data-i18n="viewOutput.evo2.{{ key }}">{{ row_label }}</span> <small>{{ comp.length }} bp</small></div>
+                <div class="evo2-comp-bar" role="img" aria-label="A {{ comp.pcts.A }}%, C {{ comp.pcts.C }}%, G {{ comp.pcts.G }}%, T {{ comp.pcts.T }}%">
+                    {% for b in ['A', 'C', 'G', 'T'] %}{% if comp.counts[b] %}<span class="evo2-nt-{{ b }}" style="width: {{ comp.pcts[b] }}%" title="{{ b }}: {{ comp.counts[b] }} ({{ comp.pcts[b] }}%)">{% if comp.pcts[b] >= 8 %}{{ b }} {{ comp.pcts[b]|round|int }}%{% endif %}</span>{% endif %}{% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% if st.longest_run.length > 1 %}
+            <p class="evo2-note">
+                <span data-i18n="viewOutput.evo2.longestRun">Longest single-base run</span>:
+                <a href="#" class="evo2-jump" data-pos="{{ st.longest_run.position }}">{{ st.longest_run.length }} × {{ st.longest_run.base }}</a>
+                <span data-i18n="viewOutput.evo2.atPosition">at position</span> {{ st.longest_run.position }}
+            </p>
+            {% endif %}
+        </section>
+
+        {% if evo2_view.lowest %}
+        <section class="evo2-card">
+            <header class="evo2-card-head"><h4 data-i18n="viewOutput.evo2.lowestBases">Least certain bases</h4></header>
+            <table class="evo2-table">
+                <thead><tr>
+                    <th data-i18n="viewOutput.evo2.position">Position</th>
+                    <th data-i18n="viewOutput.evo2.context">Context</th>
+                    <th class="num" data-i18n="viewOutput.evo2.probability">Probability</th>
+                </tr></thead>
+                <tbody>
+                {% for item in evo2_view.lowest %}
+                    <tr class="evo2-jump" data-pos="{{ item.position }}" tabindex="0">
+                        <td>{{ item.position }}</td>
+                        <td class="evo2-mono">{{ item.before }}<mark class="evo2-nt-{{ item.base }}">{{ item.base }}</mark>{{ item.after }}</td>
+                        <td class="num">{{ item.prob }}%</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+    </div>
+</div>

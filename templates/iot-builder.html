@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}<span data-i18n="iotBuilder.pageTitle">IoT Dashboard Builder</span> - {{ device.device_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/iot-ui-builder.css') }}">
+{% include '_i18n_scripts.html' %}
+{% endblock %}
+
+{% block content %}
+<div id="iot-builder-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/iot-ui-builder.js') }}?v=dcd405d4"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deviceId = {{ device.id }};
+        window.iotBuilder = new IoTUIBuilder('#iot-builder-container', deviceId);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="{{ user_language if user_language is defined else 'en' }}" data-lang="{{ user_language if user_language is defined else 'en' }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="phonos-model-id" content="{% block model_id %}{% endblock %}">
+    <title data-i18n="{% block title_i18n %}{% endblock %}">{% block page_title_text %}Phonos{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/configure.css') }}?v=0d5fdf9c">
+    {% block molstar_head %}{% include '_molstar_head.html' %}{% endblock %}
+    {% include '_i18n_scripts.html' %}
+    {% block head_extra %}{% endblock %}
+    <style>
+    /* Phones: stack back link, title and badges instead of letting them overlap (seen on Boltz2 at 390 px) */
+    @media (max-width: 640px) {
+        .page-container > .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
+        .page-header .header-left { flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; }
+        .page-header .back-link { align-self: flex-start; }
+        .page-header .page-title { min-width: 0; align-items: flex-start; }
+        .page-header .title-text { min-width: 0; }
+        .page-header .title-text h1 { font-size: 1.25rem; overflow-wrap: anywhere; }
+        .page-header .header-right { flex-wrap: wrap; justify-content: flex-start; }
+    }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body class="{% block body_class %}cfg-layout-2col{% endblock %}">
+    <div class="page-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <a href="/dashboard" class="back-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <div class="page-title">
+                    <div class="title-icon">{% block model_icon %}{% endblock %}</div>
+                    <div class="title-text">
+                        <h1>{% block model_name %}{% endblock %}</h1>
+                        <p>{% block model_tagline %}{% endblock %}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                {% block header_badge %}{% endblock %}
+                {% block credits %}{% if user_credits is defined %}<div class="credits-display"><span id="user-credits">{{ user_credits }}</span> <span data-i18n="jobs.credits">Credits</span></div>{% endif %}{% endblock %}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Input column -->
+            {% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>{% block input_card_title %}{% endblock %}</h2>
+                        <p>{% block input_card_desc %}{% endblock %}</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="prediction-form" onsubmit="{% block form_onsubmit %}event.preventDefault();{% endblock %}">
+                            {% block inputs %}{% endblock %}
+                            {% block advanced %}{% endblock %}
+                            {% block submit_button %}<button type="submit" class="btn-primary" id="submit-btn">{% block submit_label %}<span data-i18n="common.submit">Run</span>{% endblock %}</button>{% endblock %}
+                        </form>
+                        {% block examples %}{% endblock %}
+                    </div>
+                </div>
+                {% block extra_input_cards %}{% endblock %}
+            </div>
+            {% endblock %}
+
+            <!-- Output column -->
+            {% block viewer_panel %}{% endblock %}
+        </div>
+
+        {% block after_grid %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/model-cost.js') }}?v=0057fbc2" defer></script>
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>
+        const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="adminTicketView.pageTitle">Phonos - Ticket #{{ ticket_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div style="padding: var(--space-6); max-width: 900px; margin: 0 auto;">
+        <div class="flex justify-between items-center" style="margin-bottom: var(--space-6);">
+            <h1><span data-i18n="adminTicketView.ticket">Ticket</span> #{{ ticket_id }}</h1>
+            <a href="{{ url_for('admin_helpdesk') }}" class="btn btn-secondary" data-i18n="helpdesk.backToHelpdesk">Back to Help Desk</a>
+        </div>
+
+        <div class="grid" style="gap: var(--space-4);">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" id="ticket-subject" data-i18n="common.loading">Loading...</h3>
+                    <select class="form-select" id="status-select" style="width: 150px;">
+                        <option value="open" data-i18n="helpdesk.open">Open</option>
+                        <option value="in_progress" data-i18n="helpdesk.inProgress">In Progress</option>
+                        <option value="resolved" data-i18n="helpdesk.resolved">Resolved</option>
+                        <option value="closed" data-i18n="helpdesk.closed">Closed</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <div class="flex gap-4" style="margin-bottom: var(--space-4);">
+                        <div>
+                            <span class="text-sm text-muted" data-i18n="helpdesk.user">User:</span>
+                            <span id="ticket-user">-</span>
+                        </div>
+                        <div>
+                            <span class="text-sm text-muted" data-i18n="helpdesk.category">Category:</span>
+                            <span id="ticket-category">-</span>
+                        </div>
+                        <div>
+                            <span class="text-sm text-muted" data-i18n="helpdesk.created">Created:</span>
+                            <span id="ticket-created">-</span>
+                        </div>
+                    </div>
+                    <div id="ticket-description" class="text-secondary"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" data-i18n="helpdesk.conversation">Responses</h3>
+                </div>
+                <div class="card-body" id="responses-list">
+                    <p class="text-muted" data-i18n="helpdesk.noResponses">No responses yet</p>
+                </div>
+                <div class="card-footer">
+                    <form id="response-form">
+                        <div class="form-group" style="margin-bottom: var(--space-3);">
+                            <textarea class="form-textarea" name="message" data-i18n-placeholder="helpdesk.writeResponse" placeholder="Write your response..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" data-i18n="helpdesk.sendResponse">Send Response</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ticketId = {{ ticket_id }};
+
+        async function loadTicket() {
+            try {
+                const response = await fetch(`/api/admin/helpdesk/tickets/${ticketId}`);
+                const ticket = await response.json();
+
+                document.getElementById('ticket-subject').textContent = ticket.subject;
+                if (ticket.subject) document.getElementById('ticket-subject').removeAttribute('data-i18n');
+                
+                document.getElementById('ticket-user').textContent = ticket.username;
+                document.getElementById('ticket-category').textContent = ticket.category;
+                document.getElementById('ticket-created').textContent = new Date(ticket.created_at).toLocaleString();
+                document.getElementById('ticket-description').textContent = ticket.description;
+                document.getElementById('status-select').value = ticket.status;
+
+                if (ticket.responses && ticket.responses.length > 0) {
+                    const adminText = window.i18n ? window.i18n.t('helpdesk.admin') : 'Admin';
+                    const userText = window.i18n ? window.i18n.t('helpdesk.user') : 'User';
+                    
+                    document.getElementById('responses-list').innerHTML = ticket.responses.map(r => `
+                        <div style="padding: var(--space-3); background: var(--color-bg-tertiary); border-radius: var(--radius-md); margin-bottom: var(--space-3);">
+                            <div class="flex justify-between" style="margin-bottom: var(--space-2);">
+                                <strong>${r.is_admin ? adminText : userText}</strong>
+                                <span class="text-xs text-muted">${new Date(r.created_at).toLocaleString()}</span>
+                            </div>
+                            <p class="text-sm">${escapeHtml(r.message)}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading ticket:', error);
+            }
+        }
+
+        document.getElementById('status-select').addEventListener('change', async (e) => {
+            try {
+                await fetch(`/api/admin/helpdesk/tickets/${ticketId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: e.target.value })
+                });
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        });
+
+        document.getElementById('response-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                await fetch(`/api/admin/helpdesk/tickets/${ticketId}/responses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: formData.get('message') })
+                });
+
+                e.target.reset();
+                loadTicket();
+            } catch (error) {
+                console.error('Error sending response:', error);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadTicket);
+    </script>
+</body>
+</html>

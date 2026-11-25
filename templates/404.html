@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    {% include '_i18n_scripts.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="error404.page_title">Phonos - Not Found</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0d1117;
+            color: #8b949e;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #ascii-container {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 9px;
+            white-space: pre;
+            text-align: center;
+            color: #30363d;
+            opacity: 0.6;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .error-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 2.5rem 3rem;
+        }
+
+        .error-code {
+            font-size: 5rem;
+            font-weight: 700;
+            color: #21262d;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            letter-spacing: -2px;
+        }
+
+        .error-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #c9d1d9;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-description {
+            font-size: 0.875rem;
+            color: #6e7681;
+            margin-bottom: 1.75rem;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: #21262d;
+            color: #c9d1d9;
+            text-decoration: none;
+            border-radius: var(--r-ui, 0px);
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+            border: 1px solid #30363d;
+        }
+
+        .btn-home:hover {
+            background: #30363d;
+            border-color: #484f58;
+            color: #f0f6fc;
+        }
+
+        .btn-home svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 600px) {
+            .error-code {
+                font-size: 3.5rem;
+            }
+            .error-title {
+                font-size: 1rem;
+            }
+            #ascii-container {
+                font-size: 8px;
+                line-height: 6px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div id="ascii-container"></div>
+
+    <div class="error-content">
+        <div class="error-code">404</div>
+        <h1 class="error-title" data-i18n="error404.title">Page not found</h1>
+        <p class="error-description" data-i18n="error404.description">The page you're looking for doesn't exist or has been moved.</p>
+        <a href="{{ url_for('index') }}" class="btn-home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span data-i18n="error404.goHome">Go home</span>
+        </a>
+    </div>
+
+    <script>
+        const container = document.getElementById('ascii-container');
+
+        const height = 40;
+        const width = 60;
+        const period = 20;
+        const radius = 18;
+        let offset = 0;
+        const speed = 0.02;
+
+        const strandChars = ['#', '+', ':', '.', ' '];
+
+        function getStrandChar(z) {
+            const index = Math.floor((1 - z) / 2 * (strandChars.length - 1));
+            return strandChars[Math.max(0, Math.min(index, strandChars.length - 1))];
+        }
+
+        function render() {
+            let output = '';
+
+            for (let y = 0; y < height; y++) {
+                let row = new Array(width).fill(' ');
+
+                const phase = (y / period) * Math.PI * 2;
+
+                const x1 = Math.round((width / 2) + Math.sin(phase + offset) * radius);
+                const x2 = Math.round((width / 2) + Math.sin(phase + offset + Math.PI) * radius);
+
+                const z1 = Math.cos(phase + offset);
+                const z2 = Math.cos(phase + offset + Math.PI);
+
+                if (x1 >= 0 && x1 < width) row[x1] = getStrandChar(z1);
+                if (x2 >= 0 && x2 < width) row[x2] = getStrandChar(z2);
+
+                const left = Math.min(x1, x2);
+                const right = Math.max(x1, x2);
+                const frontStrandZ = z1 > z2 ? z1 : z2;
+
+                if (right - left > 1) {
+                    for (let x = left + 1; x < right; x++) {
+                        let rungChar = '.';
+                        if (frontStrandZ > 0.7) rungChar = '-';
+                        else if (frontStrandZ < -0.5) rungChar = ' ';
+
+                        if (x === Math.floor((left + right) / 2)) {
+                           rungChar = ' ';
+                        }
+                        row[x] = rungChar;
+                    }
+                }
+
+                output += row.join('') + '\n';
+            }
+
+            container.innerText = output;
+            offset -= speed;
+            requestAnimationFrame(render);
+        }
+
+        render();
+    </script>
+</body>
+</html>

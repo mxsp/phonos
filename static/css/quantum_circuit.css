@@ -1,0 +1,322 @@
+/* Phonos Quantum Circuit Builder — rendered inside the notebook split panel */
+
+.nb-split-content.nb-split-quantum {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.qcb {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+/* --- Top controls -------------------------------------------------------- */
+
+.qcb-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+.qcb-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.qcb-bar-right { margin-left: auto; }
+
+.qcb-bar-label {
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+.qcb-qubit-count {
+    min-width: 18px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.qcb-mini-btn {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.qcb-mini-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.qcb-mini-btn:disabled { opacity: 0.4; cursor: default; }
+.qcb-mini-btn.qcb-danger:hover { border-color: #e11d48; color: #e11d48; }
+
+.qcb-shots {
+    width: 70px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.qcb-mode {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--r-ui, 0px);
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.qcb-check {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* --- Palette ------------------------------------------------------------- */
+
+.qcb-palette {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.qcb-palette-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 4px;
+}
+
+.qcb-gate-btn {
+    min-width: 30px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: var(--r-ui, 0px);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+}
+
+.qcb-gate-btn:hover { background: var(--bg-hover); }
+
+.qcb-gate-btn.active {
+    border-color: #22d3ee;
+    color: #22d3ee;
+    background: rgba(34, 211, 238, 0.08);
+}
+
+.qcb-gate-btn.qcb-gate-erase.active {
+    border-color: #e11d48;
+    color: #e11d48;
+    background: rgba(225, 29, 72, 0.08);
+}
+
+/* --- Hint + note --------------------------------------------------------- */
+
+.qcb-hint {
+    padding: 6px 10px;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    border-bottom: 1px solid var(--border-color);
+    min-height: 25px;
+}
+
+.qcb-note {
+    padding: 6px 10px;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* --- Grid ---------------------------------------------------------------- */
+
+.qcb-grid {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px 10px;
+}
+
+.qcb-table {
+    display: grid;
+    grid-auto-rows: 44px;
+    width: max-content;
+}
+
+.qcb-qlabel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    color: var(--text-secondary);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.qcb-cell {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Horizontal qubit wire through the middle of every cell */
+.qcb-cell::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: var(--border-color-light, #4b5563);
+}
+
+.qcb-cell:hover {
+    background: rgba(34, 211, 238, 0.07);
+    border-radius: var(--r-ui, 0px);
+}
+
+.qcb-cell.qcb-pending {
+    background: rgba(34, 211, 238, 0.15);
+    border-radius: var(--r-ui, 0px);
+}
+
+/* Vertical connector for multi-qubit gates */
+.qcb-cell.qcb-linked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: #22d3ee;
+}
+
+.qcb-cell.qcb-linked.qcb-link-top::after { top: 50%; }
+.qcb-cell.qcb-linked.qcb-link-bottom::after { bottom: 50%; }
+
+/* Barrier column */
+.qcb-cell.qcb-barrier::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--text-tertiary) 0 4px,
+        transparent 4px 8px
+    );
+    opacity: 0.7;
+}
+
+/* Gate chips */
+.qcb-chip {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-ui, 0px);
+    background: #164e63;
+    border: 1px solid #22d3ee;
+    color: #e0f2fe;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1;
+    z-index: 1;
+    padding: 1px 3px;
+}
+
+.qcb-chip small {
+    font-size: 8px;
+    font-weight: 400;
+    color: #a5f3fc;
+    max-width: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.qcb-chip-h { background: #7c2d12; border-color: #fb923c; color: #ffedd5; }
+.qcb-chip-x, .qcb-chip-y, .qcb-chip-z { background: #1e3a8a; border-color: #60a5fa; color: #dbeafe; }
+.qcb-chip-s, .qcb-chip-sdg, .qcb-chip-t, .qcb-chip-tdg { background: #14532d; border-color: #4ade80; color: #dcfce7; }
+.qcb-chip-rx, .qcb-chip-ry, .qcb-chip-rz, .qcb-chip-p { background: #581c87; border-color: #c084fc; color: #f3e8ff; }
+
+.qcb-ctrl-dot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22d3ee;
+    z-index: 1;
+}
+
+.qcb-target-plus {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1.5px solid #22d3ee;
+    color: #22d3ee;
+    font-size: 15px;
+    line-height: 1;
+    z-index: 1;
+    background: var(--bg-surface, #111827);
+}
+
+.qcb-swap-x {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #22d3ee;
+    font-size: 15px;
+    font-weight: 700;
+    z-index: 1;
+}
+
+/* Quantum cell badge accent in the notebook cell list */
+.cell-type-badge.quantum { color: #22d3ee; }
+.cell.quantum .cell-status-indicator { background: #22d3ee; }

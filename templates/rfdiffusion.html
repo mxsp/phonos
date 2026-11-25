@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="phonos-model-id" content="type-12">
+    <title data-i18n="rfdiffusion.title">Phonos - RFDiffusion Protein Design</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_molstar_head.html' %}
+    {% include '_i18n_scripts.html' %}
+<style>
+:root {
+    --rf-primary: #9333ea;
+    --rf-primary-light: #a855f7;
+    --rf-accent: #c084fc;
+    --rf-gradient: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6366f1 100%);
+}
+
+.rf-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.rf-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+.rf-icon { width: 56px; height: 56px; background: var(--rf-gradient); border-radius: var(--r-ui, 0px); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.rf-title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+.rf-subtitle { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+.rf-grid { display: grid; grid-template-columns: 400px 1fr; gap: 24px; }
+@media (max-width: 1024px) { .rf-grid { grid-template-columns: 1fr; } }
+.rf-card { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--r-ui, 0px); overflow: hidden; }
+.rf-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-primary); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.rf-card-body { padding: 20px; }
+.rf-form-group { margin-bottom: 20px; }
+.rf-form-group:last-child { margin-bottom: 0; }
+.rf-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+.rf-input, .rf-textarea, .rf-select { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); padding: 10px 12px; border-radius: var(--r-ui, 0px); font-size: 14px; transition: all 0.2s; }
+.rf-input:focus, .rf-textarea:focus, .rf-select:focus { outline: none; border-color: var(--rf-primary); box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15); }
+.rf-range-container { display: flex; align-items: center; gap: 12px; }
+.rf-range { flex: 1; -webkit-appearance: none; height: 6px; background: var(--bg-primary); border-radius: var(--r-ui, 0px); }
+.rf-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--rf-primary); border-radius: 50%; cursor: pointer; }
+.rf-range-value { min-width: 40px; text-align: right; font-weight: 500; color: var(--text-primary); }
+.rf-help { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.rf-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: var(--rf-gradient); color: white; border: none; border-radius: var(--r-ui, 0px); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; }
+.rf-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.rf-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.rf-btn-secondary { background: var(--bg-primary); border: 1px solid var(--border-primary); color: var(--text-primary); }
+.rf-btn-secondary:hover { background: var(--bg-hover); }
+.rf-viewer-container { position: relative; height: 500px; background: #1a1a2e; border-radius: var(--r-ui, 0px); overflow: hidden; }
+#viewer3d { width: 100%; height: 100%; }
+.rf-viewer-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
+.rf-viewer-btn { padding: 8px 12px; background: rgba(0, 0, 0, 0.7); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--r-ui, 0px); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.rf-viewer-btn:hover { background: rgba(0, 0, 0, 0.9); }
+.rf-viewer-btn.active { background: var(--rf-primary); border-color: var(--rf-primary); }
+.rf-structure-toggles { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.rf-structure-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--r-ui, 0px); cursor: pointer; transition: all 0.2s; }
+.rf-structure-toggle:hover { border-color: var(--rf-primary); }
+.rf-structure-toggle.active { background: rgba(147, 51, 234, 0.1); border-color: var(--rf-primary); }
+.rf-color-dot { width: 12px; height: 12px; border-radius: 50%; }
+.rf-toggle-label { font-size: 13px; font-weight: 500; }
+.rf-status { padding: 12px 16px; border-radius: var(--r-ui, 0px); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.rf-status.info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
+.rf-status.success { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; }
+.rf-status.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
+.rf-spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: rf-spin 0.8s linear infinite; }
+@keyframes rf-spin { to { transform: rotate(360deg); } }
+.rf-credits { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-primary); border-radius: var(--r-ui, 0px); margin-bottom: 16px; }
+.rf-credits-label { font-size: 13px; color: var(--text-secondary); }
+.rf-credits-value { font-weight: 600; color: var(--rf-primary); }
+.rf-examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+.rf-example-card { padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--r-ui, 0px); cursor: pointer; transition: all 0.2s; }
+.rf-example-card:hover { border-color: var(--rf-primary); background: rgba(147, 51, 234, 0.05); }
+.rf-example-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.rf-example-desc { font-size: 12px; color: var(--text-secondary); }
+.rf-file-upload { border: 2px dashed var(--border-primary); border-radius: var(--r-ui, 0px); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.rf-file-upload:hover { border-color: var(--rf-primary); background: rgba(147, 51, 234, 0.05); }
+.rf-file-upload.has-file { border-color: var(--rf-primary); background: rgba(147, 51, 234, 0.1); }
+.rf-file-upload input { display: none; }
+.rf-file-icon { font-size: 32px; margin-bottom: 8px; }
+.rf-file-text { font-size: 14px; color: var(--text-secondary); }
+.rf-file-name { font-weight: 600; color: var(--rf-primary); margin-top: 8px; }
+</style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+<div class="rf-container">
+    <div class="rf-header">
+        <div class="rf-icon">&#129516;</div>
+        <div>
+            <div class="rf-title" data-i18n="rfdiffusion.heading">RFDiffusion</div>
+            <div class="rf-subtitle" data-i18n="rfdiffusion.subheading">De novo protein structure generation using diffusion-based design</div>
+        </div>
+    </div>
+
+    <div class="rf-grid">
+        <div>
+            <div class="rf-card">
+                <div class="rf-card-header"><span data-i18n="rfdiffusion.configuration"><span>&#9881;</span> Configuration</span></div>
+                <div class="rf-card-body">
+                    <div class="rf-credits">
+                        <span class="rf-credits-label" data-i18n="rfdiffusion.creditCost">Credit Cost</span>
+                        <span class="rf-credits-value"><span data-model-cost>{{ model_cost("type-12") }}</span> <span data-i18n="models.credits">credits</span></span>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.pdbStructure">Input PDB Structure</label>
+                        <div class="rf-file-upload" id="pdb-upload">
+                            <input type="file" id="pdb-file" accept=".pdb">
+                            <div class="rf-file-icon">&#128196;</div>
+                            <div class="rf-file-text" data-i18n="rfdiffusion.uploadPlaceholder">Drop PDB file or click to upload</div>
+                            <div class="rf-file-name" id="pdb-filename"></div>
+                        </div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.fetchRcsb">Or Fetch from RCSB</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="rf-input" id="pdb-id" placeholder="e.g., 1R42" style="flex: 1;">
+                            <button class="rf-btn rf-btn-secondary" id="fetch-pdb-btn" style="width: auto; padding: 10px 16px;" data-i18n="rfdiffusion.fetch">Fetch</button>
+                        </div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.contigs">Contig Specification *</label>
+                        <input type="text" class="rf-input" id="contigs" placeholder="e.g., A20-60/0 50-100" data-i18n-placeholder="rfdiffusion.contigPlaceholder">
+                        <div class="rf-help" data-i18n="rfdiffusion.contigHint">Define design regions. Format: ChainStart-End/Length. Separate with / or space.</div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.hotspots">Hotspot Residues</label>
+                        <input type="text" class="rf-input" id="hotspot-res" placeholder="e.g., A50,A51,A52,A53,A54" data-i18n-placeholder="rfdiffusion.hotspotPlaceholder">
+                        <div class="rf-help" data-i18n="rfdiffusion.hotspotHint">Target residues for binder design (comma-separated)</div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.steps">Diffusion Steps</label>
+                        <div class="rf-range-container">
+                            <input type="range" class="rf-range" id="diffusion-steps" min="1" max="200" value="50">
+                            <span class="rf-range-value" id="diffusion-steps-val">50</span>
+                        </div>
+                        <div class="rf-help" data-i18n="rfdiffusion.stepsHint">Higher = better quality, slower generation</div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.numDesigns">Number of Designs</label>
+                        <div class="rf-range-container">
+                            <input type="range" class="rf-range" id="num-designs" min="1" max="8" value="2">
+                            <span class="rf-range-value" id="num-designs-val">2</span>
+                        </div>
+                    </div>
+                    <div class="rf-form-group">
+                        <label class="rf-label" data-i18n="rfdiffusion.noiseScale">Noise Scale</label>
+                        <div class="rf-range-container">
+                            <input type="range" class="rf-range" id="noise-scale" min="0.1" max="2.0" step="0.1" value="1.0">
+                            <span class="rf-range-value" id="noise-scale-val">1.0</span>
+                        </div>
+                    </div>
+                    <button class="rf-btn" id="generate-btn"><span>&#128640;</span> <span data-i18n="rfdiffusion.generate">Generate Designs</span></button>
+                    <div style="margin-top: 20px;">
+                        <label class="rf-label" data-i18n="rfdiffusion.examples">Quick Examples</label>
+                        <div class="rf-examples" id="examples-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="rf-card">
+                <div class="rf-card-header"><span>&#128300;</span> <span data-i18n="rfdiffusion.viewer">3D Structure Viewer</span></div>
+                <div class="rf-card-body">
+                    <div id="status-container"></div>
+                    <div class="rf-structure-toggles" id="structure-toggles"></div>
+                    <div class="rf-viewer-container">
+                        <div id="viewer3d"></div>
+                        <div class="rf-viewer-controls">
+                            <button class="rf-viewer-btn" id="reset-view-btn">&#128260; <span data-i18n="viewer.resetView">Reset View</span></button>
+                            <button class="rf-viewer-btn" id="spin-btn">&#128257; <span data-i18n="viewer.spin">Spin</span></button>
+                            <button class="rf-viewer-btn" id="download-btn">&#128190; <span data-i18n="viewer.download">Download</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/model-cost.js') }}?v=0057fbc2" defer></script>
+<script src="{{ url_for('static', filename='js/rfdiffusion.js') }}?v=9fd83dc3"></script>
+</body>
+</html>

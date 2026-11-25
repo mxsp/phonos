@@ -1,0 +1,39 @@
+name: CI (Tests, Secret Audit & Container Build)
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install system libs & Phonos
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libxrender1 libxext6 libexpat1
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Verify zero tracked private keys or NVIDIA tokens
+        run: |
+          ! git grep -n "BEGIN RSA PRIVATE KEY\|BEGIN PRIVATE KEY\|nvapi-" -- ':!.github'
+      - name: Run test suites
+        run: |
+          pytest tests/test_oss_improvements.py tests/test_model_io.py tests/test_custom_models.py
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build Phonos runtime container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: phonos:ci

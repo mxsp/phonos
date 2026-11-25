@@ -1,0 +1,22 @@
+[Unit]
+Description=Phonos MolMIM Worker (molmim-worker-1)
+After=network.target redis6.service phonos-mrs.service
+Wants=redis6.service
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/phonos/production
+Environment=PYTHONPATH=/opt/phonos/production:/opt/phonos
+Environment=PHONOS_DIR=/opt/phonos
+EnvironmentFile=-/opt/phonos/.env
+ExecStart=/usr/bin/python3.11 /opt/phonos/production/molmim_worker.py --worker-id molmim-worker-1
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=phonos-molmim
+
+[Install]
+WantedBy=multi-user.target

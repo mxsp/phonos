@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="register.pageTitle">Create Account - Phonos</title>
+    <meta name="description" content="Create a free Phonos account to predict protein structures, dock molecules, and design proteins with state-of-the-art AI models including Boltz2, AlphaFold2, ESMFold, and DiffDock — all from your browser." data-i18n="[content]register.metaDescription">
+    <meta name="author" content="Maximilian S-Peter">
+    <link rel="canonical" href="{{ url_for('register', _external=True) }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    {% include '_i18n_scripts.html' %}
+    <style>
+        :root {
+            --color-bg: #09090b;
+            --color-bg-subtle: #18181b;
+            --color-text-main: #fafafa;
+            --color-text-muted: #a1a1aa;
+            --color-primary: #10B981;
+            --color-primary-glow: rgba(16, 185, 129, 0.5);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--color-bg);
+            color: var(--color-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Split Layout */
+        .split-layout {
+            display: flex;
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        /* Content Side */
+        .content-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+            background: var(--color-bg);
+            overflow-y: auto; /* Allow scrolling for long form */
+            max-height: 100vh;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #34D399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group.full-width { grid-column: span 2; }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--r-ui, 0px);
+            color: var(--color-text-main);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--color-primary);
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 0 4px var(--color-primary-glow);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            cursor: pointer;
+        }
+
+        .checkbox-label a { color: var(--color-primary); text-decoration: none; }
+        .checkbox-label a:hover { text-decoration: underline; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: var(--color-text-main);
+            color: var(--color-bg);
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .auth-footer a { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+        .auth-footer a:hover { text-decoration: underline; }
+
+        .lang-toggle {
+            background: none;
+            border: 1px solid var(--color-text-muted);
+            border-radius: var(--r-ui, 0px);
+            color: var(--color-text-muted);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 1px 7px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.5;
+        }
+        .lang-toggle:hover {
+            color: var(--color-text-main);
+            border-color: var(--color-text-main);
+        }
+
+        /* Visual Side */
+        .visual-side {
+            flex: 1.4;
+            background: var(--color-bg-subtle);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        .visual-image-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 900px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visual-image {
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+            border-radius: var(--r-ui, 0px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .grid-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        @media (max-width: 1024px) {
+            .split-layout { flex-direction: column; }
+            .visual-side { display: none; }
+            .content-side { padding: 2rem; max-width: 100%; overflow-y: visible; max-height: none; }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <main class="split-layout">
+        <!-- Content Side (Left) -->
+        <div class="content-side">
+            <header class="brand-header">
+                <div class="brand-name" data-i18n="common.phonos">Phonos</div>
+            </header>
+
+            {% if trusted_tester_mode %}
+            <div style="margin-bottom: 1.5rem;">
+                <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;" data-i18n="register.trustedTesterTitle">Apply for Early Access</h1>
+                <p style="color: var(--color-text-muted); font-size: 0.9rem; line-height: 1.5;" data-i18n="register.trustedTesterIntro">Phonos is currently open through the Trusted Tester Program. Create your account below, then tell us what you'd like to test — we review applications and email you the result.</p>
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; padding: 1rem; border-radius: var(--r-ui, 0px); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="username" data-i18n="auth.username">Username</label>
+                        <input type="text" class="form-input" id="username" name="username" required data-i18n-placeholder="auth.enterUsername" placeholder="jdoe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email" data-i18n="auth.email">Email</label>
+                        <input type="email" class="form-input" id="email" name="email" required data-i18n-placeholder="auth.enterEmail" placeholder="john@example.com">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label" for="legal_name" data-i18n="auth.legalName">Legal Name</label>
+                        <input type="text" class="form-input" id="legal_name" name="legal_name" required data-i18n-placeholder="auth.legalName" placeholder="John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="university" data-i18n="auth.university">University (Optional)</label>
+                        <input type="text" class="form-input" id="university" name="university" data-i18n-placeholder="auth.university" placeholder="MIT">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="age" data-i18n="auth.age">Age (Optional)</label>
+                        <input type="number" class="form-input" id="age" name="age" min="16" max="120" data-i18n-placeholder="auth.age" placeholder="25">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label" for="address" data-i18n="auth.address">Address (Optional)</label>
+                        <input type="text" class="form-input" id="address" name="address" data-i18n-placeholder="auth.address" placeholder="123 Science Way">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password" data-i18n="auth.password">Password</label>
+                        <input type="password" class="form-input" id="password" name="password" required data-i18n-placeholder="auth.enterPassword" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirm_password" data-i18n="auth.confirmPassword">Confirm Password</label>
+                        <input type="password" class="form-input" id="confirm_password" name="confirm_password" required data-i18n-placeholder="auth.enterConfirmPassword" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="accept_tos" required>
+                        <span data-i18n="auth.acceptTerms">I agree to the <a href="{{ url_for('terms_of_service') }}" target="_blank">Terms</a> and <a href="{{ url_for('datenschutz') }}" target="_blank">Privacy Policy</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary" data-i18n="auth.signUpCta">Create Account</button>
+
+                {% set mode = 'register' %}
+                {% include 'partials/_google_button.html' %}
+
+                <div class="auth-footer">
+                    <span data-i18n="auth.alreadyHaveAccount">Already have an account?</span> <a href="{{ url_for('login') }}" data-i18n="auth.signIn">Sign in</a>
+                </div>
+                <div style="margin-top: 1rem; display: flex; justify-content: center;">
+                    <button class="lang-toggle" id="lang-toggle" onclick="window.i18n.toggleLanguage()" title="Switch language" data-i18n-title="register.switchLanguage">DE</button>
+                </div>
+                {% include 'partials/_legal_footer.html' %}
+            </form>
+
+            <script>
+                (function() {
+                    var updateLangToggle = function() {
+                        var btn = document.getElementById('lang-toggle');
+                        if (!btn || !window.i18n) return;
+                        btn.textContent = window.i18n.getLanguage() === 'en' ? 'DE' : 'EN';
+                    };
+                    document.addEventListener('DOMContentLoaded', function() {
+                        updateLangToggle();
+                        window.addEventListener('i18n:change', updateLangToggle);
+                    });
+                })();
+            </script>
+        </div>
+
+        <!-- Visual Side (Right) -->
+        <div class="visual-side">
+            <div class="grid-pattern"></div>
+            <div class="ambient-glow"></div>
+            <div class="visual-image-container">
+                <img src="{{ url_for('static', filename='img/register-visual.png') }}" alt="Phonos Register Visualization" class="visual-image">
+            </div>
+        </div>
+    </main>
+
+    <!-- Disclaimer Modal (simplified) -->
+    <div id="disclaimer-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: #18181b; padding: 2rem; border-radius: var(--r-ui, 0px); border: 1px solid rgba(255,255,255,0.1); max-width: 440px;">
+            <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.25rem;" data-i18n="register.importantNotice">Important Notice</h3>
+            <p style="color: #a1a1aa; font-size: 0.875rem; line-height: 1.6; margin-bottom: 1.5rem;" data-i18n="register.disclaimerText">AI models can make mistakes. Always verify important results.</p>
+            <button id="disclaimer-accept" style="width: 100%; padding: 0.75rem; background: #fafafa; border: none; border-radius: var(--r-ui, 0px); font-weight: 600; cursor: pointer;" data-i18n="register.iUnderstand">I Understand</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('disclaimer-modal');
+            const acceptBtn = document.getElementById('disclaimer-accept');
+            if (!sessionStorage.getItem('disclaimer-accepted')) {
+                modal.style.display = 'flex';
+            }
+            acceptBtn.addEventListener('click', () => {
+                sessionStorage.setItem('disclaimer-accepted', 'true');
+                modal.style.display = 'none';
+            });
+        });
+    </script>
+    <!-- Cookie Consent Modal -->
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

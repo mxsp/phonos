@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="modelbuilder.title">Model Builder - Phonos</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-models-spa.css') }}?v=24e25a2b">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <style>
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-light: #34D399;
+            --bg-dark: #09090b;
+            --bg-card: #18181b;
+            --bg-hover: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: #27272a;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .builder-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(9, 9, 11, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .builder-header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .builder-logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .builder-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .builder-header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: 1px solid transparent;
+            border-radius: var(--r-ui, 0px);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary {
+            border-color: var(--border);
+            background: var(--bg-card);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Main Layout */
+        .builder-container {
+            display: flex;
+            height: 100vh;
+            padding-top: 64px;
+        }
+
+        /* Sidebar */
+        .builder-sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        /* Stepper */
+        .stepper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--r-ui, 0px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .step:hover {
+            background: var(--bg-hover);
+        }
+
+        .step.active {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary);
+        }
+
+        .step.completed {
+            opacity: 0.7;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--r-ui, 0px);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Main Content */
+        .builder-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .builder-workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Panel */
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid var(--border);
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        /* Code Editor */
+        .code-editor-container {
+            height: 100%;
+            border-radius: var(--r-ui, 0px);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            background: var(--bg-dark) !important;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Model Configuration */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .config-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-ui, 0px);
+            padding: 16px;
+        }
+
+        .config-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .toggle-input {
+            display: none;
+        }
+
+        .toggle-slider {
+            width: 44px;
+            height: 24px;
+            background: var(--bg-hover);
+            border-radius: var(--r-ui, 0px);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-slider::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        .toggle-input:checked + .toggle-slider::after {
+            transform: translateX(20px);
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-card);
+            border-radius: var(--r-ui, 0px);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            border: none;
+            background: transparent;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Console Output */
+        .console {
+            background: #0c0c0e;
+            border: 1px solid var(--border);
+            border-radius: var(--r-ui, 0px);
+            height: 200px;
+            overflow-y: auto;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .console-line {
+            margin-bottom: 4px;
+        }
+
+        .console-time {
+            color: var(--text-muted);
+            margin-right: 8px;
+        }
+
+        .console-info { color: var(--info); }
+        .console-success { color: var(--success); }
+        .console-error { color: var(--danger); }
+        .console-warn { color: var(--warning); }
+
+        /* Validation Panel */
+        .validation-panel {
+            background: var(--bg-card);
+            border-radius: var(--r-ui, 0px);
+            padding: 20px;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--r-ui, 0px);
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .validation-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .validation-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .validation-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .validation-icon.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .validation-icon.pending {
+            background: rgba(161, 161, 170, 0.1);
+            color: var(--text-muted);
+        }
+
+        .validation-content {
+            flex: 1;
+        }
+
+        .validation-title {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .validation-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            background: var(--bg-card);
+            border-radius: var(--r-ui, 0px);
+            padding: 20px;
+            height: 100%;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .model-preview {
+            background: var(--bg-dark);
+            border-radius: var(--r-ui, 0px);
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .model-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .model-stat:last-child {
+            border-bottom: none;
+        }
+
+        .model-stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .model-stat-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Step Content */
+        .step-content-panel {
+            display: none;
+        }
+
+        .step-content-panel.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .builder-sidebar {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .builder-sidebar {
+                display: none;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--r-ui, 0px);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body data-page="user-model-builder"{% if model_id %} data-model-id="{{ model_id }}"{% endif %}>
+    <!-- Header -->
+    <header class="builder-header">
+        <div class="builder-header-left">
+            <span class="builder-logo" data-i18n="common.phonos">Phonos</span>
+            <span style="color: var(--text-muted);">/</span>
+            <span class="builder-title" data-i18n="modelbuilder.heading">Model Builder</span>
+        </div>
+        <div class="builder-header-right">
+            <button class="btn btn-secondary" onclick="saveDraft()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                <span data-i18n="modelbuilder.saveDraft">Save Draft</span>
+            </button>
+            <button class="btn btn-secondary" onclick="validateModel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span data-i18n="modelbuilder.validate">Validate</span>
+            </button>
+            <button class="btn btn-primary" onclick="deployModel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+                <span data-i18n="modelbuilder.deployModel">Deploy Model</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <aside class="builder-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title" data-i18n="modelbuilder.buildSteps">Build Steps</div>
+                <div class="stepper">
+                    <div class="step active" data-step="1" onclick="goToStep(1)">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title" data-i18n="modelbuilder.basicInfo">Basic Info</div>
+                            <div class="step-desc" data-i18n="modelbuilder.basicInfoDesc">Name and description</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="2" onclick="goToStep(2)">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title" data-i18n="modelbuilder.architecture">Architecture</div>
+                            <div class="step-desc" data-i18n="modelbuilder.architectureDesc">Define model structure</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="3" onclick="goToStep(3)">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title" data-i18n="modelbuilder.config">Configuration</div>
+                            <div class="step-desc" data-i18n="modelbuilder.configDesc">Hyperparameters</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="4" onclick="goToStep(4)">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title" data-i18n="modelbuilder.validation">Validation</div>
+                            <div class="step-desc" data-i18n="modelbuilder.validationDesc">Test and verify</div>
+                        </div>
+                    </div>
+                    <div class="step" data-step="5" onclick="goToStep(5)">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="step-title" data-i18n="modelbuilder.deploy">Deploy</div>
+                            <div class="step-desc" data-i18n="modelbuilder.deployDesc">Publish model</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title" data-i18n="modelbuilder.quickActions">Quick Actions</div>
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="loadTemplate()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span data-i18n="modelbuilder.loadTemplate">Load Template</span>
+                </button>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="importFromFile()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span data-i18n="modelbuilder.importModel">Import Model</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="builder-content">
+            <div class="builder-workspace">
+                <!-- Left Panel - Editor -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16 18 22 12 16 6"/>
+                                <polyline points="8 6 2 12 8 18"/>
+                            </svg>
+                            <span data-i18n="modelbuilder.definition">Model Definition</span>
+                        </div>
+                        <div class="panel-actions">
+                            <button class="btn btn-secondary" onclick="formatCode()" data-i18n="modelbuilder.format">Format</button>
+                            <button class="btn btn-secondary" onclick="resetCode()" data-i18n="common.reset">Reset</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Step 1: Basic Info -->
+                        <div id="step-1" class="step-content-panel active">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="modelbuilder.modelName">Model Name *</label>
+                                <input type="text" class="form-input" id="model-name" placeholder="e.g., Protein Classifier v1" data-i18n-placeholder="modelbuilder.modelNamePlaceholder">
+                                <div class="form-hint" data-i18n="modelbuilder.modelNameHint">Give your model a descriptive name</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="modelbuilder.description">Description</label>
+                                <textarea class="form-textarea" id="model-description" placeholder="Describe what your model does and its intended use..." data-i18n-placeholder="modelbuilder.descriptionHint"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="modelbuilder.modelType">Model Type</label>
+                                <select class="form-select" id="model-type">
+                                    <option value="pytorch" data-i18n="modelbuilder.typePytorch">PyTorch</option>
+                                    <option value="tensorflow" data-i18n="modelbuilder.typeTensorflow">TensorFlow</option>
+                                    <option value="sklearn" data-i18n="modelbuilder.typeSklearn">Scikit-learn</option>
+                                    <option value="onnx" data-i18n="modelbuilder.typeOnnx">ONNX</option>
+                                    <option value="custom" data-i18n="modelbuilder.typeCustom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="modelbuilder.tags">Tags</label>
+                                <input type="text" class="form-input" id="model-tags" placeholder="protein, classification, deep-learning (comma separated)" data-i18n-placeholder="modelbuilder.tagsPlaceholder">
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Architecture -->
+                        <div id="step-2" class="step-content-panel">
+                            <div class="code-editor-container">
+                                <textarea id="code-editor">import torch
+import torch.nn as nn
+
+class CustomModel(nn.Module):
+    def __init__(self, input_dim=1024, hidden_dim=512, output_dim=10):
+        super(CustomModel, self).__init__()
+        
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim // 2, output_dim)
+        )
+    
+    def forward(self, x):
+        return self.layers(x)
+    
+    def predict(self, x):
+        self.eval()
+        with torch.no_grad():
+            return torch.softmax(self.forward(x), dim=1)</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Configuration -->
+                        <div id="step-3" class="step-content-panel">
+                            <div class="config-grid">
+                                <div class="config-card">
+                                    <div class="config-card-title" data-i18n="modelbuilder.trainingParams">Training Parameters</div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.lr">Learning Rate</label>
+                                        <input type="number" class="form-input" value="0.001" step="0.0001">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.batchSize">Batch Size</label>
+                                        <input type="number" class="form-input" value="32">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.epochs">Epochs</label>
+                                        <input type="number" class="form-input" value="100">
+                                    </div>
+                                </div>
+                                <div class="config-card">
+                                    <div class="config-card-title" data-i18n="modelbuilder.optimizerSettings">Optimizer Settings</div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.optimizer">Optimizer</label>
+                                        <select class="form-select">
+                                            <option data-i18n="modelbuilder.optAdam">Adam</option>
+                                            <option data-i18n="modelbuilder.optSgd">SGD</option>
+                                            <option data-i18n="modelbuilder.optRmsprop">RMSprop</option>
+                                            <option data-i18n="modelbuilder.optAdamW">AdamW</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.weightDecay">Weight Decay</label>
+                                        <input type="number" class="form-input" value="0.0001" step="0.0001">
+                                    </div>
+                                </div>
+                                <div class="config-card">
+                                    <div class="config-card-title" data-i18n="modelbuilder.modelOptions">Model Options</div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label" data-i18n="modelbuilder.enableGpu">Enable GPU Acceleration</span>
+                                    </label>
+                                    <label class="toggle-switch" style="margin-top: 12px;">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label" data-i18n="modelbuilder.mixedPrecision">Use Mixed Precision</span>
+                                    </label>
+                                    <label class="toggle-switch" style="margin-top: 12px;">
+                                        <input type="checkbox" class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label" data-i18n="modelbuilder.distTraining">Enable Distributed Training</span>
+                                    </label>
+                                </div>
+                                <div class="config-card">
+                                    <div class="config-card-title" data-i18n="modelbuilder.io">Input/Output</div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.inputShape">Input Shape</label>
+                                        <input type="text" class="form-input" value="(1, 1024)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" data-i18n="modelbuilder.outputShape">Output Shape</label>
+                                        <input type="text" class="form-input" value="(1, 10)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Validation -->
+                        <div id="step-4" class="step-content-panel">
+                            <div class="tabs">
+                                <button class="tab active" onclick="switchTab('validation')" data-i18n="modelbuilder.validation">Validation</button>
+                                <button class="tab" onclick="switchTab('console')" data-i18n="modelbuilder.console">Console</button>
+                                <button class="tab" onclick="switchTab('tests')" data-i18n="modelbuilder.testCases">Test Cases</button>
+                            </div>
+                            
+                            <div id="tab-validation" class="tab-content">
+                                <div class="validation-panel">
+                                    <div class="validation-item">
+                                        <div class="validation-icon success">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"/>
+                                            </svg>
+                                        </div>
+                                        <div class="validation-content">
+                                            <div class="validation-title" data-i18n="modelbuilder.syntaxCheck">Syntax Check</div>
+                                            <div class="validation-desc" data-i18n="modelbuilder.syntaxDesc">Python syntax is valid</div>
+                                        </div>
+                                        <span class="status-badge success" data-i18n="modelbuilder.passed">Passed</span>
+                                    </div>
+                                    <div class="validation-item">
+                                        <div class="validation-icon success">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"/>
+                                            </svg>
+                                        </div>
+                                        <div class="validation-content">
+                                            <div class="validation-title" data-i18n="modelbuilder.importRes">Import Resolution</div>
+                                            <div class="validation-desc" data-i18n="modelbuilder.importDesc">All dependencies available</div>
+                                        </div>
+                                        <span class="status-badge success" data-i18n="modelbuilder.passed">Passed</span>
+                                    </div>
+                                    <div class="validation-item">
+                                        <div class="validation-icon pending">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <polyline points="12 6 12 12 16 14"/>
+                                            </svg>
+                                        </div>
+                                        <div class="validation-content">
+                                            <div class="validation-title" data-i18n="modelbuilder.modelExec">Model Execution</div>
+                                            <div class="validation-desc" data-i18n="modelbuilder.modelExecDesc">Run model test to validate</div>
+                                        </div>
+                                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="runTest()" data-i18n="modelbuilder.runTest">Run Test</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-console" class="tab-content" style="display: none;">
+                                <div class="console" id="console-output">
+                                    <div class="console-line">
+                                        <span class="console-time">[10:42:15]</span>
+                                        <span class="console-info" data-i18n="modelbuilder.consoleInit">Model Builder initialized</span>
+                                    </div>
+                                    <div class="console-line">
+                                        <span class="console-time">[10:42:16]</span>
+                                        <span class="console-success" data-i18n="modelbuilder.consoleSyntaxPassed">Syntax validation passed</span>
+                                    </div>
+                                    <div class="console-line">
+                                        <span class="console-time">[10:42:16]</span>
+                                        <span data-i18n="modelbuilder.consoleDepsResolved">Dependencies resolved: torch, torch.nn</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="tab-tests" class="tab-content" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="modelbuilder.testInput">Test Input Data (JSON)</label>
+                                    <textarea class="form-textarea" rows="6" placeholder='{"input": [[0.1, 0.2, 0.3, ...]]}' data-i18n-placeholder="modelbuilder.testInputPlaceholder"></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="runCustomTest()" data-i18n="modelbuilder.runCustomTest">Run Custom Test</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Deploy -->
+                        <div id="step-5" class="step-content-panel">
+                            <div class="preview-panel">
+                                <div class="preview-header">
+                                    <h3 style="font-size: 16px; font-weight: 600;" data-i18n="modelbuilder.summary">Model Summary</h3>
+                                    <span class="status-badge success" data-i18n="modelbuilder.readyToDeploy">Ready to Deploy</span>
+                                </div>
+                                <div class="model-preview">
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.modelName">Model Name</span>
+                                        <span class="model-stat-value" id="preview-name">CustomModel</span>
+                                    </div>
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.format">Type</span>
+                                        <span class="model-stat-value" data-i18n="modelbuilder.typePytorch">PyTorch</span>
+                                    </div>
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.parameters">Parameters</span>
+                                        <span class="model-stat-value">524,288</span>
+                                    </div>
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.inputShape">Input Shape</span>
+                                        <span class="model-stat-value">(1, 1024)</span>
+                                    </div>
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.outputShape">Output Shape</span>
+                                        <span class="model-stat-value">(1, 10)</span>
+                                    </div>
+                                    <div class="model-stat">
+                                        <span class="model-stat-label" data-i18n="modelbuilder.valStatus">Validation Status</span>
+                                        <span class="model-stat-value" style="color: var(--success);" data-i18n="modelbuilder.passed">Passed</span>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label" data-i18n="modelbuilder.makePublic">Make model public</span>
+                                    </label>
+                                    <label class="toggle-switch" style="margin-top: 12px;">
+                                        <input type="checkbox" class="toggle-input" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label" data-i18n="modelbuilder.enableApi">Enable API access</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Preview -->
+                <div class="panel" style="width: 350px; flex: none;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                            <span data-i18n="modelbuilder.properties">Properties</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="config-card" style="margin-bottom: 16px;">
+                            <div class="config-card-title" data-i18n="modelbuilder.modelInfo">Model Info</div>
+                            <div class="model-stat">
+                                <span class="model-stat-label" data-i18n="modelbuilder.created">Created</span>
+                                <span class="model-stat-value" data-i18n="modelbuilder.justNow">Just now</span>
+                            </div>
+                            <div class="model-stat">
+                                <span class="model-stat-label" data-i18n="modelbuilder.lastModified">Last Modified</span>
+                                <span class="model-stat-value" data-i18n="modelbuilder.justNow">Just now</span>
+                            </div>
+                            <div class="model-stat">
+                                <span class="model-stat-label" data-i18n="modelbuilder.version">Version</span>
+                                <span class="model-stat-value">1.0.0</span>
+                            </div>
+                        </div>
+
+                        <div class="config-card" style="margin-bottom: 16px;">
+                            <div class="config-card-title" data-i18n="modelbuilder.requirements">Requirements</div>
+                            <div style="font-family: monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                                torch>=2.0.0<br>
+                                numpy>=1.24.0<br>
+                                scikit-learn>=1.3.0
+                            </div>
+                        </div>
+
+                        <div class="config-card">
+                            <div class="config-card-title" data-i18n="modelbuilder.actions">Actions</div>
+                            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="exportModel()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                <span data-i18n="modelbuilder.exportModel">Export Model</span>
+                            </button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="generateDocs()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                                <span data-i18n="modelbuilder.generateDocs">Generate Docs</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script>
+        // Initialize CodeMirror
+        let editor;
+        let currentStep = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                mode: 'python',
+                theme: 'dracula',
+                lineNumbers: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                indentUnit: 4,
+                tabSize: 4,
+                lineWrapping: true,
+                extraKeys: {
+                    'Ctrl-S': function() { saveDraft(); },
+                    'Ctrl-Enter': function() { validateModel(); }
+                }
+            });
+        });
+
+        // Navigation
+        function goToStep(step) {
+            currentStep = step;
+            
+            // Update stepper
+            document.querySelectorAll('.step').forEach((el, index) => {
+                el.classList.remove('active');
+                if (index < step - 1) {
+                    el.classList.add('completed');
+                } else {
+                    el.classList.remove('completed');
+                }
+            });
+            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+            
+            // Show step content
+            document.querySelectorAll('.step-content-panel').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`step-${step}`).classList.add('active');
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+        }
+
+        // Actions
+        function saveDraft() {
+            addConsoleMessage('Draft saved successfully', 'success');
+        }
+
+        function validateModel() {
+            addConsoleMessage('Running validation...', 'info');
+            setTimeout(() => {
+                addConsoleMessage('Validation completed successfully', 'success');
+            }, 1500);
+        }
+
+        function deployModel() {
+            if (confirm('Deploy this model to production?')) {
+                addConsoleMessage('Deploying model...', 'info');
+                setTimeout(() => {
+                    addConsoleMessage('Model deployed successfully!', 'success');
+                }, 2000);
+            }
+        }
+
+        function formatCode() {
+            if (editor) {
+                addConsoleMessage('Code formatted', 'info');
+            }
+        }
+
+        function resetCode() {
+            if (confirm('Reset code to default template?')) {
+                location.reload();
+            }
+        }
+
+        function loadTemplate() {
+            const templates = ['ResNet', 'Transformer', 'LSTM', 'CNN'];
+            const template = prompt(`Choose template:\n${templates.join('\n')}`);
+            if (template) {
+                addConsoleMessage(`Loaded ${template} template`, 'info');
+            }
+        }
+
+        function importFromFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.py,.json,.pt,.pth';
+            input.onchange = function() {
+                addConsoleMessage(`Importing ${this.files[0].name}...`, 'info');
+            };
+            input.click();
+        }
+
+        function runTest() {
+            addConsoleMessage('Running model test...', 'info');
+            setTimeout(() => {
+                addConsoleMessage('Test completed: 98.5% accuracy', 'success');
+            }, 2000);
+        }
+
+        function runCustomTest() {
+            addConsoleMessage('Running custom test...', 'info');
+        }
+
+        function exportModel() {
+            addConsoleMessage('Exporting model...', 'info');
+        }
+
+        function generateDocs() {
+            addConsoleMessage('Generating documentation...', 'info');
+            setTimeout(() => {
+                addConsoleMessage('Documentation generated', 'success');
+            }, 1500);
+        }
+
+        // Console
+        function addConsoleMessage(message, type = 'info') {
+            const consoleEl = document.getElementById('console-output');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `<span class="console-time">[${time}]</span><span class="console-${type}">${message}</span>`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // Auto-save
+        setInterval(() => {
+            if (document.getElementById('model-name').value) {
+                // Auto-save logic here
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

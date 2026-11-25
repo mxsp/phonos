@@ -1,0 +1,17 @@
+[Unit]
+Description=Run stuck Redis jobs cleanup every hour
+Documentation=file:///opt/phonos/production/CLEANUP_JOBS_README.md
+Requires=cleanup-stuck-jobs.service
+
+[Timer]
+# Run every hour
+OnCalendar=hourly
+# Also run 5 minutes after boot
+OnBootSec=5min
+# Run immediately if we missed a scheduled run
+Persistent=true
+# Add randomization to avoid all jobs running at the same time
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

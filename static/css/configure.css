@@ -1,0 +1,1173 @@
+/* =============================================================================
+   configure.css
+   Shared design foundation for per-model "configure" pages.
+   Hoisted from the OpenFold3 page design and generalized: every teal accent is
+   driven by a single canonical --cfg-* variable set so any model page
+   (OpenFold3 / Boltz2 / RFDiffusion / ...) can share one stylesheet.
+   Loaded AFTER css/app.css.
+   ============================================================================= */
+
+:root {
+    /* Accent (teal) */
+    --cfg-accent: #0d9488;
+    --cfg-accent-light: #14b8a6;
+    --cfg-accent-dark: #0f766e;
+    --cfg-accent-shadow: rgba(13, 148, 136, 0.2);
+    --cfg-accent-bg: rgba(13, 148, 136, 0.08);
+    --cfg-accent-bg-15: rgba(13, 148, 136, 0.15);
+
+    /* Back-compat aliases (read by boltz2.js inline-style strings: --accent-primary) */
+    --accent-primary: var(--cfg-accent);
+    --accent-secondary: var(--cfg-accent-dark);
+
+    /* Semantic */
+    --cfg-success: #10b981;
+    --cfg-success-bg: rgba(16, 185, 129, 0.1);
+    --cfg-warning: #f59e0b;
+    --cfg-error: #ef4444;
+    --cfg-error-bg: rgba(239, 68, 68, 0.1);
+
+    /* Surfaces */
+    --cfg-bg: #09090b;
+    --cfg-surface: #18181b;
+    --cfg-border: #27272a;
+    --cfg-border-2: #3f3f46;
+
+    /* Text */
+    --cfg-text: #fafafa;
+    --cfg-text-2: #a1a1aa;
+    --cfg-text-3: #71717a;
+    --cfg-text-4: #52525b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--cfg-bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--cfg-text);
+    min-height: 100vh;
+}
+
+.page-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--cfg-text-2);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 8px 12px;
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    transition: all 0.2s;
+}
+
+.back-link:hover {
+    color: var(--cfg-text);
+    background: var(--cfg-border);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--cfg-accent), var(--cfg-accent-dark));
+    border-radius: var(--r-ui, 0px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title-icon svg {
+    width: 28px;
+    height: 28px;
+    color: white;
+}
+
+.title-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cfg-text);
+    margin-bottom: 4px;
+}
+
+.title-text p {
+    font-size: 13px;
+    color: var(--cfg-text-3);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.credits-display {
+    padding: 10px 16px;
+    background: var(--cfg-success-bg);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--r-ui, 0px);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cfg-success);
+}
+
+/* Main Grid */
+.main-grid {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1200px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.card {
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--cfg-border);
+}
+
+.card-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cfg-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-header p {
+    font-size: 13px;
+    color: var(--cfg-text-3);
+    margin-top: 4px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Form */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cfg-text-2);
+    margin-bottom: 8px;
+}
+
+.form-label .required {
+    color: var(--cfg-error);
+}
+
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-size: 14px;
+    font-family: 'Inter', monospace;
+    transition: all 0.2s;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--cfg-accent);
+    box-shadow: 0 0 0 3px var(--cfg-accent-shadow);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.form-hint {
+    font-size: 11px;
+    color: var(--cfg-text-4);
+    margin-top: 6px;
+}
+
+/* Molecule Type Tabs */
+.molecule-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.molecule-tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.molecule-tab:hover {
+    background: var(--cfg-surface);
+    color: var(--cfg-text);
+}
+
+.molecule-tab.active {
+    background: var(--cfg-accent);
+    border-color: var(--cfg-accent);
+    color: white;
+}
+
+/* Ligand Section */
+.ligand-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.ligand-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ligand-btn:hover {
+    background: var(--cfg-surface);
+    color: var(--cfg-text);
+}
+
+.ligand-btn.active {
+    background: var(--cfg-accent);
+    border-color: var(--cfg-accent);
+    color: white;
+}
+
+/* Common Ligands Grid */
+.ligands-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.ligand-chip {
+    padding: 8px 10px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    font-size: 12px;
+    color: var(--cfg-text-2);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.ligand-chip:hover {
+    border-color: var(--cfg-accent);
+    color: var(--cfg-text);
+}
+
+.ligand-chip.selected {
+    background: var(--cfg-accent-bg-15);
+    border-color: var(--cfg-accent);
+    color: var(--cfg-accent-light);
+}
+
+/* Submit Button */
+.btn-primary {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--cfg-accent), var(--cfg-accent-dark));
+    border: none;
+    border-radius: var(--r-ui, 0px);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(13, 148, 136, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Secondary Button */
+.btn, .btn-secondary {
+    padding: 12px 20px;
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn:hover, .btn-secondary:hover {
+    background: var(--cfg-border);
+    border-color: var(--cfg-accent);
+}
+
+.btn:disabled, .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Output Format Toggle */
+.format-toggle {
+    display: flex;
+    gap: 6px;
+}
+
+.format-btn {
+    padding: 8px 16px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.format-btn.active {
+    background: var(--cfg-accent);
+    border-color: var(--cfg-accent);
+    color: white;
+}
+
+/* Results Panel */
+.result-container {
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+}
+
+.viewer-container {
+    position: relative;
+    height: 500px;
+    background: var(--cfg-bg);
+}
+
+#structure-viewer {
+    width: 100%;
+    height: 100%;
+}
+
+.viewer-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+}
+
+.viewer-btn {
+    padding: 8px 14px;
+    background: rgba(24, 24, 27, 0.9);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+}
+
+.viewer-btn:hover {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: var(--cfg-accent);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 20px;
+}
+
+.metric-card {
+    padding: 16px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--cfg-text);
+    margin-bottom: 4px;
+}
+
+.metric-value.good { color: var(--cfg-success); }
+.metric-value.medium { color: var(--cfg-warning); }
+
+.metric-label {
+    font-size: 12px;
+    color: var(--cfg-text-3);
+}
+
+/* Examples */
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.example-card {
+    padding: 12px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.example-card:hover {
+    border-color: var(--cfg-accent);
+    background: var(--cfg-accent-bg);
+}
+
+.example-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cfg-text);
+    margin-bottom: 2px;
+}
+
+.example-desc {
+    font-size: 11px;
+    color: var(--cfg-text-3);
+}
+
+/* Loading */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 20px;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--cfg-border);
+    border-top-color: var(--cfg-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--cfg-text);
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    border-radius: var(--r-ui, 0px);
+    font-size: 14px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.toast-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.toast-success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.hidden { display: none !important; }
+
+/* Multimer Toggle */
+.mode-switch {
+    display: flex;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    overflow: hidden;
+}
+
+.mode-switch-btn {
+    padding: 5px 14px;
+    background: transparent;
+    border: none;
+    color: var(--cfg-text-3);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-switch-btn.active {
+    background: var(--cfg-accent);
+    color: white;
+}
+
+.mode-switch-btn:hover:not(.active) {
+    color: var(--cfg-text);
+}
+
+/* Chain Entries */
+.chain-entry {
+    position: relative;
+    padding: 14px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    margin-bottom: 10px;
+}
+
+.chain-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.chain-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cfg-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chain-id-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-ui, 0px);
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+}
+
+.chain-type-select {
+    padding: 4px 10px;
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.chain-type-select:focus {
+    outline: none;
+    border-color: var(--cfg-accent);
+}
+
+.chain-remove-btn {
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-3);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chain-remove-btn:hover {
+    border-color: var(--cfg-error);
+    color: var(--cfg-error);
+    background: var(--cfg-error-bg);
+}
+
+.chain-sequence-input {
+    width: 100%;
+    min-height: 70px;
+    padding: 10px;
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.chain-sequence-input:focus {
+    outline: none;
+    border-color: var(--cfg-accent);
+    box-shadow: 0 0 0 3px var(--cfg-accent-bg-15);
+}
+
+.add-chain-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px dashed var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-3);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.add-chain-btn:hover {
+    border-color: var(--cfg-accent);
+    color: var(--cfg-accent-light);
+    background: var(--cfg-accent-bg);
+}
+
+.multimer-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--cfg-accent-bg);
+    border: 1px solid var(--cfg-accent-shadow);
+    border-radius: var(--r-ui, 0px);
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: #5eead4;
+}
+
+/* Confidence Chart */
+.confidence-panel {
+    padding: 20px;
+    border-top: 1px solid var(--cfg-border);
+}
+
+/* Badge */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--r-ui, 0px);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-teal {
+    background: var(--cfg-accent-bg-15);
+    color: var(--cfg-accent-light);
+}
+
+/* MSA Section */
+.msa-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+}
+
+.msa-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    background: var(--cfg-surface);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.msa-textarea:focus {
+    outline: none;
+    border-color: var(--cfg-accent);
+}
+
+/* =============================================================================
+   NEW reusable components (so Boltz2 / RFDiffusion can drop bespoke styling).
+   All accents are driven by the --cfg-* variables above.
+   ============================================================================= */
+
+/* Underline-style tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--cfg-border);
+    flex-wrap: wrap;
+}
+
+.tab-button {
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--cfg-text-2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+}
+
+.tab-button:hover {
+    color: var(--cfg-text);
+}
+
+.tab-button.active {
+    color: var(--cfg-accent-light);
+    border-bottom-color: var(--cfg-accent);
+}
+
+/* Range sliders */
+.slider-group {
+    margin-bottom: 20px;
+}
+
+.slider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.slider-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cfg-text-2);
+}
+
+.slider-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cfg-accent-light);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: var(--r-ui, 0px);
+    background: var(--cfg-border-2);
+    outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cfg-accent);
+    border: 2px solid var(--cfg-surface);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    background: var(--cfg-accent-light);
+}
+
+.slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cfg-accent);
+    border: 2px solid var(--cfg-surface);
+    cursor: pointer;
+}
+
+/* Checkbox rows */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--cfg-text-2);
+}
+
+.checkbox-group input[type=checkbox] {
+    accent-color: var(--cfg-accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Category filter buttons */
+.cat-btn {
+    padding: 6px 12px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cat-btn:hover {
+    color: var(--cfg-text);
+    border-color: var(--cfg-accent);
+}
+
+.cat-btn.active {
+    background: var(--cfg-accent);
+    border-color: var(--cfg-accent);
+    color: white;
+}
+
+/* Compact example chips */
+.example-chip {
+    padding: 6px 12px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.example-chip:hover {
+    border-color: var(--cfg-accent);
+    color: var(--cfg-accent-light);
+    background: var(--cfg-accent-bg);
+}
+
+/* Database source selector */
+.db-source-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.db-source-btn {
+    padding: 8px 14px;
+    background: var(--cfg-bg);
+    border: 1px solid var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-2);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.db-source-btn:hover {
+    color: var(--cfg-text);
+}
+
+.db-source-btn.active {
+    background: var(--cfg-accent);
+    border-color: var(--cfg-accent);
+    color: white;
+}
+
+.db-results {
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid var(--cfg-border);
+    border-radius: var(--r-ui, 0px);
+    background: var(--cfg-bg);
+}
+
+.db-selected {
+    padding: 12px 14px;
+    margin-top: 8px;
+    background: var(--cfg-accent-bg);
+    border: 1px solid var(--cfg-accent-shadow);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text);
+    font-size: 13px;
+}
+
+/* Inline status messages */
+.status {
+    padding: 10px 14px;
+    border-radius: var(--r-ui, 0px);
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+.status.info {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--cfg-warning);
+    color: var(--cfg-warning);
+}
+
+.status.success {
+    background: var(--cfg-success-bg);
+    border: 1px solid var(--cfg-success);
+    color: var(--cfg-success);
+}
+
+.status.error {
+    background: var(--cfg-error-bg);
+    border: 1px solid var(--cfg-error);
+    color: var(--cfg-error);
+}
+
+/* File upload dropzone */
+.file-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    background: var(--cfg-bg);
+    border: 1px dashed var(--cfg-border-2);
+    border-radius: var(--r-ui, 0px);
+    color: var(--cfg-text-3);
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.file-upload:hover {
+    border-color: var(--cfg-accent);
+    color: var(--cfg-text-2);
+}
+
+.file-upload.has-file {
+    border-style: solid;
+    border-color: var(--cfg-accent);
+    background: var(--cfg-accent-bg);
+    color: var(--cfg-accent-light);
+}
+
+/* =============================================================================
+   Layout modifiers (apply to <body>).
+   ============================================================================= */
+.cfg-layout-2col .main-grid { grid-template-columns: 480px 1fr; }
+.cfg-layout-2col-right .main-grid { grid-template-columns: 1fr 380px; }
+
+@media (max-width: 1200px) {
+    .cfg-layout-2col .main-grid,
+    .cfg-layout-2col-right .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Prediction status bar (shared: esmfold / alphafold2 / openfold) ── */
+.status-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); margin-bottom: 16px; font-size: 13px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.idle { background: var(--cfg-text-4); }
+.status-dot.running { background: var(--cfg-warning); animation: pulse 1.5s ease-in-out infinite; }
+.status-dot.success { background: var(--cfg-success); }
+.status-dot.error { background: var(--cfg-error); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ── pLDDT confidence legend (shared: esmfold / alphafold2 / openfold) ── */
+.confidence-legend { margin-top: 16px; background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); padding: 14px 16px; }
+.confidence-legend-title { font-size: 12px; font-weight: 600; color: var(--cfg-text-2); margin-bottom: 10px; }
+.confidence-items { display: flex; gap: 16px; flex-wrap: wrap; }
+.confidence-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--cfg-text-3); }
+.confidence-dot { width: 10px; height: 10px; border-radius: var(--r-ui, 0px); flex-shrink: 0; }
+
+/* ── Download button (shared) ── */
+.download-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--cfg-surface); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); color: var(--cfg-text-2); font-size: 13px; cursor: pointer; text-decoration: none; transition: all 0.2s; margin-top: 12px; }
+.download-btn:hover { color: var(--cfg-text); border-color: var(--cfg-accent); }
+
+/* ── Hosted badge (shared) ── */
+.badge-nim { background: var(--cfg-accent-bg); border: 1px solid var(--cfg-accent); color: var(--cfg-accent); padding: 4px 10px; border-radius: var(--r-ui, 0px); font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+
+/* ── Viewer placeholder (shared) ── */
+.viewer-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--cfg-text-4); }
+.viewer-placeholder svg { width: 48px; height: 48px; opacity: 0.4; }
+.viewer-container [data-phonos-viewer] { width: 100%; height: 100%; }
+
+/* ── Two-up form row (shared) ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── Collapsible advanced section (shared) ── */
+.advanced-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 14px; background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); font-size: 13px; font-weight: 500; color: var(--cfg-text-2); user-select: none; }
+.advanced-toggle:hover { color: var(--cfg-text); border-color: var(--cfg-accent); }
+.advanced-toggle svg { transition: transform 0.2s; }
+/* Only the dedicated chevron rotates; scope rotation to it so a leading icon
+   (e.g. the gear in the standardised summary) is not flipped too. */
+.advanced-toggle.open > svg:not(.cfg-advanced-chevron) { transform: rotate(180deg); }
+.advanced-toggle.open .cfg-advanced-summary-label svg { transform: none; }
+.advanced-body { margin-top: 16px; }
+
+/* ── Checkbox list (shared) ── */
+.checkbox-grid { display: flex; flex-direction: column; gap: 8px; }
+.checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--cfg-text-2); cursor: pointer; }
+.checkbox-item input { accent-color: var(--cfg-accent); width: 15px; height: 15px; }
+
+/* ── Range slider row (shared) ── */
+.range-row { display: flex; align-items: center; gap: 12px; }
+.range-row input[type=range] { flex: 1; accent-color: var(--cfg-accent); }
+.range-val { min-width: 36px; text-align: right; font-weight: 600; color: var(--cfg-text); font-size: 13px; }
+
+/* ── Hosted badge (alias) + credits pill (shared) ── */
+.badge-hosted { background: var(--cfg-accent-bg); border: 1px solid var(--cfg-accent); color: var(--cfg-accent); padding: 4px 10px; border-radius: var(--r-ui, 0px); font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+.credits-pill { font-size: 12px; color: var(--cfg-text-2); padding: 6px 12px; background: var(--cfg-surface); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); }
+.credits-pill b { color: var(--cfg-accent); }
+
+/* ── Input tabs (shared: proteinmpnn / diffdock) ── */
+.input-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tab-btn { padding: 6px 14px; border-radius: var(--r-ui, 0px); border: 1px solid var(--cfg-border); background: transparent; color: var(--cfg-text-3); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.tab-btn.active { background: var(--cfg-border); color: var(--cfg-text); border-color: var(--cfg-border-2); }
+
+/* ── Metrics row (shared) ── */
+.metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+
+/* ── Viewer canvas fill (shared) ── */
+#structure-viewer { width: 100%; height: 100%; }
+
+/* =============================================================================
+   STANDARDISED "Advanced Parameters" section (shared across all configure pages)
+   One consistent collapse/expand pattern, summary header, field grouping, and
+   helper text — so the advanced block looks/behaves identically on every model.
+   Works with native <details class="cfg-advanced"> (no JS) AND with the legacy
+   .advanced-toggle/.advanced-body JS pattern (kept visually in sync below).
+   ============================================================================= */
+.cfg-advanced { margin-bottom: 20px; border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); background: var(--cfg-bg); overflow: hidden; }
+.cfg-advanced > summary,
+.cfg-advanced-summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; cursor: pointer; user-select: none; list-style: none; font-size: 13px; font-weight: 600; color: var(--cfg-text-2); transition: color 0.2s; }
+.cfg-advanced > summary::-webkit-details-marker { display: none; }
+.cfg-advanced > summary:hover,
+.cfg-advanced-summary:hover { color: var(--cfg-text); }
+.cfg-advanced-summary-label { display: flex; align-items: center; gap: 8px; }
+.cfg-advanced-summary-label svg { color: var(--cfg-accent); }
+/* Chevron: rotates open on native <details> and on .open for the JS pattern */
+.cfg-advanced-chevron { flex-shrink: 0; transition: transform 0.2s; color: var(--cfg-text-3); }
+.cfg-advanced[open] > summary .cfg-advanced-chevron,
+.cfg-advanced-summary.open .cfg-advanced-chevron { transform: rotate(180deg); }
+/* Body: consistent padding + top divider so the collapsed/expanded edge is clean */
+.cfg-advanced-body { padding: 4px 14px 14px; margin-top: 0; }
+.cfg-advanced > summary + .cfg-advanced-body,
+.cfg-advanced > .cfg-advanced-summary + .cfg-advanced-body { border-top: 1px solid var(--cfg-border); }
+/* Legacy JS toggle (div summary): no border-radius bleed, summary spans full width */
+.cfg-advanced > .advanced-toggle { background: transparent; border: none; border-radius: 0; }
+
+/* Standardised grouped toggle/checkbox card inside the advanced section */
+.cfg-toggle-card { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 12px; background: var(--cfg-surface); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); cursor: pointer; }
+.cfg-toggle-card:first-child { margin-top: 12px; }
+.cfg-toggle-card input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--cfg-accent); cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+.cfg-toggle-card .cfg-toggle-title { display: block; color: var(--cfg-text); font-size: 13px; font-weight: 600; }
+.cfg-toggle-card .cfg-toggle-desc { display: block; margin-top: 2px; font-size: 11px; color: var(--cfg-text-3); }
+/* Sub-group of params revealed by a parent toggle */
+.cfg-subparams { margin-top: 12px; padding: 12px; background: var(--cfg-accent-bg); border: 1px solid var(--cfg-accent-shadow); border-radius: var(--r-ui, 0px); }
+.cfg-advanced-divider { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--cfg-border); }
+
+/* =============================================================================
+   STANDARDISED input-frame data loader (shared)
+   The "load seed / sequence / ligand from a project file or database" pickers
+   live consistently inside the Input frame with one look: a labelled block,
+   project tab + database tab, two-up select row, and a status/hint line.
+   ============================================================================= */
+.cfg-loader { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cfg-border); }
+.cfg-loader-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 500; color: var(--cfg-text-2); }
+.cfg-loader-row { display: flex; gap: 6px; }
+.cfg-loader-row > select.form-select { flex: 1; font-size: 12px; padding: 8px 10px; }
+.cfg-loader-status { margin-top: 6px; font-size: 11px; color: var(--cfg-text-4); }

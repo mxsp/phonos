@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First-Run Setup – Phonos Lab</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}">
+    <style>
+        :root { --bg: #09090b; --card: #121216; --border: rgba(255,255,255,0.1); --text: #fafafa; --muted: #a1a1aa; --accent: #10b981; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { min-height: 100vh; background: radial-gradient(circle at top right, rgba(16,185,129,0.12), transparent 45%), var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: grid; place-items: center; padding: 1.5rem; }
+        .card { width: 100%; max-width: 480px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 2.25rem; box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+        .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--accent); background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); border-radius: 999px; padding: 3px 10px; margin-bottom: 1rem; }
+        h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+        p.sub { color: var(--muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.82rem; font-weight: 600; color: #e4e4e7; margin: 0.95rem 0 0.35rem; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 0.7rem 0.85rem; background: #09090b; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none; }
+        input:focus { border-color: var(--accent); }
+        .check-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 1.1rem; font-size: 0.84rem; color: var(--muted); }
+        .btn { width: 100%; margin-top: 1.4rem; padding: 0.8rem 1rem; background: var(--accent); color: #052e1c; font-weight: 700; font-size: 0.95rem; border: none; border-radius: 8px; cursor: pointer; transition: filter 0.15s; }
+        .btn:hover { filter: brightness(1.08); }
+        .err { display: none; margin-top: 1rem; padding: 0.7rem 0.9rem; border-radius: 8px; background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; font-size: 0.85rem; }
+        .meta { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <span class="pill">Phonos v{{ version }} · Zero-SMTP Local Setup</span>
+        <h1>Initialize Your Phonos Lab</h1>
+        <p class="sub">Create the first Administrator account and name your shared Lab Workspace. No email server or external 2FA required.</p>
+
+        <form id="setup-form">
+            <label for="lab_name">Lab / Organization Name</label>
+            <input type="text" id="lab_name" name="lab_name" value="Phonos Lab" required maxlength="120">
+
+            <label for="username">Administrator Username</label>
+            <input type="text" id="username" name="username" placeholder="e.g. admin or max" required minlength="2" maxlength="120" autocomplete="username">
+
+            <label for="password">Administrator Password (min. 8 characters)</label>
+            <input type="password" id="password" name="password" placeholder="Strong passphrase" required minlength="8" autocomplete="new-password">
+
+            <label class="check-row">
+                <input type="checkbox" id="allow_public_signup" style="margin-top:3px;">
+                <span>Allow open self-registration on <code>/register</code> (leave unchecked so only Administrators create lab accounts)</span>
+            </label>
+
+            <div class="err" id="err-box"></div>
+            <button type="submit" class="btn" id="submit-btn">Create Administrator &amp; Launch Lab →</button>
+        </form>
+
+        <div class="meta">
+            <span>100% Local · Zero Telemetry</span>
+            <span>Research Use Only (RUO)</span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('setup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const err = document.getElementById('err-box');
+            err.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Initializing Lab...';
+            try {
+                const res = await fetch('/api/accounts/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': {{ csrf_token|tojson }} },
+                    body: JSON.stringify({
+                        lab_name: document.getElementById('lab_name').value.trim(),
+                        username: document.getElementById('username').value.trim(),
+                        password: document.getElementById('password').value,
+                        allow_public_signup: document.getElementById('allow_public_signup').checked
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    err.textContent = data.message || data.detail || 'Setup failed.';
+                    err.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Administrator & Launch Lab →';
+                    return;
+                }
+                window.location.href = data.redirect || '/oversight';
+            } catch (ex) {
+                err.textContent = 'Network error: ' + ex.message;
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Administrator & Launch Lab →';
+            }
+        });
+    </script>
+</body>
+</html>

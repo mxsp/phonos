@@ -1,0 +1,22 @@
+[Unit]
+Description=Phonos ESMFold-RE Worker (esmfold-re-worker-1)
+After=network.target redis6.service phonos-mrs.service
+Wants=redis6.service
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/phonos/production
+Environment=PYTHONPATH=/opt/phonos/production:/opt/phonos
+Environment=PHONOS_DIR=/opt/phonos
+EnvironmentFile=-/opt/phonos/.env
+ExecStart=/usr/bin/python3.11 /opt/phonos/production/esmfold_re_worker.py --worker-id esmfold-re-worker-1 --config /opt/phonos/production/node_config_esmfold_re.json
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=phonos-esmfold-re
+
+[Install]
+WantedBy=multi-user.target

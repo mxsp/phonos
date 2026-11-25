@@ -1,0 +1,173 @@
+version: '3.8'
+
+# Phonos GPU Worker Deployment
+# Deploy both ESMFold and DiffDock workers with GPU support
+#
+# Usage:
+#   1. Copy .env.example to .env and configure
+#   2. docker-compose up -d
+#
+# GPU Assignment:
+#   - ESMFold: GPU 0
+#   - DiffDock: GPU 1
+
+services:
+  esmfold-worker:
+    build:
+      context: ../../../node1-esm
+      dockerfile: Dockerfile
+    image: phonos/esmfold-worker:latest
+    container_name: phonos-esmfold-worker
+    restart: unless-stopped
+    environment:
+      # Worker Configuration
+      - WORKER_TYPE=type-0
+      - WORKER_ID=publisher-node-type-0
+      - WORKER_HEARTBEAT_INTERVAL=${WORKER_HEARTBEAT_INTERVAL:-30}
+      - JOB_TIMEOUT=${ESMFOLD_JOB_TIMEOUT:-600}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+
+      # GPU Configuration - ESMFold uses GPU 0
+      - PREFERRED_GPU=0
+      - CUDA_VISIBLE_DEVICES=0
+
+      # Redis Connection
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SSL=${REDIS_SSL:-false}
+
+      # Encryption
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+
+      # Model Cache
+      - TRANSFORMERS_CACHE=/app/cache
+      - TORCH_HOME=/app/cache
+      - HF_HOME=/app/cache
+
+      # Performance
+      - PYTORCH_JIT=1
+      - OMP_NUM_THREADS=${OMP_NUM_THREADS:-8}
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+    volumes:
+      - esmfold-cache:/app/cache
+      - esmfold-logs:/app/logs
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+        limits:
+          memory: 32G
+        reservations:
+          memory: 16G
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r = redis.Redis(host='${REDIS_HOST}', port=int('${REDIS_PORT:-6379}'), password='${REDIS_PASSWORD}'); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  diffdock-worker:
+    build:
+      context: ../../../diffdock
+      dockerfile: Dockerfile
+    image: phonos/diffdock-worker:latest
+    container_name: phonos-diffdock-worker
+    restart: unless-stopped
+    environment:
+      # Worker Configuration
+      - WORKER_TYPE=type-3
+      - WORKER_ID=publisher-node-type-3
+      - WORKER_HEARTBEAT_INTERVAL=${WORKER_HEARTBEAT_INTERVAL:-30}
+      - JOB_TIMEOUT=${DIFFDOCK_JOB_TIMEOUT:-1200}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+
+      # GPU Configuration - DiffDock uses GPU 1
+      - PREFERRED_GPU=1
+      - CUDA_VISIBLE_DEVICES=1
+
+      # Redis Connection
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SSL=${REDIS_SSL:-false}
+
+      # Encryption
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+
+      # DiffDock specific
+      - DIFFDOCK_INSTALL_DIR=/opt/DiffDock
+      - DIFFDOCK_CONDA_ENV=diffdock
+      - DIFFDOCK_CACHE_DIR=/app/cache
+
+      # CPU Threading (for hybrid CPU/GPU workloads)
+      - OMP_NUM_THREADS=${OMP_NUM_THREADS:-6}
+      - MKL_NUM_THREADS=${MKL_NUM_THREADS:-6}
+      - OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-6}
+      - NUMEXPR_NUM_THREADS=${NUMEXPR_NUM_THREADS:-6}
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+    volumes:
+      - diffdock-cache:/app/cache
+      - diffdock-install:/opt/DiffDock
+      - diffdock-logs:/app/logs
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+        limits:
+          memory: 32G
+        reservations:
+          memory: 16G
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r = redis.Redis(host='${REDIS_HOST}', port=int('${REDIS_PORT:-6379}'), password='${REDIS_PASSWORD}'); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  esmfold-cache:
+    driver: local
+  esmfold-logs:
+    driver: local
+  diffdock-cache:
+    driver: local
+  diffdock-install:
+    driver: local
+  diffdock-logs:
+    driver: local
+
+networks:
+  default:
+    name: phonos-workers
+    driver: bridge

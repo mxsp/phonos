@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="experimentalViewer.pageTitle">Phonos - Experimental 3D (Hand Tracking)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_molstar_head.html' %}
+    {% include '_i18n_scripts.html' %}
+    <!-- MediaPipe Hand Tracking -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --sidebar-width: 340px;
+            --header-height: 56px;
+            --panel-bg: rgba(39, 39, 42, 0.95);
+            --panel-border: rgba(63, 63, 70, 0.5);
+            --accent-color: #10b981;
+            --accent-hover: #34d399;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --experimental-gradient: linear-gradient(135deg, #10b981, #06b6d4);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #09090b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .viewer-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--panel-bg);
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            color: #fafafa;
+        }
+
+        .sidebar-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--experimental-gradient);
+            border-radius: var(--r-ui, 0px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .sidebar-logo svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+
+        .experimental-badge {
+            font-size: 9px;
+            font-weight: 700;
+            background: var(--experimental-gradient);
+            color: white;
+            padding: 3px 8px;
+            border-radius: var(--r-ui, 0px);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Panels */
+        .panel {
+            background: rgba(24, 24, 27, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .panel:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .panel-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .panel-header:hover {
+            background: rgba(63, 63, 70, 0.3);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e4e4e7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title svg {
+            width: 16px;
+            height: 16px;
+            color: var(--accent-color);
+        }
+
+        .panel-toggle {
+            width: 16px;
+            height: 16px;
+            color: #71717a;
+            transition: transform 0.2s;
+        }
+
+        .panel.collapsed .panel-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .panel-content {
+            padding: 14px 16px;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .panel.collapsed .panel-content {
+            display: none;
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 14px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .control-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(9, 9, 11, 0.8);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #fafafa;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .control-select:hover {
+            border-color: #52525b;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Tracking Stats */
+        .tracking-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card {
+            background: rgba(9, 9, 11, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Gesture Mode Selector */
+        .gesture-modes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .gesture-mode-btn {
+            padding: 12px 8px;
+            background: rgba(9, 9, 11, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gesture-mode-btn:hover {
+            background: rgba(63, 63, 70, 0.4);
+            color: #e4e4e7;
+            transform: translateY(-1px);
+        }
+
+        .gesture-mode-btn.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .gesture-mode-btn .mode-icon {
+            font-size: 22px;
+        }
+
+        .gesture-mode-btn .mode-label {
+            font-weight: 600;
+        }
+
+        /* Style Grid */
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .style-btn {
+            padding: 10px 8px;
+            background: rgba(9, 9, 11, 0.6);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #a1a1aa;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .style-btn:hover {
+            background: rgba(63, 63, 70, 0.4);
+            color: #e4e4e7;
+        }
+
+        .style-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        /* Color Swatches */
+        .color-swatches {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--r-ui, 0px);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: white;
+            box-shadow: 0 0 0 3px var(--accent-color);
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 13px;
+            color: #e4e4e7;
+            cursor: pointer;
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: rgba(63, 63, 70, 0.6);
+            border-radius: var(--r-ui, 0px);
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .slider-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-color);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Buttons */
+        .action-btn {
+            padding: 10px 14px;
+            background: rgba(63, 63, 70, 0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            color: #e4e4e7;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: rgba(63, 63, 70, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .action-btn.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            height: var(--header-height);
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .structure-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .structure-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .structure-meta {
+            font-size: 12px;
+            color: #71717a;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Viewer */
+        .viewer-container {
+            flex: 1;
+            position: relative;
+            background: #09090b;
+        }
+
+        #viewer-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Camera Container - Improved */
+        .camera-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            height: 240px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid var(--accent-color);
+            border-radius: var(--r-ui, 0px);
+            overflow: hidden;
+            z-index: 50;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .camera-container.minimized {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .camera-container.minimized:hover {
+            transform: scale(1.05);
+        }
+
+        .camera-container.minimized .camera-overlay,
+        .camera-container.minimized .camera-header,
+        .camera-container.minimized .tracking-overlay {
+            display: none;
+        }
+
+        .camera-container.minimized video,
+        .camera-container.minimized canvas {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .camera-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 14px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 3;
+        }
+
+        .camera-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .camera-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+
+        .camera-status-dot.active {
+            background: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 8px var(--accent-color); }
+            50% { box-shadow: 0 0 16px var(--accent-color); }
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .camera-btn {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: var(--r-ui, 0px);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .camera-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #camera-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+            z-index: 1;
+        }
+
+        /* Tracking Overlay */
+        .tracking-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 14px;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+            z-index: 3;
+        }
+
+        .gesture-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .gesture-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gesture-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .gesture-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gesture-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .gesture-sublabel {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .gesture-confidence {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confidence-bar {
+            width: 60px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: var(--r-ui, 0px);
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: var(--r-ui, 0px);
+            transition: width 0.2s;
+        }
+
+        .confidence-value {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-color);
+            min-width: 32px;
+        }
+
+        /* Gesture Guide */
+        .gesture-guide {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            padding: 20px 28px;
+            z-index: 40;
+            backdrop-filter: blur(16px);
+            display: none;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+
+        .gesture-guide.visible {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .gesture-guide h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fafafa;
+            margin: 0 0 16px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .gesture-guide h3 svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-color);
+        }
+
+        .gesture-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px 32px;
+        }
+
+        .gesture-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .gesture-emoji {
+            font-size: 28px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: var(--r-ui, 0px);
+        }
+
+        .gesture-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .gesture-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .gesture-action {
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        /* Hand Status Badge */
+        .hand-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--r-ui, 0px);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-color);
+            transition: all 0.2s;
+        }
+
+        .hand-status.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .hand-status svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Atom Tooltip */
+        .atom-tooltip {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r-ui, 0px);
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #fafafa;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .atom-tooltip.visible {
+            display: block;
+        }
+
+        .atom-tooltip-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .atom-tooltip-detail {
+            color: #a1a1aa;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 40px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 11px;
+            color: #71717a;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-item svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+
+        .status-indicator.warning {
+            background: var(--warning-color);
+        }
+
+        .status-indicator.error {
+            background: var(--danger-color);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(9, 9, 11, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid var(--panel-border);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #a1a1aa;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .loading-subtext {
+            margin-top: 6px;
+            color: #71717a;
+            font-size: 12px;
+        }
+
+        /* Mobile Toggle */
+        .mobile-sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 200;
+            width: 56px;
+            height: 56px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s;
+        }
+
+        .mobile-sidebar-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .mobile-sidebar-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .mobile-sidebar-toggle .icon-close { display: none; }
+        .mobile-sidebar-toggle.active .icon-open { display: none; }
+        .mobile-sidebar-toggle.active .icon-close { display: block; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-overlay.active { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .mobile-sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                width: 100%;
+                height: auto;
+                max-height: 75vh;
+                border-right: none;
+                border-top: 1px solid var(--panel-border);
+                border-radius: 20px 20px 0 0;
+                transform: translateY(100%);
+                transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+                z-index: 100;
+            }
+
+            .sidebar.open { transform: translateY(0); }
+
+            body.sidebar-open .sidebar-overlay { display: block; }
+
+            .camera-container {
+                width: 180px;
+                height: 135px;
+                bottom: 90px;
+                right: 12px;
+            }
+
+            .gesture-guide { display: none !important; }
+        }
+
+        /* No Structure Placeholder */
+        .no-structure-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #71717a;
+        }
+
+        .no-structure-placeholder svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-structure-placeholder h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #a1a1aa;
+            margin: 0 0 8px;
+        }
+
+        .no-structure-placeholder p {
+            font-size: 14px;
+            margin: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" data-i18n="experimentalViewer.initializing">Initializing Hand Tracking</div>
+        <div class="loading-subtext" data-i18n="experimentalViewer.loadingModels">Loading MediaPipe models...</div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle" data-i18n-aria="experimentalViewer.toggleSidebar" aria-label="Toggle sidebar">
+        <svg class="icon-open" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg class="icon-close" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+    </button>
+
+    <div class="viewer-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+                    </svg>
+                </div>
+                <h1 data-i18n="experimentalViewer.title">Experimental 3D</h1>
+                <span class="experimental-badge" data-i18n="experimentalViewer.beta">Beta</span>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Hand Tracking Panel -->
+                <div class="panel">
+                    <div class="panel-header" onclick="togglePanel(this)">
+                        <span class="panel-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span data-i18n="experimentalViewer.handTracking">Hand Tracking</span>
+                        </span>
+                        <svg class="panel-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Tracking Stats -->
+                        <div class="tracking-stats">
+                            <div class="stat-card">
+                                <div class="stat-value" id="fps-value">--</div>
+                                <div class="stat-label" data-i18n="experimentalViewer.fps">FPS</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="confidence-value">--%</div>
+                                <div class="stat-label" data-i18n="experimentalViewer.confidence">Confidence</div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <button class="action-btn primary" style="width: 100%;" id="toggle-camera-btn" onclick="toggleCamera()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span id="camera-btn-text" data-i18n="experimentalViewer.startCamera">Start Camera</span>
+                            </button>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.gestureMode">Gesture Mode</label>
+                            <div class="gesture-modes">
+                                <button class="gesture-mode-btn active" data-mode="all" onclick="setGestureMode('all')">
+                                    <span class="mode-icon">&#128400;</span>
+                                    <span class="mode-label" data-i18n="experimentalViewer.all">All</span>
+                                </button>
+                                <button class="gesture-mode-btn" data-mode="rotate" onclick="setGestureMode('rotate')">
+                                    <span class="mode-icon">&#128260;</span>
+                                    <span class="mode-label" data-i18n="experimentalViewer.rotate">Rotate</span>
+                                </button>
+                                <button class="gesture-mode-btn" data-mode="zoom" onclick="setGestureMode('zoom')">
+                                    <span class="mode-icon">&#128269;</span>
+                                    <span class="mode-label" data-i18n="experimentalViewer.zoom">Zoom</span>
+                                </button>
+                                <button class="gesture-mode-btn" data-mode="pan" onclick="setGestureMode('pan')">
+                                    <span class="mode-icon">&#9995;</span>
+                                    <span class="mode-label" data-i18n="experimentalViewer.pan">Pan</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.sensitivity">Sensitivity</label>
+                            <div class="slider-container">
+                                <input type="range" id="sensitivity" min="0.5" max="3" step="0.1" value="1.5">
+                                <span class="slider-value" id="sensitivity-value">1.5x</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.smoothing">Smoothing</label>
+                            <div class="slider-container">
+                                <input type="range" id="smoothing" min="0.1" max="0.9" step="0.05" value="0.4">
+                                <span class="slider-value" id="smoothing-value">0.4</span>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mirror-controls" checked>
+                            <label for="mirror-controls" data-i18n="experimentalViewer.mirror">Mirror hand movement</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="show-gesture-guide" checked onchange="toggleGestureGuide()">
+                            <label for="show-gesture-guide" data-i18n="experimentalViewer.showGuide">Show gesture guide</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Structure Panel -->
+                <div class="panel">
+                    <div class="panel-header" onclick="togglePanel(this)">
+                        <span class="panel-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <span data-i18n="experimentalViewer.structure">Structure</span>
+                        </span>
+                        <svg class="panel-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.selectStructure">Select Structure</label>
+                            <select class="control-select" id="structure-select">
+                                <option value="" data-i18n="experimentalViewer.chooseStructure">Choose a structure...</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="action-btn primary" style="flex: 1;" onclick="loadStructure()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                <span data-i18n="experimentalViewer.load">Load</span>
+                            </button>
+                            <button class="action-btn" style="flex: 1;" onclick="loadSampleStructure()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                </svg>
+                                <span data-i18n="experimentalViewer.sample">Sample</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Style Panel -->
+                <div class="panel">
+                    <div class="panel-header" onclick="togglePanel(this)">
+                        <span class="panel-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                            </svg>
+                            <span data-i18n="experimentalViewer.style">Style</span>
+                        </span>
+                        <svg class="panel-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.representation">Representation</label>
+                            <div class="style-grid">
+                                <button class="style-btn active" data-style="cartoon" onclick="setStyle('cartoon')" data-i18n="experimentalViewer.cartoon">Cartoon</button>
+                                <button class="style-btn" data-style="stick" onclick="setStyle('stick')" data-i18n="experimentalViewer.stick">Stick</button>
+                                <button class="style-btn" data-style="sphere" onclick="setStyle('sphere')" data-i18n="experimentalViewer.sphere">Sphere</button>
+                                <button class="style-btn" data-style="line" onclick="setStyle('line')" data-i18n="experimentalViewer.line">Line</button>
+                                <button class="style-btn" data-style="cross" onclick="setStyle('cross')" data-i18n="experimentalViewer.cross">Cross</button>
+                                <button class="style-btn" data-style="surface" onclick="setStyle('surface')" data-i18n="experimentalViewer.surface">Surface</button>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.colorScheme">Color Scheme</label>
+                            <select class="control-select" id="color-scheme" onchange="applyColorScheme()">
+                                <option value="spectrum" data-i18n="experimentalViewer.spectrum">Spectrum (Rainbow)</option>
+                                <option value="chain" data-i18n="experimentalViewer.chain">By Chain</option>
+                                <option value="ss" data-i18n="experimentalViewer.ss">Secondary Structure</option>
+                                <option value="residue" data-i18n="experimentalViewer.residue">By Residue</option>
+                                <option value="element" data-i18n="experimentalViewer.element">By Element (CPK)</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" data-i18n="experimentalViewer.background">Background</label>
+                            <div class="color-swatches">
+                                <div class="color-swatch active" style="background: #09090b;" data-bg="#09090b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #18181b;" data-bg="#18181b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #1e293b;" data-bg="#1e293b" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #0f172a;" data-bg="#0f172a" onclick="setBackground(this)"></div>
+                                <div class="color-swatch" style="background: #ffffff;" data-bg="#ffffff" onclick="setBackground(this)"></div>
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="spin-model" onchange="toggleSpin()">
+                            <label for="spin-model" data-i18n="experimentalViewer.autoSpin">Auto spin</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div style="padding: 12px; border-top: 1px solid var(--panel-border);">
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('viewer') }}" class="action-btn" style="flex: 1; text-decoration: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                        </svg>
+                        <span data-i18n="experimentalViewer.standard">Standard</span>
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="action-btn" style="flex: 1; text-decoration: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        <span data-i18n="experimentalViewer.dashboard">Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="structure-info">
+                    <span class="structure-name" id="structure-name" data-i18n="experimentalViewer.noStructure">No structure loaded</span>
+                    <span class="structure-meta" id="structure-meta"></span>
+                </div>
+                <div class="top-bar-actions">
+                    <div class="hand-status inactive" id="hand-status">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+                        </svg>
+                        <span id="hand-status-text" data-i18n="experimentalViewer.cameraOff">Camera off</span>
+                    </div>
+                    <button class="action-btn" onclick="resetView()" data-i18n-title="experimentalViewer.resetViewTitle" title="Reset View (R)">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span data-i18n="experimentalViewer.reset">Reset</span>
+                    </button>
+                    <button class="action-btn" onclick="takeScreenshot()" data-i18n-title="experimentalViewer.screenshotTitle" title="Screenshot (S)">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span data-i18n="experimentalViewer.screenshot">Screenshot</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="viewer-container">
+                <div id="viewer-canvas" data-phonos-viewer></div>
+                <div class="atom-tooltip" id="atom-tooltip">
+                    <div class="atom-tooltip-title" id="atom-tooltip-title"></div>
+                    <div class="atom-tooltip-detail" id="atom-tooltip-detail"></div>
+                    <div class="atom-tooltip-chain" id="atom-tooltip-chain"></div>
+                </div>
+
+                <!-- No Structure Placeholder -->
+                <div class="no-structure-placeholder" id="no-structure-placeholder">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>
+                    </svg>
+                    <h3 data-i18n="experimentalViewer.noStructure">No Structure Loaded</h3>
+                    <p data-i18n="experimentalViewer.selectFromSidebar">Select a structure from the sidebar or load a sample</p>
+                </div>
+
+                <!-- Gesture Guide -->
+                <div class="gesture-guide visible" id="gesture-guide">
+                    <h3 data-i18n="experimentalViewer.gestureControls">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+                        </svg>
+                        Hand Gesture Controls
+                    </h3>
+                    <div class="gesture-list">
+                        <div class="gesture-item">
+                            <span class="gesture-emoji">&#9995;</span>
+                            <div class="gesture-text">
+                                <div class="gesture-name" data-i18n="experimentalViewer.openHand">Open Hand</div>
+                                <div class="gesture-action" data-i18n="experimentalViewer.rotateModel">Rotate model</div>
+                            </div>
+                        </div>
+                        <div class="gesture-item">
+                            <span class="gesture-emoji">&#129295;</span>
+                            <div class="gesture-text">
+                                <div class="gesture-name" data-i18n="experimentalViewer.pinch">Pinch</div>
+                                <div class="gesture-action" data-i18n="experimentalViewer.zoomInOut">Zoom in/out</div>
+                            </div>
+                        </div>
+                        <div class="gesture-item">
+                            <span class="gesture-emoji">&#9994;</span>
+                            <div class="gesture-text">
+                                <div class="gesture-name" data-i18n="experimentalViewer.closedFist">Closed Fist</div>
+                                <div class="gesture-action" data-i18n="experimentalViewer.panTranslate">Pan/translate</div>
+                            </div>
+                        </div>
+                        <div class="gesture-item">
+                            <span class="gesture-emoji">&#128406;</span>
+                            <div class="gesture-text">
+                                <div class="gesture-name" data-i18n="experimentalViewer.twoHands">Two Hands</div>
+                                <div class="gesture-action" data-i18n="experimentalViewer.scaleModel">Scale model</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Preview -->
+                <div class="camera-container" id="camera-container" style="display: none;">
+                    <div class="camera-header">
+                        <div class="camera-status">
+                            <span class="camera-status-dot" id="camera-dot"></span>
+                            <span id="camera-status-label" data-i18n="experimentalViewer.initializingLabel">Initializing...</span>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="camera-btn" onclick="toggleCameraSize()" data-i18n-title="experimentalViewer.minimize" title="Minimize">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <video id="camera-video" playsinline></video>
+                    <canvas id="camera-canvas"></canvas>
+                    <div class="camera-overlay">
+                        <div class="gesture-indicator">
+                            <div class="gesture-main">
+                                <span class="gesture-icon" id="current-gesture-icon">&#128075;</span>
+                                <div class="gesture-info">
+                                    <span class="gesture-label" id="current-gesture-label" data-i18n="experimentalViewer.waiting">Waiting...</span>
+                                    <span class="gesture-sublabel" id="current-gesture-sublabel" data-i18n="experimentalViewer.startCameraToBegin">Start camera to begin</span>
+                                </div>
+                            </div>
+                            <div class="gesture-confidence">
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="confidence-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="confidence-value" id="confidence-display">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="status-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <span class="status-indicator" id="status-indicator"></span>
+                        <span id="status-text" data-i18n="experimentalViewer.ready">Ready</span>
+                    </div>
+                    <div class="status-item" id="atom-count" style="display: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span id="atom-count-text" data-i18n="experimentalViewer.atoms">0 atoms</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <span data-i18n="experimentalViewer.version">Experimental Hand Tracking v1.0</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION & STATE
+        // ============================================
+        const CONFIG = {
+            deadZone: 0.015,           // Minimum movement threshold
+            gestureDebounce: 150,      // ms between gesture changes
+            pinchThreshold: 0.065,     // Distance for pinch detection
+            fistThreshold: 0.7,        // Ratio for fist detection
+            confidenceMin: 0.6         // Minimum hand detection confidence
+        };
+
+        let viewer = null;            // PhonosViewer instance
+        let currentStyle = 'cartoon';
+        let currentColorScheme = 'spectrum';
+        let isSpinning = false;
+        let modelData = null;
+        let modelFormat = null;       // Track current format for reloading
+        let gestureMode = 'all';       // all, rotate, zoom, pan
+
+        // MediaPipe state
+        let hands = null;
+        let camera = null;
+        let isCameraActive = false;
+
+        // Tracking state with smoothing
+        let trackingState = {
+            lastPosition: null,
+            lastPinchDist: null,
+            lastTwoHandDist: null,
+            currentGesture: 'none',
+            lastGestureTime: 0,
+            gestureConfidence: 0,
+            smoothPosition: { x: 0.5, y: 0.5 },
+            frameCount: 0,
+            lastFrameTime: Date.now()
+        };
+
+        const MOLECULAR_EXTENSIONS = ['pdb', 'cif', 'mmcif', 'mol', 'mol2', 'sdf', 'xyz', 'cube'];
+
+        // ============================================
+        // MOL* CAMERA HELPERS
+        // Access the underlying Mol* plugin for programmatic
+        // camera rotation, zoom, and translation (hand tracking).
+        // ============================================
+        function getMolstarPlugin() {
+            if (!viewer || !viewer.instance) return null;
+            // pdbe-molstar exposes the Mol* PluginContext
+            return viewer.instance.plugin || null;
+        }
+
+        function molstarRotate(deltaX, deltaY) {
+            var plugin = getMolstarPlugin();
+            if (!plugin || !plugin.canvas3d) return;
+            var canvas3d = plugin.canvas3d;
+            var cam = canvas3d.camera;
+            if (!cam) return;
+            // Use the built-in trackball: simulate a drag by requesting manual rotation
+            // Mol* provides requestCameraReset but for incremental rotation we
+            // drive the snapshot directly via Euler-ish delta on the current state.
+            try {
+                var snapshot = cam.getSnapshot();
+                // Apply rotation via the trackball helper if available
+                if (canvas3d.input && typeof canvas3d.requestDraw === 'function') {
+                    // Trigger a rotation by dispatching synthetic pointer events on the canvas
+                    var cvs = viewer.getCanvas();
+                    if (cvs) {
+                        var rect = cvs.getBoundingClientRect();
+                        var cx = rect.width / 2;
+                        var cy = rect.height / 2;
+                        // Simulate drag: pointerdown at center, pointermove by delta, pointerup
+                        var evDown = new PointerEvent('pointerdown', {
+                            clientX: rect.left + cx, clientY: rect.top + cy,
+                            button: 0, buttons: 1, bubbles: true, pointerId: 9999
+                        });
+                        var evMove = new PointerEvent('pointermove', {
+                            clientX: rect.left + cx + deltaX, clientY: rect.top + cy + deltaY,
+                            button: 0, buttons: 1, bubbles: true, pointerId: 9999
+                        });
+                        var evUp = new PointerEvent('pointerup', {
+                            clientX: rect.left + cx + deltaX, clientY: rect.top + cy + deltaY,
+                            button: 0, buttons: 0, bubbles: true, pointerId: 9999
+                        });
+                        cvs.dispatchEvent(evDown);
+                        cvs.dispatchEvent(evMove);
+                        cvs.dispatchEvent(evUp);
+                    }
+                }
+            } catch (e) {
+                console.warn('molstarRotate error:', e);
+            }
+        }
+
+        function molstarZoom(factor) {
+            var plugin = getMolstarPlugin();
+            if (!plugin || !plugin.canvas3d) return;
+            try {
+                var cvs = viewer.getCanvas();
+                if (cvs) {
+                    // Simulate a wheel event for zoom
+                    var rect = cvs.getBoundingClientRect();
+                    var cx = rect.left + rect.width / 2;
+                    var cy = rect.top + rect.height / 2;
+                    // Positive deltaY = zoom out in most implementations, negative = zoom in
+                    // factor > 1 means zoom in, < 1 means zoom out
+                    var wheelDelta = -(factor - 1) * 800;
+                    var ev = new WheelEvent('wheel', {
+                        clientX: cx, clientY: cy,
+                        deltaY: wheelDelta, deltaMode: 0,
+                        bubbles: true
+                    });
+                    cvs.dispatchEvent(ev);
+                }
+            } catch (e) {
+                console.warn('molstarZoom error:', e);
+            }
+        }
+
+        function molstarTranslate(deltaX, deltaY) {
+            var plugin = getMolstarPlugin();
+            if (!plugin || !plugin.canvas3d) return;
+            try {
+                var cvs = viewer.getCanvas();
+                if (cvs) {
+                    var rect = cvs.getBoundingClientRect();
+                    var cx = rect.width / 2;
+                    var cy = rect.height / 2;
+                    // Right-button drag = pan in Mol*
+                    var evDown = new PointerEvent('pointerdown', {
+                        clientX: rect.left + cx, clientY: rect.top + cy,
+                        button: 2, buttons: 2, bubbles: true, pointerId: 9998
+                    });
+                    var evMove = new PointerEvent('pointermove', {
+                        clientX: rect.left + cx + deltaX, clientY: rect.top + cy + deltaY,
+                        button: 2, buttons: 2, bubbles: true, pointerId: 9998
+                    });
+                    var evUp = new PointerEvent('pointerup', {
+                        clientX: rect.left + cx + deltaX, clientY: rect.top + cy + deltaY,
+                        button: 2, buttons: 0, bubbles: true, pointerId: 9998
+                    });
+                    cvs.dispatchEvent(evDown);
+                    cvs.dispatchEvent(evMove);
+                    cvs.dispatchEvent(evUp);
+                }
+            } catch (e) {
+                console.warn('molstarTranslate error:', e);
+            }
+        }
+
+        // ============================================
+        // VIEWER INITIALIZATION
+        // ============================================
+        async function initViewer() {
+            viewer = PhonosViewer.create('viewer-canvas', {
+                hideControls: true,
+                sequencePanel: false,
+                focusPanel: false,
+                bgColor: { r: 9, g: 9, b: 11 }
+            });
+            window._phonosViewer = viewer;
+
+            try {
+                const projects = await fetch('/api/projects').then(r => r.json());
+                const select = document.getElementById('structure-select');
+
+                for (const project of projects) {
+                    const [jobs, files] = await Promise.all([
+                        fetch('/api/projects/' + project.id + '/jobs').then(r => r.json()),
+                        fetch('/api/projects/' + project.id + '/files').then(r => r.json())
+                    ]);
+
+                    const completedJobs = jobs.filter(j => j.status === 'completed');
+                    completedJobs.forEach(job => {
+                        const option = document.createElement('option');
+                        option.value = job.job_id;
+                        option.textContent = project.name + ' - ' + (job.name || job.job_id);
+                        option.dataset.projectName = project.name;
+                        option.dataset.jobName = job.name || job.job_id;
+                        option.dataset.type = 'job';
+                        option.dataset.format = 'pdb';
+                        select.appendChild(option);
+                    });
+
+                    const molecularFiles = files.filter(f => {
+                        const ext = (f.filename || '').split('.').pop().toLowerCase();
+                        return MOLECULAR_EXTENSIONS.indexOf(ext) !== -1;
+                    });
+
+                    molecularFiles.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file.id;
+                        option.textContent = project.name + ' - ' + file.filename;
+                        option.dataset.projectName = project.name;
+                        option.dataset.jobName = file.filename;
+                        option.dataset.type = file.type === 'upload' ? 'file' : 'job';
+                        const ext = (file.filename || '').split('.').pop().toLowerCase();
+                        option.dataset.format = ext === 'mmcif' ? 'cif' : ext;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading structures:', error);
+                updateStatus('Error loading structures', 'error');
+            }
+
+            // Wire up hover events from PhonosViewer (replaces 3Dmol setHoverable)
+            viewer.on('hover', function(e) {
+                var detail = e.detail;
+                if (detail && detail.residueName) {
+                    showAtomTooltip({
+                        resn: detail.residueName || '',
+                        resi: detail.residueNumber || '',
+                        atom: detail.atomName || '',
+                        elem: detail.element || '',
+                        chain: detail.chainId || detail.authAsymId || 'A'
+                    });
+                } else {
+                    hideAtomTooltip();
+                }
+            });
+        }
+
+        // ============================================
+        // MEDIAPIPE HAND TRACKING
+        // ============================================
+        async function initHandTracking() {
+            updateStatus('Initializing MediaPipe...', 'warning');
+
+            try {
+                hands = new Hands({
+                    locateFile: file => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + file
+                });
+
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: CONFIG.confidenceMin,
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults(onHandResults);
+
+                updateStatus('Hand tracking ready');
+                document.getElementById('loading-overlay').classList.add('hidden');
+            } catch (error) {
+                console.error('MediaPipe init error:', error);
+                updateStatus('Failed to initialize hand tracking', 'error');
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+
+        function onHandResults(results) {
+            const canvasEl = document.getElementById('camera-canvas');
+            const ctx = canvasEl.getContext('2d');
+            const videoEl = document.getElementById('camera-video');
+
+            canvasEl.width = videoEl.videoWidth;
+            canvasEl.height = videoEl.videoHeight;
+
+            ctx.save();
+            ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+            // Update FPS
+            trackingState.frameCount++;
+            const now = Date.now();
+            if (now - trackingState.lastFrameTime >= 1000) {
+                document.getElementById('fps-value').textContent = trackingState.frameCount;
+                trackingState.frameCount = 0;
+                trackingState.lastFrameTime = now;
+            }
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                // Draw landmarks with custom styling
+                for (const landmarks of results.multiHandLandmarks) {
+                    // Draw connections with gradient
+                    drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+                        color: '#10b981',
+                        lineWidth: 3
+                    });
+
+                    // Draw landmarks
+                    drawLandmarks(ctx, landmarks, {
+                        color: '#34d399',
+                        lineWidth: 1,
+                        radius: 4
+                    });
+
+                    // Highlight fingertips
+                    [4, 8, 12, 16, 20].forEach(idx => {
+                        const tip = landmarks[idx];
+                        ctx.beginPath();
+                        ctx.arc(tip.x * canvasEl.width, tip.y * canvasEl.height, 6, 0, 2 * Math.PI);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fill();
+                    });
+                }
+
+                // Calculate confidence from hand score
+                const confidence = Math.min(100, Math.round((results.multiHandedness?.[0]?.score || 0.5) * 100));
+                trackingState.gestureConfidence = confidence;
+                document.getElementById('confidence-value').textContent = confidence + '%';
+                document.getElementById('confidence-fill').style.width = confidence + '%';
+                document.getElementById('confidence-display').textContent = confidence + '%';
+
+                updateHandStatus(true, results.multiHandLandmarks.length);
+                processGestures(results.multiHandLandmarks);
+            } else {
+                updateHandStatus(false);
+                resetTrackingState();
+            }
+
+            ctx.restore();
+        }
+
+        function processGestures(handsData) {
+            if (!viewer) return;
+
+            const sensitivity = parseFloat(document.getElementById('sensitivity').value);
+            const smoothing = parseFloat(document.getElementById('smoothing').value);
+            const mirror = document.getElementById('mirror-controls').checked;
+
+            if (handsData.length === 2) {
+                processTwoHandGesture(handsData, sensitivity);
+            } else if (handsData.length === 1) {
+                const hand = handsData[0];
+                const gesture = detectGesture(hand);
+
+                // Gesture debouncing
+                const now = Date.now();
+                if (gesture !== trackingState.currentGesture) {
+                    if (now - trackingState.lastGestureTime > CONFIG.gestureDebounce) {
+                        trackingState.currentGesture = gesture;
+                        trackingState.lastGestureTime = now;
+                        updateGestureIndicator(gesture);
+                    }
+                } else {
+                    trackingState.lastGestureTime = now;
+                }
+
+                // Apply gesture based on mode
+                const activeGesture = trackingState.currentGesture;
+
+                if (gestureMode === 'all' || gestureMode === 'rotate') {
+                    if (activeGesture === 'open') {
+                        processRotation(hand, sensitivity, smoothing, mirror);
+                    }
+                }
+
+                if (gestureMode === 'all' || gestureMode === 'zoom') {
+                    if (activeGesture === 'pinch') {
+                        processZoom(hand, sensitivity, smoothing);
+                    }
+                }
+
+                if (gestureMode === 'all' || gestureMode === 'pan') {
+                    if (activeGesture === 'fist') {
+                        processPan(hand, sensitivity, smoothing, mirror);
+                    }
+                }
+            }
+        }
+
+        function detectGesture(landmarks) {
+            const thumbTip = landmarks[4];
+            const indexTip = landmarks[8];
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+
+            const indexBase = landmarks[5];
+            const middleBase = landmarks[9];
+            const ringBase = landmarks[13];
+            const pinkyBase = landmarks[17];
+
+            // Pinch detection
+            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+            if (pinchDist < CONFIG.pinchThreshold) {
+                return 'pinch';
+            }
+
+            // Finger extension detection
+            const indexExt = indexTip.y < indexBase.y;
+            const middleExt = middleTip.y < middleBase.y;
+            const ringExt = ringTip.y < ringBase.y;
+            const pinkyExt = pinkyTip.y < pinkyBase.y;
+
+            const extendedCount = [indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
+
+            // Fist detection
+            if (extendedCount === 0) {
+                return 'fist';
+            }
+
+            // Open hand detection
+            if (extendedCount >= 3) {
+                return 'open';
+            }
+
+            return 'partial';
+        }
+
+        function processRotation(hand, sensitivity, smoothing, mirror) {
+            if (!modelData) return;
+
+            const wrist = hand[0];
+            const current = { x: wrist.x, y: wrist.y };
+
+            // Apply smoothing
+            trackingState.smoothPosition.x = trackingState.smoothPosition.x * smoothing + current.x * (1 - smoothing);
+            trackingState.smoothPosition.y = trackingState.smoothPosition.y * smoothing + current.y * (1 - smoothing);
+
+            if (trackingState.lastPosition) {
+                let deltaX = (trackingState.smoothPosition.x - trackingState.lastPosition.x) * sensitivity * 250;
+                let deltaY = (trackingState.smoothPosition.y - trackingState.lastPosition.y) * sensitivity * 250;
+
+                // Apply dead zone
+                if (Math.abs(deltaX) < CONFIG.deadZone * 100) deltaX = 0;
+                if (Math.abs(deltaY) < CONFIG.deadZone * 100) deltaY = 0;
+
+                if (mirror) deltaX = -deltaX;
+
+                if (deltaX !== 0 || deltaY !== 0) {
+                    molstarRotate(deltaX, deltaY);
+                }
+            }
+
+            trackingState.lastPosition = { ...trackingState.smoothPosition };
+            trackingState.lastPinchDist = null;
+        }
+
+        function processZoom(hand, sensitivity, smoothing) {
+            if (!modelData) return;
+
+            const thumbTip = hand[4];
+            const indexTip = hand[8];
+            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+            if (trackingState.lastPinchDist !== null) {
+                const delta = (pinchDist - trackingState.lastPinchDist) * sensitivity * 40;
+
+                if (Math.abs(delta) > CONFIG.deadZone) {
+                    molstarZoom(1 + delta * (1 - smoothing));
+                }
+            }
+
+            trackingState.lastPinchDist = pinchDist;
+            trackingState.lastPosition = null;
+        }
+
+        function processPan(hand, sensitivity, smoothing, mirror) {
+            if (!modelData) return;
+
+            const wrist = hand[0];
+            const current = { x: wrist.x, y: wrist.y };
+
+            trackingState.smoothPosition.x = trackingState.smoothPosition.x * smoothing + current.x * (1 - smoothing);
+            trackingState.smoothPosition.y = trackingState.smoothPosition.y * smoothing + current.y * (1 - smoothing);
+
+            if (trackingState.lastPosition) {
+                let deltaX = (trackingState.smoothPosition.x - trackingState.lastPosition.x) * sensitivity * 180;
+                let deltaY = (trackingState.smoothPosition.y - trackingState.lastPosition.y) * sensitivity * 180;
+
+                if (Math.abs(deltaX) < CONFIG.deadZone * 100) deltaX = 0;
+                if (Math.abs(deltaY) < CONFIG.deadZone * 100) deltaY = 0;
+
+                if (mirror) deltaX = -deltaX;
+
+                if (deltaX !== 0 || deltaY !== 0) {
+                    molstarTranslate(deltaX, -deltaY);
+                }
+            }
+
+            trackingState.lastPosition = { ...trackingState.smoothPosition };
+            trackingState.lastPinchDist = null;
+        }
+
+        function processTwoHandGesture(handsData, sensitivity) {
+            if (!modelData) return;
+
+            const h1 = handsData[0][0];
+            const h2 = handsData[1][0];
+            const dist = Math.hypot(h2.x - h1.x, h2.y - h1.y);
+
+            if (trackingState.lastTwoHandDist !== null) {
+                const delta = (dist - trackingState.lastTwoHandDist) * sensitivity * 25;
+                if (Math.abs(delta) > CONFIG.deadZone) {
+                    molstarZoom(1 + delta);
+                }
+            }
+
+            trackingState.lastTwoHandDist = dist;
+            trackingState.currentGesture = 'two-hands';
+            updateGestureIndicator('two-hands');
+        }
+
+        function resetTrackingState() {
+            trackingState.currentGesture = 'none';
+            trackingState.lastPosition = null;
+            trackingState.lastPinchDist = null;
+            trackingState.lastTwoHandDist = null;
+            trackingState.gestureConfidence = 0;
+            document.getElementById('confidence-value').textContent = '--%';
+            document.getElementById('confidence-fill').style.width = '0%';
+            document.getElementById('confidence-display').textContent = '0%';
+            updateGestureIndicator('none');
+        }
+
+        function updateHandStatus(detected, count) {
+            const el = document.getElementById('hand-status');
+            const text = document.getElementById('hand-status-text');
+
+            if (detected) {
+                el.classList.remove('inactive');
+                text.textContent = count === 1 ? '1 hand' : count + ' hands';
+            } else {
+                el.classList.add('inactive');
+                text.textContent = isCameraActive ? 'No hands' : 'Camera off';
+            }
+        }
+
+        function updateGestureIndicator(gesture) {
+            const iconEl = document.getElementById('current-gesture-icon');
+            const labelEl = document.getElementById('current-gesture-label');
+            const subEl = document.getElementById('current-gesture-sublabel');
+
+            const gestures = {
+                'none': { icon: '\u{1F44B}', label: 'Waiting', sub: 'Show your hand' },
+                'open': { icon: '\u270B', label: 'Rotating', sub: 'Move hand to rotate' },
+                'pinch': { icon: '\u{1F90F}', label: 'Zooming', sub: 'Pinch to zoom' },
+                'fist': { icon: '\u270A', label: 'Panning', sub: 'Move to pan' },
+                'partial': { icon: '\u{1F590}', label: 'Partial', sub: 'Extend fingers' },
+                'two-hands': { icon: '\u{1F450}', label: 'Scaling', sub: 'Move hands apart/together' }
+            };
+
+            const g = gestures[gesture] || gestures['none'];
+            iconEl.textContent = g.icon;
+            labelEl.textContent = g.label;
+            subEl.textContent = g.sub;
+        }
+
+        // ============================================
+        // CAMERA CONTROLS
+        // ============================================
+        async function toggleCamera() {
+            const btn = document.getElementById('toggle-camera-btn');
+            const btnText = document.getElementById('camera-btn-text');
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-video');
+            const dot = document.getElementById('camera-dot');
+            const statusLabel = document.getElementById('camera-status-label');
+
+            if (!isCameraActive) {
+                try {
+                    btnText.textContent = 'Starting...';
+                    container.style.display = 'block';
+                    statusLabel.textContent = 'Requesting camera...';
+
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                    });
+
+                    video.srcObject = stream;
+                    await video.play();
+
+                    camera = new Camera(video, {
+                        onFrame: async () => {
+                            if (hands) await hands.send({ image: video });
+                        },
+                        width: 640,
+                        height: 480
+                    });
+
+                    await camera.start();
+
+                    isCameraActive = true;
+                    btnText.textContent = 'Stop Camera';
+                    btn.classList.remove('primary');
+                    btn.classList.add('danger');
+                    dot.classList.add('active');
+                    statusLabel.textContent = 'Tracking';
+                    updateStatus('Hand tracking active');
+                    updateHandStatus(false);
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    container.style.display = 'none';
+                    btnText.textContent = 'Start Camera';
+                    updateStatus('Camera access denied', 'error');
+                    alert('Could not access camera. Please allow camera permissions.');
+                }
+            } else {
+                if (camera) camera.stop();
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(t => t.stop());
+                }
+
+                isCameraActive = false;
+                container.style.display = 'none';
+                btnText.textContent = 'Start Camera';
+                btn.classList.add('primary');
+                btn.classList.remove('danger');
+                updateStatus('Camera stopped');
+                updateHandStatus(false);
+                resetTrackingState();
+            }
+        }
+
+        function toggleCameraSize() {
+            document.getElementById('camera-container').classList.toggle('minimized');
+        }
+
+        function toggleGestureGuide() {
+            const guide = document.getElementById('gesture-guide');
+            const checkbox = document.getElementById('show-gesture-guide');
+            guide.classList.toggle('visible', checkbox.checked);
+        }
+
+        function setGestureMode(mode) {
+            gestureMode = mode;
+            document.querySelectorAll('.gesture-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+
+        // Slider updates
+        document.getElementById('sensitivity').addEventListener('input', e => {
+            document.getElementById('sensitivity-value').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('smoothing').addEventListener('input', e => {
+            document.getElementById('smoothing-value').textContent = e.target.value;
+        });
+
+        // ============================================
+        // STRUCTURE LOADING
+        // ============================================
+        async function loadStructure() {
+            const select = document.getElementById('structure-select');
+            const id = select.value;
+
+            if (!id) {
+                alert('Please select a structure first');
+                return;
+            }
+
+            updateStatus('Loading structure...', 'warning');
+
+            try {
+                const option = select.options[select.selectedIndex];
+                const type = option.dataset.type || 'job';
+                const format = option.dataset.format || 'pdb';
+
+                let structureData;
+
+                if (type === 'file') {
+                    const response = await fetch('/download_file/' + id + '?view=true');
+                    if (!response.ok) throw new Error('Failed to load file');
+                    structureData = await response.text();
+                } else {
+                    const response = await fetch('/api/jobs/' + id + '/output_content', {
+                        headers: { 'X-CSRF-Token': window.PHONOS_CONFIG?.csrfToken || '' }
+                    });
+                    if (!response.ok) {
+                        const err = await response.json().catch(() => ({}));
+                        throw new Error(err.message || 'Failed to load job output');
+                    }
+                    const data = await response.json();
+                    structureData = data.content;
+                }
+
+                modelData = structureData;
+                modelFormat = format;
+
+                // Load structure via PhonosViewer
+                viewer.loadData(structureData, format);
+
+                // Update UI
+                document.getElementById('structure-name').textContent = option.dataset.jobName || 'Structure';
+                document.getElementById('structure-meta').textContent = option.dataset.projectName || '';
+                document.getElementById('no-structure-placeholder').style.display = 'none';
+
+                // Atom count is not directly available from PhonosViewer;
+                // estimate from raw data (count ATOM/HETATM lines for PDB format)
+                var atomCount = estimateAtomCount(structureData, format);
+                if (atomCount > 0) {
+                    document.getElementById('atom-count').style.display = 'flex';
+                    document.getElementById('atom-count-text').textContent = atomCount + ' atoms';
+                }
+
+                // Apply the chosen color scheme
+                applyCurrentStyle();
+
+                updateStatus('Structure loaded');
+
+            } catch (error) {
+                console.error('Load error:', error);
+                updateStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadSampleStructure() {
+            updateStatus('Loading sample...', 'warning');
+
+            try {
+                // Load sample PDB via PhonosViewer (RCSB by PDB ID)
+                viewer.loadPdb('1crn');
+                modelData = '1crn';
+                modelFormat = 'pdb';
+
+                document.getElementById('structure-name').textContent = 'Crambin (1CRN)';
+                document.getElementById('structure-meta').textContent = 'Sample protein';
+                document.getElementById('no-structure-placeholder').style.display = 'none';
+
+                // Crambin has 327 atoms
+                document.getElementById('atom-count').style.display = 'flex';
+                document.getElementById('atom-count-text').textContent = '327 atoms';
+
+                applyCurrentStyle();
+                updateStatus('Sample structure loaded');
+
+            } catch (error) {
+                console.error('Sample load error:', error);
+                updateStatus('Failed to load sample', 'error');
+            }
+        }
+
+        // Estimate atom count from raw structure data
+        function estimateAtomCount(data, format) {
+            if (!data) return 0;
+            if (format === 'pdb' || format === 'mol' || format === 'mol2' || format === 'sdf' || format === 'xyz') {
+                // Count ATOM and HETATM records for PDB-like formats
+                var lines = data.split('\n');
+                var count = 0;
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    if (line.indexOf('ATOM') === 0 || line.indexOf('HETATM') === 0) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+            if (format === 'cif' || format === 'mmcif') {
+                // Count _atom_site rows (lines starting with ATOM or HETATM in mmCIF)
+                var cifLines = data.split('\n');
+                var cifCount = 0;
+                for (var j = 0; j < cifLines.length; j++) {
+                    var cl = cifLines[j];
+                    if (cl.indexOf('ATOM') === 0 || cl.indexOf('HETATM') === 0) {
+                        cifCount++;
+                    }
+                }
+                return cifCount;
+            }
+            return 0;
+        }
+
+        // ============================================
+        // STYLE & DISPLAY
+        // ============================================
+        function setStyle(style) {
+            currentStyle = style;
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.style === style);
+            });
+            applyCurrentStyle();
+        }
+
+        function applyCurrentStyle() {
+            if (!viewer || !modelData) return;
+            if (viewer.setVisualStyle) {
+                viewer.setVisualStyle(currentStyle);
+            }
+
+            // Map legacy color scheme names to PhonosViewer coloring methods
+            // PhonosViewer handles representations declaratively via Mol*
+            // so we map the style+color combo to the best PhonosViewer equivalent
+            if (currentColorScheme === 'chain') {
+                viewer.applyChainColoring();
+            } else {
+                // For spectrum, ss, residue, element: use default Mol* coloring
+                viewer.applyDefaultColoring();
+            }
+        }
+
+        function applyColorScheme() {
+            currentColorScheme = document.getElementById('color-scheme').value;
+            applyCurrentStyle();
+        }
+
+        function setBackground(el) {
+            // Parse hex color to RGB for PhonosViewer.setBgColor
+            var hex = el.dataset.bg || '#09090b';
+            var rgb = hexToRgb(hex);
+            viewer.setBgColor(rgb.r, rgb.g, rgb.b);
+            document.querySelectorAll('.color-swatch').forEach(s => {
+                s.classList.toggle('active', s === el);
+            });
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            }
+            return {
+                r: parseInt(hex.substring(0, 2), 16),
+                g: parseInt(hex.substring(2, 4), 16),
+                b: parseInt(hex.substring(4, 6), 16)
+            };
+        }
+
+        function toggleSpin() {
+            isSpinning = document.getElementById('spin-model').checked;
+            viewer.toggleSpin(isSpinning);
+        }
+
+        function resetView() {
+            if (viewer && modelData) {
+                viewer.resetView();
+            }
+        }
+
+        function takeScreenshot() {
+            if (viewer) {
+                // PhonosViewer.screenshot() handles the download internally
+                viewer.screenshot();
+            }
+        }
+
+        // ============================================
+        // UI HELPERS
+        // ============================================
+        function showAtomTooltip(atom) {
+            var tooltip = document.getElementById('atom-tooltip');
+            document.getElementById('atom-tooltip-title').textContent = (atom.resn || '') + ' ' + (atom.resi || '');
+            document.getElementById('atom-tooltip-detail').textContent = (atom.atom || '') + (atom.elem ? ' (' + atom.elem + ')' : '');
+            document.getElementById('atom-tooltip-chain').textContent = 'Chain ' + (atom.chain || 'A');
+            tooltip.classList.add('visible');
+            document.addEventListener('mousemove', positionTooltip);
+        }
+
+        function hideAtomTooltip() {
+            document.getElementById('atom-tooltip').classList.remove('visible');
+            document.removeEventListener('mousemove', positionTooltip);
+        }
+
+        function positionTooltip(e) {
+            const tooltip = document.getElementById('atom-tooltip');
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+        }
+
+        function togglePanel(header) {
+            header.closest('.panel').classList.toggle('collapsed');
+        }
+
+        function updateStatus(text, type) {
+            document.getElementById('status-text').textContent = text;
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = 'status-indicator';
+            if (type === 'error') indicator.classList.add('error');
+            else if (type === 'warning') indicator.classList.add('warning');
+        }
+
+        // Mobile sidebar
+        function initMobileSidebar() {
+            const toggle = document.getElementById('mobile-sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            if (!toggle || !sidebar) return;
+
+            toggle.addEventListener('click', () => {
+                const isOpen = sidebar.classList.toggle('open');
+                toggle.classList.toggle('active', isOpen);
+                overlay.classList.toggle('active', isOpen);
+                document.body.classList.toggle('sidebar-open', isOpen);
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                toggle.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+            if (e.key === 'r' || e.key === 'R') resetView();
+            if (e.key === 's' || e.key === 'S') takeScreenshot();
+            if (e.key === 'c' || e.key === 'C') toggleCamera();
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initViewer();
+            await initHandTracking();
+            initMobileSidebar();
+        });
+    </script>
+</body>
+</html>

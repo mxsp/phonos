@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="publicProfile.pageTitle">{{ user.username }} - Phonos</title>    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div style="padding: var(--space-6); max-width: 900px; margin: 0 auto;">
+        <a href="{{ url_for('public_projects') }}" class="btn btn-ghost" style="margin-bottom: var(--space-4);" data-i18n="community.backToCommunity">
+            &larr; Back to Community
+        </a>
+
+        <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-body">
+                <div class="flex items-center gap-4" style="margin-bottom: var(--space-4);">
+                    <div class="avatar avatar-xl">
+                        {% if user.profile_picture_url %}
+                        {% set pic_url = user.profile_picture_url %}
+                        {% if not pic_url.startswith('http') %}
+                            {% set pic_url = '/uploads/' + pic_url.lstrip('/') %}
+                        {% endif %}
+                        <img src="{{ pic_url }}" alt="{{ user.username }}">
+                        {% else %}
+                        {{ user.username[0].upper() }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2>{{ user.username }}</h2>
+                        {% if user.company %}
+                        <p class="text-muted">{{ user.company }}</p>
+                        {% elif user.university %}
+                        <p class="text-muted">{{ user.university }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if settings.bio %}
+                <p class="text-secondary" style="margin-bottom: var(--space-4);">{{ settings.bio }}</p>
+                {% endif %}
+
+                <div class="flex gap-4">
+                    <div>
+                        <span class="text-2xl font-bold">{{ total_projects }}</span>
+                        <span class="text-sm text-muted" data-i18n="community.projects">projects</span>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold">{{ total_views }}</span>
+                        <span class="text-sm text-muted" data-i18n="community.views">views</span>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold">{{ total_votes }}</span>
+                        <span class="text-sm text-muted" data-i18n="community.votes">votes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: var(--space-4);" data-i18n="community.publicProjects">Public Projects</h3>
+
+        {% if projects %}
+        <div class="grid grid-2">
+            {% for project in projects %}
+            <div class="project-card">
+                <div class="project-card-header">
+                    <h4 class="project-card-title">{{ project.name }}</h4>
+                </div>
+                <p class="project-card-description">{% if project.description %}{{ project.description }}{% else %}<span data-i18n="public.noDescription">No description</span>{% endif %}</p>
+                <div class="project-card-meta">
+                    <span>{{ project.view_count }} <span data-i18n="community.views">views</span></span>
+                    <span>{{ project.vote_score }} <span data-i18n="community.votes">votes</span></span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p class="text-muted" data-i18n="community.noPublicProjects">No public projects yet</p>
+        </div>
+        {% endif %}
+    </div>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

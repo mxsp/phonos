@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Runtime Level Configuration Schema",
+  "description": "Validation schemas for each backend_type's encrypted config",
+  "definitions": {
+    "local_docker": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "remote_docker": {
+      "type": "object",
+      "required": ["host", "port"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "tls_cert": { "type": "string" },
+        "tls_key": { "type": "string" },
+        "tls_ca": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ssh": {
+      "type": "object",
+      "required": ["host", "username"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 22 },
+        "username": { "type": "string", "minLength": 1 },
+        "key_path": { "type": "string" },
+        "docker_socket": { "type": "string", "default": "/var/run/docker.sock" }
+      },
+      "additionalProperties": false
+    },
+    "kubernetes": {
+      "type": "object",
+      "required": ["namespace", "image"],
+      "properties": {
+        "kubeconfig": { "type": "string" },
+        "namespace": { "type": "string", "minLength": 1 },
+        "image": { "type": "string", "minLength": 1 },
+        "service_account": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "remote_ssh": {
+      "type": "object",
+      "required": ["subdomain", "worker_id"],
+      "properties": {
+        "subdomain": {
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.fyreflysystems\\.de$"
+        },
+        "worker_id": { "type": "string", "minLength": 1, "maxLength": 63 },
+        "ssh_user": { "type": "string", "default": "root" },
+        "ssh_port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 22 },
+        "ssh_key_path": { "type": "string" },
+        "tunnel_network": { "type": "string", "default": "10.242.0.0/24" },
+        "worker_tunnel_ip": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "wolfram_service": {
+      "type": "object",
+      "required": ["service_url"],
+      "properties": {
+        "service_url": { "type": "string", "minLength": 1 },
+        "kernel": { "type": "string", "minLength": 1, "default": "wolframscript" },
+        "use_cloud": { "type": "boolean", "default": true },
+        "timeout": { "type": "integer", "minimum": 1, "maximum": 600, "default": 60 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

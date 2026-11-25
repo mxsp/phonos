@@ -1,0 +1,33 @@
+# Phonos worker systemd unit TEMPLATE.
+#
+# The __PHONOS_*__ tokens are placeholders. Do not install this file directly;
+# render it for the target host first. setup_new_workers.sh does this
+# automatically, or do it manually, e.g.:
+#
+#   sed -e "s|__PHONOS_USER__|$(id -un)|g" \
+#       -e "s|__PHONOS_GROUP__|$(id -gn)|g" \
+#       -e "s|__PHONOS_DIR__|$HOME/phonos|g" \
+#       -e "s|__PHONOS_PYTHON__|$(command -v python3.11 || command -v python3)|g" \
+#       phonos-new-workers.service | sudo tee /etc/systemd/system/phonos-new-workers.service
+[Unit]
+Description=Phonos New NVIDIA API Workers
+After=network.target
+
+[Service]
+Type=simple
+User=__PHONOS_USER__
+Group=__PHONOS_GROUP__
+WorkingDirectory=__PHONOS_DIR__
+Environment=PYTHONPATH=__PHONOS_DIR__/production
+Environment=PHONOS_DIR=__PHONOS_DIR__
+EnvironmentFile=-__PHONOS_DIR__/.env
+ExecStart=__PHONOS_PYTHON__ __PHONOS_DIR__/scripts/utils/deploy_new_workers.py deploy
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=180
+Restart=always
+RestartSec=30
+SyslogIdentifier=phonos-workers
+
+[Install]
+WantedBy=multi-user.target

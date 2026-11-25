@@ -1,0 +1,11 @@
+{#
+  Reciprocal hreflang + self-referencing canonical for bilingual (en/de) pages
+  that are served at a single URL via content negotiation (see _render_legal in
+  routes/pages.py). `lang` is the language actually rendered for this request.
+  This tells Google the page exists in two languages and which URL serves each,
+  preventing the de/en variants from being treated as duplicate content.
+#}
+<link rel="canonical" href="{{ url_for(request.endpoint, _external=True, lang=lang) }}">
+<link rel="alternate" hreflang="en" href="{{ url_for(request.endpoint, _external=True, lang='en') }}">
+<link rel="alternate" hreflang="de" href="{{ url_for(request.endpoint, _external=True, lang='de') }}">
+<link rel="alternate" hreflang="x-default" href="{{ url_for(request.endpoint, _external=True) }}">

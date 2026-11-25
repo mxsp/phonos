@@ -1,0 +1,47 @@
+{# Evo2 job output — Sequence tab. Rendered by static/js/evo2_output.js from #evo2-data. #}
+<div class="evo2-view" id="evo2-sequence">
+    <div class="evo2-toolbar">
+        <div class="evo2-seg" role="radiogroup" aria-label="Colour bases by">
+            {% if evo2_view.has_probs %}
+            <button type="button" role="radio" data-color="prob" aria-checked="true" data-i18n="viewOutput.evo2.colorProb">Probability</button>
+            {% endif %}
+            <button type="button" role="radio" data-color="base" aria-checked="{{ 'false' if evo2_view.has_probs else 'true' }}" data-i18n="viewOutput.evo2.colorBase">Base</button>
+            <button type="button" role="radio" data-color="none" aria-checked="false" data-i18n="viewOutput.evo2.colorNone">Plain</button>
+        </div>
+        <div class="evo2-find">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="evo2-motif" placeholder="Find motif, e.g. ATG" data-i18n-placeholder="viewOutput.evo2.findPlaceholder" spellcheck="false" autocomplete="off" maxlength="60">
+            <span id="evo2-motif-count" class="evo2-find-count" aria-live="polite"></span>
+            <button type="button" class="btn btn-secondary btn-sm" id="evo2-motif-prev" aria-label="Previous match" disabled>‹</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="evo2-motif-next" aria-label="Next match" disabled>›</button>
+        </div>
+        <div class="evo2-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="Evo2View.copy('full')" data-i18n="viewOutput.evo2.copyAll">Copy all</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="Evo2View.copy('generated')" data-i18n="viewOutput.evo2.copyGenerated">Copy generated</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="Evo2View.downloadFasta('full')" data-i18n="viewOutput.evo2.downloadFasta">Download FASTA</button>
+        </div>
+    </div>
+
+    <div class="evo2-legend evo2-legend-row" id="evo2-legend-prob" aria-hidden="true">
+        {% if evo2_view.stats.seed_length %}<span><i class="evo2-swatch evo2-seed-swatch"></i><span data-i18n="viewOutput.evo2.seedInput">seed (your input)</span></span>{% endif %}
+        <span><i class="evo2-swatch evo2-bin-0"></i>&lt;30%</span>
+        <span><i class="evo2-swatch evo2-bin-1"></i>30–50%</span>
+        <span><i class="evo2-swatch evo2-bin-2"></i>50–80%</span>
+        <span><i class="evo2-swatch evo2-bin-3"></i>≥80%</span>
+    </div>
+    <div class="evo2-legend evo2-legend-row" id="evo2-legend-base" aria-hidden="true" hidden>
+        {% if evo2_view.stats.seed_length %}<span><i class="evo2-swatch evo2-seed-swatch"></i><span data-i18n="viewOutput.evo2.seedInput">seed (your input)</span></span>{% endif %}
+        <span><b class="evo2-nt-text-A">A</b></span><span><b class="evo2-nt-text-C">C</b></span>
+        <span><b class="evo2-nt-text-G">G</b></span><span><b class="evo2-nt-text-T">T</b></span>
+    </div>
+
+    {% if evo2_view.has_probs %}
+    <canvas id="evo2-strip" class="evo2-strip" height="14" title="Click to jump to a position"></canvas>
+    {% endif %}
+
+    <div id="evo2-seq" class="evo2-seq" data-color="{{ 'prob' if evo2_view.has_probs else 'base' }}" tabindex="0" aria-label="Sequence"></div>
+
+    <div class="evo2-info" id="evo2-info" aria-live="polite">
+        <span class="evo2-info-empty" data-i18n="viewOutput.evo2.infoHint">Hover or click a base to see its position and probability.</span>
+    </div>
+</div>

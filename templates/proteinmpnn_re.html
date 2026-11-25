@@ -1,0 +1,339 @@
+{% extends "_configure_base.html" %}
+{% from "partials/_model_badges.html" import runs_at with context %}
+
+{% block model_id %}proteinmpnn-re{% endblock %}
+
+{% block title_i18n %}proteinmpnn.title{% endblock %}
+{% block page_title_text %}Phonos - ProteinMPNN Sequence Design{% endblock %}
+
+{% block head_extra %}
+<style>
+.seq-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.seq-tab { padding: 6px 14px; border-radius: var(--r-ui, 0px); border: 1px solid var(--cfg-border); background: transparent; color: var(--cfg-text-3); font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.seq-tab.active { background: var(--cfg-accent-bg); border-color: var(--cfg-accent); color: var(--cfg-accent); }
+.seq-block { background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); padding: 14px; font-family: monospace; font-size: 12px; color: var(--cfg-text-2); word-break: break-all; line-height: 1.8; min-height: 80px; }
+.seq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.seq-item { background: var(--cfg-bg); border: 1px solid var(--cfg-border); border-radius: var(--r-ui, 0px); padding: 12px 14px; }
+.seq-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.seq-item-label { font-size: 12px; font-weight: 600; color: var(--cfg-text-2); }
+.seq-item-score { font-size: 11px; color: var(--cfg-success); font-weight: 600; }
+.seq-text { font-family: monospace; font-size: 11px; color: var(--cfg-text-3); word-break: break-all; line-height: 1.6; }
+</style>
+{% endblock %}
+
+{% block model_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>{% endblock %}
+{% block model_name %}<span data-i18n="proteinmpnn.heading">ProteinMPNN Sequence Design</span>{% endblock %}
+{% block model_tagline %}<span data-i18n="proteinmpnn.subheading">Deep learning-based protein sequence design from backbone structure</span>{% endblock %}
+{% block header_badge %}{{ runs_at('proteinmpnn-re') }}{% endblock %}
+{% block credits %}{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header"><h2 data-i18n="proteinmpnn.inputs">Input Structure</h2></div>
+                    <div class="card-body">
+                        <form id="design-form">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="proteinmpnn.pdbStructure">Protein Structure (PDB)</label>
+                                <div class="input-tabs">
+                                    <button type="button" class="tab-btn active" id="tab-paste" data-i18n="proteinmpnn.pastePdb">Paste PDB</button>
+                                    <button type="button" class="tab-btn" id="tab-upload" data-i18n="proteinmpnn.uploadFile">Upload File</button>
+                                </div>
+                                <div id="pdb-paste-area">
+                                    <textarea id="pdb-input" class="form-textarea" data-i18n-placeholder="proteinmpnn.pdbPlaceholder" placeholder="Paste PDB file content here...&#10;ATOM      1  N   MET A   1      ..."></textarea>
+                                </div>
+                                <div id="pdb-upload-area" style="display:none;">
+                                    <input type="file" id="pdb-file" accept=".pdb" class="form-input" style="padding:8px;">
+                                </div>
+                                <div class="form-hint" data-i18n="proteinmpnn.pdbHint">ProteinMPNN designs sequences compatible with the given backbone.</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="num-seqs" data-i18n="proteinmpnn.numSeqs">Sequences to Design</label>
+                                <input type="number" id="num-seqs" class="form-input" value="10" min="1" max="100">
+                                <div class="form-hint" data-i18n="proteinmpnn.numSeqsHint">Number of sequence variants to generate (1-100).</div>
+                            </div>
+
+                            <div class="status-bar" id="status-bar">
+                                <div class="status-dot idle" id="status-dot"></div>
+                                <span id="status-text" style="color:#71717a;" data-i18n="common.ready">Ready</span>
+                            </div>
+
+                            <button type="submit" class="btn-primary" id="submit-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>
+                                <span data-i18n="proteinmpnn.design">Design Sequences</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 data-i18n="proteinmpnn.designedSeqs">Designed Sequences</h2>
+                        <div id="header-actions" style="display:none;">
+                            <button class="download-btn" onclick="downloadFasta()">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span data-i18n="proteinmpnn.downloadFasta">Download FASTA</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="empty-state" style="text-align:center;padding:40px 0;color:#52525b;">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.4;"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>
+                            <div style="font-size:14px;" data-i18n="proteinmpnn.placeholder">Provide a PDB structure to design sequences</div>
+                        </div>
+
+                        <div id="results-content" style="display:none;">
+                            <div class="viewer-container">
+                                <div id="structure-viewer" data-phonos-viewer></div>
+                                <div class="viewer-placeholder" id="viewer-placeholder">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;opacity:0.4;"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44"/></svg>
+                                    <span style="font-size:13px;" data-i18n="proteinmpnn.viewerLabel">Structure viewer</span>
+                                </div>
+                                <div class="viewer-controls" id="viewer-controls" style="display:none;">
+                                    <button class="viewer-btn" onclick="resetView()" data-i18n="common.reset">Reset</button>
+                                    <button class="viewer-btn" onclick="toggleSpin()" data-i18n="common.spin">Spin</button>
+                                </div>
+                            </div>
+
+                            <div class="metrics-row" id="metrics-row"></div>
+
+                            <div style="font-size:13px;font-weight:600;color:#a1a1aa;margin-top:4px;margin-bottom:10px;" data-i18n="proteinmpnn.designedSeqs">Designed Sequences</div>
+                            <div class="seq-list" id="seq-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+    (function() {
+        var allSequences = [];
+        var taskId = null;
+        var pollTimer = null;
+
+        function getCsrf() {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
+        }
+
+        function setStatus(state, msg) {
+            var dot = document.getElementById('status-dot');
+            var text = document.getElementById('status-text');
+            dot.className = 'status-dot ' + state;
+            text.textContent = msg;
+            text.style.color = state === 'error' ? '#ef4444' : state === 'success' ? '#10b981' : '#a1a1aa';
+        }
+
+        function clearChildren(el) {
+            while (el.firstChild) { el.removeChild(el.firstChild); }
+        }
+
+        document.getElementById('tab-paste').addEventListener('click', function() {
+            document.getElementById('tab-paste').className = 'tab-btn active';
+            document.getElementById('tab-upload').className = 'tab-btn';
+            document.getElementById('pdb-paste-area').style.display = '';
+            document.getElementById('pdb-upload-area').style.display = 'none';
+        });
+        document.getElementById('tab-upload').addEventListener('click', function() {
+            document.getElementById('tab-upload').className = 'tab-btn active';
+            document.getElementById('tab-paste').className = 'tab-btn';
+            document.getElementById('pdb-paste-area').style.display = 'none';
+            document.getElementById('pdb-upload-area').style.display = '';
+        });
+
+        document.getElementById('design-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var pdbText = document.getElementById('pdb-input').value.trim();
+            var fileInput = document.getElementById('pdb-file');
+            var numSeqs = parseInt(document.getElementById('num-seqs').value) || 10;
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            setStatus('running', i18n.t('jobs.submitting') || 'Submitting job...');
+
+            function doSubmit(pdb) {
+                if (!pdb) { setStatus('error', i18n.t('errors.pdb_required') || 'Please provide a protein PDB'); btn.disabled = false; return; }
+
+                loadViewerFromPdb(pdb);
+
+                fetch('/api/proteinmpnn-re/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                    body: JSON.stringify({ input_pdb: pdb, num_seqs: numSeqs })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) { throw new Error(data.message || data.error); }
+                    if (data.task_id) {
+                        taskId = data.task_id;
+                        setStatus('running', i18n.t('proteinmpnn.designing') || 'Designing sequences...');
+                        pollStatus();
+                    } else {
+                        handleResult(data);
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function(err) { setStatus('error', (i18n.t('common.error') || 'Error') + ': ' + err.message); btn.disabled = false; });
+            }
+
+            if (fileInput.files && fileInput.files[0]) {
+                var fr = new FileReader();
+                fr.onload = function(ev) { doSubmit(ev.target.result); };
+                fr.readAsText(fileInput.files[0]);
+            } else {
+                doSubmit(pdbText);
+            }
+        });
+
+        function pollStatus() {
+            if (!taskId) { return; }
+            pollTimer = setInterval(function() {
+                fetch('/api/proteinmpnn-re/status/' + encodeURIComponent(taskId), { headers: { 'X-CSRF-Token': getCsrf() } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.status === 'completed' || data.status === 'done') {
+                        clearInterval(pollTimer);
+                        handleResult(data);
+                        document.getElementById('submit-btn').disabled = false;
+                    } else if (data.status === 'failed' || data.status === 'error') {
+                        clearInterval(pollTimer);
+                        setStatus('error', 'Design failed: ' + (data.error || 'Unknown error'));
+                        document.getElementById('submit-btn').disabled = false;
+                    }
+                })
+                .catch(function(err) { clearInterval(pollTimer); setStatus('error', 'Poll error: ' + err.message); document.getElementById('submit-btn').disabled = false; });
+            }, 3000);
+        }
+
+        function parseFasta(fastaText) {
+            var sequences = [];
+            if (!fastaText || typeof fastaText !== 'string') { return sequences; }
+            var lines = fastaText.split('\n');
+            var currentSeq = null;
+            lines.forEach(function(line) {
+                line = line.trim();
+                if (line.startsWith('>')) {
+                    if (currentSeq) { sequences.push(currentSeq); }
+                    currentSeq = { header: line.substring(1), sequence: '' };
+                } else if (currentSeq && line) {
+                    currentSeq.sequence += line;
+                }
+            });
+            if (currentSeq) { sequences.push(currentSeq); }
+            return sequences;
+        }
+
+        function handleResult(data) {
+            var mfasta = data.mfasta || data.fasta || data.sequences || '';
+            var scores = data.scores || [];
+            var sequences = parseFasta(mfasta);
+
+            if (!sequences.length && mfasta) {
+                sequences = [{ header: 'Designed', sequence: mfasta }];
+            }
+
+            allSequences = sequences;
+
+            if (!sequences.length) {
+                setStatus('error', 'No sequences returned');
+                document.getElementById('submit-btn').disabled = false;
+                return;
+            }
+
+            buildMetrics(sequences, scores);
+            buildSeqList(sequences, scores);
+
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('results-content').style.display = '';
+            document.getElementById('header-actions').style.display = '';
+            setStatus('success', sequences.length + ' sequence(s) designed');
+        }
+
+        function buildMetrics(sequences, scores) {
+            var row = document.getElementById('metrics-row');
+            clearChildren(row);
+            var numDesigned = sequences.length;
+            var avgLen = sequences.length ? Math.round(sequences.reduce(function(a,s){return a+s.sequence.length;},0)/sequences.length) : 0;
+            var avgScore = scores.length ? (scores.reduce(function(a,b){return a+b;},0)/scores.length).toFixed(3) : 'N/A';
+            [
+                { val: String(numDesigned), label: 'Sequences Designed' },
+                { val: String(avgLen) + ' aa', label: 'Avg Length' },
+                { val: String(avgScore), label: 'Avg Score', color: '#10b981' }
+            ].forEach(function(m) {
+                var card = document.createElement('div');
+                card.className = 'metric-card';
+                var v = document.createElement('div');
+                v.className = 'metric-value';
+                v.textContent = m.val;
+                if (m.color) { v.style.color = m.color; }
+                var l = document.createElement('div');
+                l.className = 'metric-label';
+                l.textContent = m.label;
+                card.appendChild(v);
+                card.appendChild(l);
+                row.appendChild(card);
+            });
+        }
+
+        function buildSeqList(sequences, scores) {
+            var list = document.getElementById('seq-list');
+            clearChildren(list);
+            sequences.slice(0, 50).forEach(function(seq, i) {
+                var item = document.createElement('div');
+                item.className = 'seq-item';
+                var header = document.createElement('div');
+                header.className = 'seq-item-header';
+                var label = document.createElement('div');
+                label.className = 'seq-item-label';
+                label.textContent = seq.header || ('Sequence ' + (i+1));
+                header.appendChild(label);
+                if (scores[i] !== undefined) {
+                    var scoreEl = document.createElement('div');
+                    scoreEl.className = 'seq-item-score';
+                    scoreEl.textContent = 'score: ' + parseFloat(scores[i]).toFixed(3);
+                    header.appendChild(scoreEl);
+                }
+                var text = document.createElement('div');
+                text.className = 'seq-text';
+                text.textContent = seq.sequence;
+                item.appendChild(header);
+                item.appendChild(text);
+                list.appendChild(item);
+            });
+        }
+
+        function loadViewerFromPdb(pdb) {
+            document.getElementById('viewer-placeholder').style.display = 'none';
+            document.getElementById('viewer-controls').style.display = '';
+            if (window._phonosViewer) { window._phonosViewer.destroy(); }
+            window._phonosViewer = PhonosViewer.create('structure-viewer', {
+                hideControls: true,
+                sequencePanel: false
+            });
+            window._phonosViewer.loadData(pdb, 'pdb');
+        }
+
+        window.resetView = function() { if (window._phonosViewer) { window._phonosViewer.resetView(); } };
+        window.toggleSpin = function() { if (window._phonosViewer) { window._phonosViewer.toggleSpin(); } };
+        window.downloadFasta = function() {
+            if (!allSequences.length) { return; }
+            var lines = [];
+            allSequences.forEach(function(seq) {
+                lines.push('>' + seq.header);
+                lines.push(seq.sequence);
+            });
+            var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'proteinmpnn_sequences.fasta';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    })();
+    </script>
+{% endblock %}

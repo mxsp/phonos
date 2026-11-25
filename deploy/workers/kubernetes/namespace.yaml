@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: phonos-workers
+  labels:
+    app.kubernetes.io/name: phonos
+    app.kubernetes.io/component: workers

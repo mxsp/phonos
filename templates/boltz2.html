@@ -1,0 +1,649 @@
+{% extends "_configure_base.html" %}
+
+{% block model_id %}type-9{% endblock %}
+
+{% block title_i18n %}boltz2.title{% endblock %}
+{% block page_title_text %}Phonos - Boltz2 Structure Prediction{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/file-upload-preview.css') }}?v=54e85791">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* db-source toggle — de-ambered to accent (class-based now, not inline) */
+.db-source-btn { flex: 1; padding: 8px 12px; background: var(--cfg-bg); border: 1px solid var(--cfg-border-2); border-radius: var(--r-ui, 0px); color: var(--cfg-text-2); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.db-source-btn.active { background: var(--cfg-accent); border-color: var(--cfg-accent); color: #fff; }
+/* Boltz2-unique components (recolored to --cfg-* tokens) */
+.badge-primary { background: var(--cfg-accent-bg-15); border: 1px solid var(--cfg-accent); color: var(--cfg-accent-light); }
+.badge-success { background: var(--cfg-success-bg); border: 1px solid var(--cfg-success); color: var(--cfg-success); }
+.btn-block { width: 100%; }
+.status-message { padding: 16px; border-radius: var(--r-ui, 0px); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+.status-message.info { background: var(--cfg-accent-bg); border: 1px solid var(--cfg-accent); color: var(--cfg-accent-light); }
+.status-message.success { background: var(--cfg-success-bg); border: 1px solid var(--cfg-success); color: var(--cfg-success); }
+.status-message.error { background: var(--cfg-error-bg); border: 1px solid var(--cfg-error); color: var(--cfg-error); }
+.mode-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.mode-toggle-label { font-size: 12px; color: var(--cfg-text-3); font-weight: 500; }
+.smiles-example-btn { padding: 4px 10px; background: var(--cfg-border); border: 1px solid var(--cfg-border-2); border-radius: var(--r-ui, 0px); color: var(--cfg-text-2); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.smiles-example-btn:hover { border-color: var(--cfg-accent); color: var(--cfg-text); }
+.ligand-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
+.ligand-grid::-webkit-scrollbar { width: 6px; }
+.ligand-grid::-webkit-scrollbar-track { background: var(--cfg-bg); }
+.ligand-grid::-webkit-scrollbar-thumb { background: var(--cfg-border-2); border-radius: var(--r-ui, 0px); }
+.ligand-grid::-webkit-scrollbar-thumb:hover { background: var(--cfg-text-4); }
+.ligand-option { padding: 8px 10px; background: var(--cfg-bg); border: 1px solid var(--cfg-border-2); border-radius: var(--r-ui, 0px); cursor: pointer; transition: all 0.2s; text-align: center; }
+.ligand-option:hover { border-color: var(--cfg-accent); }
+.ligand-option.selected { border-color: var(--cfg-accent); background: var(--cfg-accent-bg); }
+.ligand-code { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.ligand-name { font-size: 10px; color: var(--cfg-text-3); }
+.ligand-option.selected .ligand-name { color: rgba(255,255,255,0.8); }
+.ligand-cat-btn { padding: 6px 12px; background: var(--cfg-bg); border: 1px solid var(--cfg-border-2); border-radius: var(--r-ui, 0px); color: var(--cfg-text-2); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.ligand-cat-btn:hover { border-color: var(--cfg-accent); color: var(--cfg-text); }
+.ligand-cat-btn.active { background: var(--cfg-accent); border-color: var(--cfg-accent); color: #fff; }
+</style>
+{% endblock %}
+
+{% block model_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>{% endblock %}
+
+{% block model_name %}<span data-i18n="boltz2.title">Boltz2 Structure Prediction</span>{% endblock %}
+{% block model_tagline %}<span data-i18n="boltz2.pageSubtitle">Predict 3D structures for proteins, DNA, RNA, and complexes with ligands</span>{% endblock %}
+
+{% block header_badge %}<span class="badge badge-primary">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span data-i18n="models.creditsPerRun" data-i18n-options='{"count": {{ model_cost("type-9") }}}'>{{ model_cost("type-9") }} credits/run</span>
+                </span>{% endblock %}
+
+{% block credits %}<div class="credits-display">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 6px;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span id="user-credits">{{ user_credits }}</span> <span data-i18n="boltz2.credits">Credits</span>
+                </div>{% endblock %}
+
+{% block input_sidebar %}
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <span data-i18n="boltz2.inputConfig">Input Configuration</span>
+                        </h2>
+                        <p data-i18n="boltz2.inputSubtitle">Configure your structure prediction parameters</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="prediction-form">
+                            <!-- Molecule Type -->
+                            <div class="form-group">
+                                <label class="form-label"><span data-i18n="boltz2.moleculeType">Molecule Type</span> <span class="required">*</span></label>
+                                <div class="tabs">
+                                    <button type="button" class="tab-button active" data-type="protein" data-i18n="boltz2.protein">Protein</button>
+                                    <button type="button" class="tab-button" data-type="dna" data-i18n="boltz2.dna">DNA</button>
+                                    <button type="button" class="tab-button" data-type="rna" data-i18n="boltz2.rna">RNA</button>
+                                </div>
+                                <input type="hidden" id="molecule-type" value="protein">
+                            </div>
+
+                            <!-- Sequence Input -->
+                            <div class="form-group">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <label class="form-label" for="sequence" style="margin-bottom: 0;">
+                                        <span id="sequence-label" data-i18n="boltz2.proteinSequence">Protein Sequence</span> <span class="required">*</span>
+                                    </label>
+                                    <div class="mode-switch" id="mode-switch">
+                                        <button type="button" class="mode-switch-btn active" data-mode="monomer" data-i18n="boltz2.monomer">Monomer</button>
+                                        <button type="button" class="mode-switch-btn" data-mode="multimer" data-i18n="boltz2.multimer">Multimer</button>
+                                        <button type="button" class="mode-switch-btn" data-mode="batch" data-i18n="boltz2.batch">Batch</button>
+                                    </div>
+                                </div>
+
+                                <!-- Monomer Mode (default) -->
+                                <div id="monomer-input">
+                                    <div id="boltz2-sequence-dropzone-container" style="margin-bottom: 12px;"></div>
+                                    <textarea
+                                        id="sequence"
+                                        class="form-textarea"
+                                        placeholder="Enter amino acid sequence (e.g., MKFLKFSLLT...) or drag-and-drop FASTA file above&#10;&#10;Supports FASTA format (headers will be stripped)"
+                                        data-i18n-placeholder="boltz2.sequencePlaceholder"
+                                        required
+                                    ></textarea>
+                                    <div class="form-hint" id="sequence-hint" data-i18n="boltz2.sequenceHint">
+                                        Standard amino acids only (ACDEFGHIKLMNPQRSTVWY). Max 4096 residues. Supports FASTA format.
+                                    </div>
+                                </div>
+
+                                <!-- Multimer Mode -->
+                                <div id="multimer-input" class="hidden">
+                                    <div class="multimer-info">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="12" y1="16" x2="12" y2="12"/>
+                                            <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.multimerInfo">Define multiple chains for a single complex prediction. Max 12 chains, 4096 residues each.</span>
+                                    </div>
+                                    <div id="chains-container">
+                                        <!-- Chain entries will be added here by JS -->
+                                    </div>
+                                    <button type="button" class="add-chain-btn" id="add-chain-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.addChain">Add Chain</span>
+                                    </button>
+                                </div>
+
+                                <!-- Batch Mode -->
+                                <div id="batch-input" class="hidden">
+                                    <div class="multimer-info" style="background: rgba(13, 148, 136, 0.08); border-color: rgba(13, 148, 136, 0.2); color: #5eead4;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.batchInfo">Upload multiple structures for batch processing. Supports Multi-FASTA or CSV.</span>
+                                    </div>
+                                    <div id="batch-items-container">
+                                        <!-- Batch structures will be added here by JS -->
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                                        <button type="button" class="add-chain-btn" id="add-batch-item-btn" style="flex: 1;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                            </svg>
+                                            <span data-i18n="boltz2.addStructure">Add Structure</span>
+                                        </button>
+                                        <button type="button" class="add-chain-btn" id="upload-batch-btn" style="flex: 1; border-style: solid;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="17 8 12 3 7 8"/>
+                                                <line x1="12" y1="3" x2="12" y2="15"/>
+                                            </svg>
+                                            <span data-i18n="boltz2.uploadFile">Upload CSV/FASTA</span>
+                                        </button>
+                                        <input type="file" id="batch-file-input" class="hidden" accept=".fasta,.fa,.csv,.txt">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ligand Configuration -->
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="boltz2.addLigand">Add Ligand (Optional)</label>
+                                <div class="tabs">
+                                    <button type="button" class="tab-button active" data-ligand="none" data-i18n="boltz2.none">None</button>
+                                    <button type="button" class="tab-button" data-ligand="ccd" data-i18n="boltz2.commonLigands">Common Ligands</button>
+                                    <button type="button" class="tab-button" data-ligand="smiles" data-i18n="boltz2.smiles">SMILES</button>
+                                    <button type="button" class="tab-button" data-ligand="database" data-i18n="boltz2.database">Database</button>
+                                </div>
+                            </div>
+
+                            <!-- Pocket Constraints -->
+                            <div id="pocket-constraints-section" class="form-group hidden">
+                                <label class="form-label">Pocket Constraints (Optional)</label>
+                                <div style="background: rgba(13, 148, 136, 0.05); border: 1px solid rgba(13, 148, 136, 0.1); border-radius: var(--r-ui, 0px); padding: 12px;">
+                                    <p style="font-size: 11px; color: #71717a; margin-bottom: 8px;">Define residues that form the binding pocket to guide the prediction.</p>
+                                    <input type="text" id="pocket-residues" class="form-input" placeholder="e.g. A:12, A:15, B:42" style="font-size: 12px;">
+                                    <div class="form-hint">Format: Chain:ResidueIndex (comma separated)</div>
+                                </div>
+                            </div>
+
+                            <!-- Common Ligands Panel -->
+                            <div id="ligand-ccd-panel" class="hidden form-group">
+                                <label class="form-label" data-i18n="boltz2.selectLigand">Select Ligand</label>
+
+                                <!-- Search/Filter -->
+                                <div style="margin-bottom: 12px;">
+                                    <input
+                                        type="text"
+                                        id="ligand-search"
+                                        class="form-input"
+                                        placeholder="Search ligands by name or code..."
+                                        data-i18n-placeholder="boltz2.searchLigands"
+                                        style="background: #09090b;"
+                                    >
+                                </div>
+
+                                <!-- Category Tabs -->
+                                <div class="ligand-categories" style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                                    <button type="button" class="ligand-cat-btn active" data-category="all" data-i18n="boltz2.all">All</button>
+                                    <button type="button" class="ligand-cat-btn" data-category="nucleotides" data-i18n="boltz2.nucleotides">Nucleotides</button>
+                                    <button type="button" class="ligand-cat-btn" data-category="cofactors" data-i18n="boltz2.cofactors">Cofactors</button>
+                                    <button type="button" class="ligand-cat-btn" data-category="metal-ions" data-i18n="boltz2.metalIons">Metal Ions</button>
+                                    <button type="button" class="ligand-cat-btn" data-category="drugs" data-i18n="boltz2.commonDrugs">Common Drugs</button>
+                                </div>
+
+                                <div class="ligand-grid" id="ligand-grid"></div>
+                                <input type="hidden" id="ligand-ccd" value="">
+
+                                <!-- Ligand Count -->
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                                    <label class="form-label" style="margin: 0; white-space: nowrap;" data-i18n="boltz2.ligandCopies">Ligand Copies:</label>
+                                    <input
+                                        type="number"
+                                        id="ligand-count"
+                                        class="form-input"
+                                        value="1"
+                                        min="1"
+                                        max="10"
+                                        style="width: 80px; text-align: center;"
+                                    >
+                                    <span class="form-hint" style="margin: 0;" data-i18n="boltz2.ligandCopiesHint">Number of ligand molecules to include</span>
+                                </div>
+                            </div>
+
+                            <!-- SMILES Input Panel -->
+                            <div id="ligand-smiles-panel" class="hidden form-group">
+                                <label class="form-label" for="ligand-smiles-input"><span data-i18n="boltz2.smilesString">SMILES String</span> <span class="required">*</span></label>
+                                <input
+                                    type="text"
+                                    id="ligand-smiles-input"
+                                    class="form-input"
+                                    placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O (Aspirin)"
+                                    data-i18n-placeholder="boltz2.smilesPlaceholder"
+                                >
+                                <div class="form-hint"><span data-i18n="boltz2.smilesHint">Enter SMILES notation for custom ligand.</span> <a href="https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system" target="_blank" style="color: var(--accent-primary);" data-i18n="boltz2.learnAboutSmiles">Learn about SMILES</a></div>
+
+                                <!-- Common SMILES Examples -->
+                                <div style="margin-top: 12px;">
+                                    <label class="form-label" style="font-size: 11px;" data-i18n="boltz2.quickExamples">Quick Examples:</label>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                        <button type="button" class="smiles-example-btn" data-smiles="CC(=O)OC1=CC=CC=C1C(=O)O" data-name="Aspirin" data-i18n="boltz2.aspirin">Aspirin</button>
+                                        <button type="button" class="smiles-example-btn" data-smiles="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O" data-name="Ibuprofen" data-i18n="boltz2.ibuprofen">Ibuprofen</button>
+                                        <button type="button" class="smiles-example-btn" data-smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C" data-name="Caffeine" data-i18n="boltz2.caffeine">Caffeine</button>
+                                        <button type="button" class="smiles-example-btn" data-smiles="CC(=O)NC1=CC=C(C=C1)O" data-name="Acetaminophen" data-i18n="boltz2.acetaminophen">Acetaminophen</button>
+                                    </div>
+                                </div>
+
+                                <!-- Ligand Count for SMILES -->
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                                    <label class="form-label" style="margin: 0; white-space: nowrap;" data-i18n="boltz2.ligandCopies">Ligand Copies:</label>
+                                    <input
+                                        type="number"
+                                        id="ligand-smiles-count"
+                                        class="form-input"
+                                        value="1"
+                                        min="1"
+                                        max="10"
+                                        style="width: 80px; text-align: center;"
+                                    >
+                                </div>
+
+                                <!-- Load SDF/MOL ligand from a project (converted to SMILES) -->
+                                <div class="cfg-loader">
+                                    <label class="cfg-loader-label" data-i18n="boltz2.loadSdfFromProject">…or load an SDF / MOL from a project</label>
+                                    <div class="cfg-loader-row">
+                                        <select id="boltz2-ligand-project" class="form-select">
+                                            <option value="">Select project…</option>
+                                        </select>
+                                        <select id="boltz2-ligand-file" class="form-select" disabled>
+                                            <option value="">Select file…</option>
+                                        </select>
+                                    </div>
+                                    <div id="boltz2-ligand-convert-status" class="cfg-loader-status">Converted to SMILES automatically (RDKit).</div>
+                                </div>
+                            </div>
+
+                            <!-- Database Search Panel -->
+                            <div id="ligand-database-panel" class="hidden form-group">
+                                <label class="form-label" data-i18n="boltz2.searchPublicDatabases">Search Public Databases</label>
+
+                                <!-- Database Source Tabs -->
+                                <div class="database-source-tabs" style="display: flex; gap: 6px; margin-bottom: 12px;">
+                                    <button type="button" class="db-source-btn active" data-source="pubchem" data-i18n="boltz2.pubchem">PubChem</button>
+                                    <button type="button" class="db-source-btn" data-source="chembl" data-i18n="boltz2.chembl">ChEMBL</button>
+                                </div>
+
+                                <!-- Search Input -->
+                                <div style="position: relative; margin-bottom: 12px;">
+                                    <input
+                                        type="text"
+                                        id="ligand-db-search"
+                                        class="form-input"
+                                        placeholder="Search by compound name (e.g., Aspirin, Ibuprofen)..."
+                                        data-i18n-placeholder="boltz2.dbSearchPlaceholder"
+                                        style="padding-right: 90px;"
+                                    >
+                                    <button type="button" id="ligand-db-search-btn" style="position: absolute; right: 4px; top: 4px; bottom: 4px; padding: 0 16px; background: var(--accent-primary); border: none; border-radius: var(--r-ui, 0px); color: white; font-size: 12px; font-weight: 500; cursor: pointer;" data-i18n="boltz2.search">Search</button>
+                                </div>
+
+                                <!-- Search Results -->
+                                <div id="ligand-db-results" style="max-height: 280px; overflow-y: auto; border: 1px solid #27272a; border-radius: var(--r-ui, 0px); background: #09090b;">
+                                    <div style="padding: 40px 20px; text-align: center; color: #71717a; font-size: 13px;">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; display: block; opacity: 0.5;">
+                                            <circle cx="11" cy="11" r="8"/>
+                                            <path d="M21 21l-4.35-4.35"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.dbSearchHint">Search for compounds to find their SMILES structure</span>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Compound Info -->
+                                <div id="ligand-db-selected" class="hidden" style="margin-top: 12px; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--r-ui, 0px);">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; font-weight: 600; color: #10b981;" data-i18n="boltz2.selectedCompound">Selected Compound</span>
+                                        <button type="button" id="clear-db-selection" style="padding: 4px 8px; background: transparent; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--r-ui, 0px); color: #10b981; font-size: 11px; cursor: pointer;" data-i18n="boltz2.clear">Clear</button>
+                                    </div>
+                                    <div id="db-selected-name" style="font-size: 14px; color: #fafafa; margin-bottom: 4px;"></div>
+                                    <div id="db-selected-smiles" style="font-size: 11px; color: #71717a; font-family: monospace; word-break: break-all;"></div>
+                                </div>
+
+                                <!-- Ligand Count for Database -->
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                                    <label class="form-label" style="margin: 0; white-space: nowrap;" data-i18n="boltz2.ligandCopies">Ligand Copies:</label>
+                                    <input
+                                        type="number"
+                                        id="ligand-db-count"
+                                        class="form-input"
+                                        value="1"
+                                        min="1"
+                                        max="10"
+                                        style="width: 80px; text-align: center;"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- Advanced Parameters -->
+                            <details class="cfg-advanced" id="advanced-params" open>
+                                <summary class="cfg-advanced-summary">
+                                    <span class="cfg-advanced-summary-label">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3"/>
+                                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.advancedParameters">Advanced Parameters</span>
+                                    </span>
+                                    <svg class="cfg-advanced-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </summary>
+                                <div class="cfg-advanced-body">
+
+                                <!-- Cyclic Peptide Toggle -->
+                                <div id="cyclic-group">
+                                    <label class="cfg-toggle-card">
+                                        <input type="checkbox" id="cyclic-peptide">
+                                        <span>
+                                            <strong class="cfg-toggle-title" data-i18n="boltz2.cyclicPeptide">Cyclic Peptide</strong>
+                                            <span class="cfg-toggle-desc" data-i18n="boltz2.cyclicPeptideHint">Enable for cyclic/circular peptides</span>
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <!-- Without Potentials Toggle -->
+                                <label class="cfg-toggle-card">
+                                    <input type="checkbox" id="without-potentials">
+                                    <span>
+                                        <strong class="cfg-toggle-title" data-i18n="boltz2.disablePotentials">Disable Potentials</strong>
+                                        <span class="cfg-toggle-desc" data-i18n="boltz2.disablePotentialsHint">Skip potential calculations (faster but less accurate)</span>
+                                    </span>
+                                </label>
+
+                                <!-- Write Full PAE Toggle -->
+                                <label class="cfg-toggle-card">
+                                    <input type="checkbox" id="write-full-pae">
+                                    <span>
+                                        <strong class="cfg-toggle-title" data-i18n="boltz2.fullPaeMatrix">Full PAE Matrix</strong>
+                                        <span class="cfg-toggle-desc" data-i18n="boltz2.fullPaeMatrixHint">Include full Predicted Aligned Error matrix in output</span>
+                                    </span>
+                                </label>
+
+                                <!-- Concatenate MSAs Toggle -->
+                                <label class="cfg-toggle-card">
+                                    <input type="checkbox" id="concatenate-msas">
+                                    <span>
+                                        <strong class="cfg-toggle-title" data-i18n="boltz2.concatenateMsas">Concatenate MSAs</strong>
+                                        <span class="cfg-toggle-desc" data-i18n="boltz2.concatenateMsasHint">Merge multiple sequence alignments across chains</span>
+                                    </span>
+                                </label>
+
+                                <!-- Chain ID -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                                    <div>
+                                        <label class="form-label" for="chain-id" style="font-size: 12px;" data-i18n="boltz2.chainId">Chain ID</label>
+                                        <input type="text" id="chain-id" class="form-input" value="A" maxlength="2" style="text-transform: uppercase;">
+                                        <div class="form-hint" data-i18n="boltz2.chainIdHint">Identifier for the main chain</div>
+                                    </div>
+                                    <div id="ligand-id-group" class="hidden">
+                                        <label class="form-label" for="ligand-id" style="font-size: 12px;" data-i18n="boltz2.ligandId">Ligand ID</label>
+                                        <input type="text" id="ligand-id" class="form-input" value="L" maxlength="2" style="text-transform: uppercase;">
+                                        <div class="form-hint" data-i18n="boltz2.ligandIdHint">Identifier for the ligand</div>
+                                    </div>
+                                </div>
+
+                                <div class="slider-group" style="margin-top: 16px;">
+                                    <div class="slider-header">
+                                        <span class="slider-label" data-i18n="boltz2.recyclingSteps">Recycling Steps</span>
+                                        <span class="slider-value" id="recycling-value">1</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="recycling-steps"
+                                        class="slider"
+                                        min="1" max="6" value="1" step="1"
+                                    >
+                                    <div class="form-hint" data-i18n="boltz2.recyclingStepsHint">Refinement iterations for better accuracy (1-6)</div>
+                                </div>
+
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label" data-i18n="boltz2.samplingSteps">Sampling Steps</span>
+                                        <span class="slider-value" id="sampling-value">50</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="sampling-steps"
+                                        class="slider"
+                                        min="10" max="1000" value="50" step="10"
+                                    >
+                                    <div class="form-hint" data-i18n="boltz2.samplingStepsHint">Diffusion sampling iterations (10-1000). Higher = better quality, slower.</div>
+                                </div>
+
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label" data-i18n="boltz2.diffusionSamples">Diffusion Samples</span>
+                                        <span class="slider-value" id="diffusion-value">3</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="diffusion-samples"
+                                        class="slider"
+                                        min="1" max="5" value="3" step="1"
+                                    >
+                                    <div class="form-hint" data-i18n="boltz2.diffusionSamplesHint">Number of independent structure models (1-5)</div>
+                                </div>
+
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label" data-i18n="boltz2.stepScale">Step Scale</span>
+                                        <span class="slider-value" id="step-scale-value">1.2</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="step-scale"
+                                        class="slider"
+                                        min="0.5" max="5.0" value="1.2" step="0.1"
+                                    >
+                                    <div class="form-hint" data-i18n="boltz2.stepScaleHint">Scaling factor for diffusion steps (0.5-5.0).</div>
+                                </div>
+                                <!-- Binding Affinity (inline; shown when a ligand is selected) -->
+                                <div class="hidden cfg-advanced-divider" id="affinity-params">
+                                    <div class="form-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                                        </svg>
+                                        <span data-i18n="boltz2.bindingAffinity">Binding Affinity</span>
+                                        <span class="badge badge-primary" style="font-size: 10px;" data-i18n="boltz2.ligandRequired">Ligand Required</span>
+                                    </div>
+
+                                <!-- Predict Affinity Toggle -->
+                                <label class="cfg-toggle-card">
+                                    <input type="checkbox" id="predict-affinity">
+                                    <span>
+                                        <strong class="cfg-toggle-title" data-i18n="boltz2.predictBindingAffinity">Predict Binding Affinity</strong>
+                                        <span class="cfg-toggle-desc" data-i18n="boltz2.predictBindingAffinityHint">Calculate ligand binding affinity (requires more compute time)</span>
+                                    </span>
+                                </label>
+
+                                <div id="affinity-sub-params" class="hidden cfg-subparams">
+                                    <div class="slider-group">
+                                        <div class="slider-header">
+                                            <span class="slider-label" data-i18n="boltz2.affinitySamplingSteps">Affinity Sampling Steps</span>
+                                            <span class="slider-value" id="affinity-sampling-value">200</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            id="affinity-sampling-steps"
+                                            class="slider"
+                                            min="10" max="1000" value="200" step="10"
+                                        >
+                                        <div class="form-hint" data-i18n="boltz2.affinitySamplingStepsHint">Sampling steps for affinity calculation (10-1000)</div>
+                                    </div>
+
+                                    <div class="slider-group">
+                                        <div class="slider-header">
+                                            <span class="slider-label" data-i18n="boltz2.affinitySamples">Affinity Samples</span>
+                                            <span class="slider-value" id="affinity-samples-value">5</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            id="affinity-samples"
+                                            class="slider"
+                                            min="1" max="10" value="5" step="1"
+                                        >
+                                        <div class="form-hint" data-i18n="boltz2.affinitySamplesHint">Independent samples for affinity (1-10)</div>
+                                    </div>
+
+                                    <label class="checkbox-item" style="margin-top: 12px;">
+                                        <input type="checkbox" id="affinity-mw-correction">
+                                        <span data-i18n="boltz2.applyMwCorrection">Apply molecular weight correction</span>
+                                    </label>
+                                </div>
+                                </div>
+                                </div>
+                            </details>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                </svg>
+                                <span data-i18n="boltz2.predictStructure">Predict Structure</span>
+                            </button>
+                        </form>
+
+                        <!-- Example Sequences -->
+                        <div class="form-group" style="margin-top: 24px;">
+                            <label class="form-label" data-i18n="boltz2.quickExamplesTitle">Quick Examples</label>
+                            <div class="examples-grid">
+                                <div class="example-card" data-example="insulin">
+                                    <div class="example-title" data-i18n="boltz2.exampleInsulin">Insulin Chain A</div>
+                                    <div class="example-desc" data-i18n="boltz2.exampleInsulinDesc">Small protein (21 aa)</div>
+                                </div>
+                                <div class="example-card" data-example="insulin-atp">
+                                    <div class="example-title" data-i18n="boltz2.exampleInsulinAtp">Protein + ATP</div>
+                                    <div class="example-desc" data-i18n="boltz2.exampleInsulinAtpDesc">With ligand binding</div>
+                                </div>
+                                <div class="example-card" data-example="dna">
+                                    <div class="example-title" data-i18n="boltz2.exampleDna">DNA Sequence</div>
+                                    <div class="example-desc" data-i18n="boltz2.exampleDnaDesc">12 base pairs</div>
+                                </div>
+                                <div class="example-card" data-example="insulin-complex">
+                                    <div class="example-title" data-i18n="boltz2.exampleInsulinComplex">Insulin Complex</div>
+                                    <div class="example-desc" data-i18n="boltz2.exampleInsulinComplexDesc">Multimer (A+B chains)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block viewer_panel %}
+            <div>
+                <div id="result-panel" class="hidden">
+                    <div class="result-container">
+                        <!-- 3D Viewer -->
+                        <div class="viewer-container">
+                            <div id="structure-viewer"></div>
+                            <div class="viewer-controls">
+                                <button class="viewer-btn" onclick="resetView()" data-i18n="boltz2.resetView">Reset View</button>
+                                <button class="viewer-btn" onclick="downloadStructure()" data-i18n="boltz2.downloadCif">Download CIF</button>
+                                <button class="viewer-btn" onclick="toggleConfidenceLegend()" data-i18n="boltz2.toggleLegend">Toggle Legend</button>
+                            </div>
+                        </div>
+
+                        <!-- Metrics -->
+                        <div class="metrics-grid" id="metrics-grid">
+                            <!-- Metrics will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Per-Residue Confidence Chart -->
+                        <div id="confidence-chart-panel" class="hidden" style="padding: 20px; border-top: 1px solid #27272a;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h4 style="font-size: 14px; font-weight: 600; color: #fafafa; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                    <span data-i18n="boltz2.plddtConfidence">Per-Residue Confidence (pLDDT)</span>
+                                </h4>
+                                <span id="confidence-avg-label" style="font-size: 12px; color: #71717a;"></span>
+                            </div>
+                            <div style="height: 220px; position: relative; width: 100%;">
+                                <canvas id="plddt-chart"></canvas>
+                            </div>
+                            <!-- Heatmap Strip -->
+                            <div style="height: 16px; width: 100%; position: relative; border-radius: var(--r-ui, 0px); overflow: hidden; margin: 12px 0 8px 0;">
+                                <canvas id="plddt-heatmap" height="16" style="width: 100%; height: 100%; display: block;"></canvas>
+                            </div>
+                            <!-- Legend -->
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #71717a;">
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #0053D6; border-radius: var(--r-ui, 0px); display: inline-block;"></span><span data-i18n="boltz2.veryHigh">Very High (&ge;90)</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #65CBF3; border-radius: var(--r-ui, 0px); display: inline-block;"></span><span data-i18n="boltz2.high">High (70-89)</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #FFDB13; border-radius: var(--r-ui, 0px); display: inline-block;"></span><span data-i18n="boltz2.low">Low (50-69)</span></span>
+                                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 10px; height: 10px; background: #FF7D45; border-radius: var(--r-ui, 0px); display: inline-block;"></span><span data-i18n="boltz2.veryLow">Very Low (&lt;50)</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder / Loading State -->
+                <div id="placeholder-panel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="loading-container">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #3f3f46;">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                <div style="text-align: center;">
+                                    <h3 style="font-size: 16px; color: #fafafa; margin-bottom: 8px;" data-i18n="boltz2.readyToPredict">Ready to Predict</h3>
+                                    <p style="font-size: 13px; color: #71717a;" data-i18n="boltz2.readyToPredictHint">Enter a sequence and click "Predict Structure" to begin</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-panel" class="hidden">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="loading-container">
+                                <div class="spinner"></div>
+                                <div class="loading-text" data-i18n="boltz2.predictingStructure">Predicting structure...</div>
+                                <p style="font-size: 12px; color: #52525b; text-align: center; max-width: 300px;" data-i18n="boltz2.loadingHint">
+                                    This may take 5-30 seconds depending on sequence length and complexity
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/file-upload-preview.js') }}?v=76d1aae8"></script>
+<script src="{{ url_for('static', filename='js/multimer-batch.js') }}?v=319a2091"></script>
+<script src="{{ url_for('static', filename='js/boltz2.js') }}?v=080dfa57"></script>
+{% endblock %}

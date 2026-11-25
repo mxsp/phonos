@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="trustedTester.pageTitle">Phonos - Trusted Tester Program</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_i18n_scripts.html' %}
+    <style>
+        .tt-card { max-width: 640px; }
+        .tt-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin: var(--space-4) 0; padding: 0; list-style: none; }
+        .tt-steps li { padding: var(--space-3); border: 1px solid var(--border-color, #333); border-radius: var(--r-ui, 0px); font-size: 0.875rem; opacity: 0.6; }
+        .tt-steps li.is-done, .tt-steps li.is-current { opacity: 1; }
+        .tt-steps li.is-current { border-color: var(--primary, #ff6600); }
+        .tt-steps strong { display: block; margin-bottom: var(--space-1); }
+        .tt-form label { display: block; margin: var(--space-3) 0 var(--space-1); font-weight: 500; }
+        .tt-form textarea { min-height: 120px; resize: vertical; }
+        .tt-alert { padding: var(--space-3); border-radius: var(--r-ui, 0px); margin-bottom: var(--space-4); }
+        .tt-alert--ok { background: rgba(34, 197, 94, 0.12); }
+        .tt-alert--err { background: rgba(239, 68, 68, 0.14); }
+        .tt-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+        @media (max-width: 560px) { .tt-steps { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist-legacy.css') }}?v=cdf47d51">
+</head>
+<body>
+{% set app = state.application %}
+{% set status = app.status if app else None %}
+{% set tier = state.access_tier %}
+<div class="auth-container">
+    <div class="auth-card card tt-card">
+        <div class="card-body">
+            <h1 data-i18n="trustedTester.title">Trusted Tester Program</h1>
+            <p class="text-muted" data-i18n="trustedTester.intro">
+                Trusted Testers use Phonos before it opens to everyone, tell us what breaks, and then move on to regular access.
+            </p>
+
+            <ol class="tt-steps">
+                <li class="{{ 'is-done' if status else 'is-current' }}">
+                    <strong data-i18n="trustedTester.stepApply">1 · Apply</strong>
+                    <span data-i18n="trustedTester.stepApplyText">Tell us what you want to test.</span>
+                </li>
+                <li class="{{ 'is-done' if status in ('approved', 'graduated') or tier == 'tester' else ('is-current' if status == 'pending' else '') }}">
+                    <strong data-i18n="trustedTester.stepTest">2 · Test</strong>
+                    <span data-i18n="trustedTester.stepTestText">Approved testers get access and report findings.</span>
+                </li>
+                <li class="{{ 'is-done' if status == 'graduated' else ('is-current' if status == 'approved' else '') }}">
+                    <strong data-i18n="trustedTester.stepRegular">3 · Regular access</strong>
+                    <span data-i18n="trustedTester.stepRegularText">Testers join regular access when the program ends for them.</span>
+                </li>
+            </ol>
+
+            {% if notice == 'applied' %}
+            <div class="tt-alert tt-alert--ok" role="status" data-i18n="trustedTester.applied">Application received. We will email you when it is reviewed.</div>
+            {% endif %}
+            {% if error %}
+            <div class="tt-alert tt-alert--err" role="alert">{{ error }}</div>
+            {% endif %}
+
+            {% if status == 'pending' %}
+            <p><span class="badge badge-warning" data-i18n="trustedTester.statusPending">Pending review</span></p>
+            <p data-i18n="trustedTester.pendingText">Your application is waiting for review. You will get an email and a notification as soon as it is decided.</p>
+            {% elif status == 'approved' %}
+            <p><span class="badge badge-success" data-i18n="trustedTester.statusApproved">Trusted Tester</span></p>
+            <p data-i18n="trustedTester.approvedText">You are a Trusted Tester. Please report anything that breaks or confuses you through the help desk; we move testers to regular access when their testing phase ends.</p>
+            {% elif status == 'graduated' %}
+            <p><span class="badge badge-success" data-i18n="trustedTester.statusGraduated">Regular access</span></p>
+            <p data-i18n="trustedTester.graduatedText">Thank you for testing Phonos. Your account has regular access.</p>
+            {% elif status == 'rejected' or status == 'revoked' %}
+            <p><span class="badge badge-secondary">{{ 'Not accepted' if status == 'rejected' else 'Access ended' }}</span></p>
+            {% if app.review_note %}<p class="text-muted">{{ app.review_note }}</p>{% endif %}
+            {% endif %}
+
+            {% if not status or status in ('rejected', 'revoked') %}
+            {% if tier == 'regular' and not state.gate_enabled and not status %}
+            <p class="text-muted" data-i18n="trustedTester.optInText">You already have regular access. Join as a Trusted Tester to try new features first.</p>
+            {% endif %}
+            <form class="tt-form" method="post" action="{{ url_for('trusted_tester_page_apply') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <label for="tt-motivation" data-i18n="trustedTester.motivation">What do you want to test, and why? *</label>
+                <textarea id="tt-motivation" name="motivation" class="form-input" required minlength="20" maxlength="2000">{{ form.get('motivation', '') }}</textarea>
+                <label for="tt-institution" data-i18n="trustedTester.institution">Institution or company</label>
+                <input id="tt-institution" name="institution" class="form-input" maxlength="200" value="{{ form.get('institution', '') }}">
+                <label for="tt-use-case" data-i18n="trustedTester.useCase">Main use case (e.g. docking, protein design)</label>
+                <input id="tt-use-case" name="use_case" class="form-input" maxlength="200" value="{{ form.get('use_case', '') }}">
+                <p class="text-muted" style="margin-top: var(--space-3); font-size: 0.875rem;">
+                    <span data-i18n="trustedTester.legalNote">By applying you accept the Trusted Tester terms and we process your application as described in the privacy policy.</span>
+                    <a href="{{ url_for('terms_of_service') }}" data-i18n="trustedTester.termsLink">Terms, section 2.5</a> ·
+                    <a href="{{ url_for('datenschutz') }}" data-i18n="trustedTester.privacyLink">Privacy policy, section 3.3</a>
+                </p>
+                <div class="tt-actions">
+                    <button type="submit" class="btn btn-primary" data-i18n="trustedTester.submit">Apply as Trusted Tester</button>
+                </div>
+            </form>
+            {% endif %}
+
+            <div class="tt-actions">
+                {% if tier != 'applicant' %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" data-i18n="trustedTester.toDashboard">Go to dashboard</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn btn-ghost" data-i18n="nav.logout">Log out</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

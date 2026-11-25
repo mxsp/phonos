@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    {% include '_google_analytics.html' %}
+    {% include "_i18n_scripts.html" %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title data-i18n="notebook.title">Phonos - Notebook</title>
+    <script>
+        // Mirror the csrf token into PHONOS_CONFIG for the SPA-style fetch calls
+        // (notebook.js, file-tree upload) which read window.PHONOS_CONFIG.csrfToken.
+        // Falls back to the <meta name="csrf-token"> tag below.
+        window.PHONOS_CONFIG = window.PHONOS_CONFIG || {};
+        window.PHONOS_CONFIG.csrfToken = "{{ csrf_token }}";
+        window.PHONOS_CONFIG.userLanguage = "{{ user_language|default('en') }}";
+    </script>
+    
+    <!-- Theme & Fonts -->
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CodeMirror 5 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.css">
+    <!-- xterm.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notebook.css') }}?v=2c58e218">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bureau.css') }}?v=79a12222">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/wolfram_nb.css') }}?v=bd5d9fe0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quantum_circuit.css') }}?v=2ef7f6e7">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/wolfram-nb-errors.css') }}?v=46005128">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notebook_docs.css') }}?v=bc0e1c0c">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body class="nb-app" data-theme="dark">
+    
+    <!-- Main Layout -->
+    <div class="nb-layout">
+        
+        <!-- Activity Bar (Leftmost vertical strip) -->
+        <aside class="nb-activity-bar">
+            <div class="nb-activity-top">
+                {# Center: the shared launcher entry point, in the same first
+                   position as the equivalent button on the other surfaces. #}
+                <a href="/oversight" class="nb-activity-item nb-activity-center" title="Back to Center" aria-label="Back to Center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                    </svg>
+                </a>
+                <a href="/dashboard" class="nb-activity-item logo" title="Back to Dashboard" data-i18n="[title]notebook.backToDashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/> 
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </a>
+                <button class="nb-activity-item active" data-tab="files" title="Explorer" data-i18n="[title]notebook.explorer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="notebooks" title="Notebooks" data-i18n="[title]notebook.notebooks">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="projects" title="Projects" data-i18n="[title]bureau.projects">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2"/>
+                        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                        <path d="M2 13h20"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="kernels" title="Runtimes" data-i18n="[title]notebook.runtimes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="terminal" title="Terminal" data-i18n="[title]notebook.terminal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2"/>
+                        <polyline points="8 21 12 17 16 21"/>
+                        <line x1="8" y1="13" x2="12" y2="9"/>
+                        <line x1="12" y1="13" x2="16" y2="13"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" id="docs-trigger" title="Documentation" data-i18n="[title]notebook.documentation">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="outline" title="Outline" data-i18n="[title]notebook.outline">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+                <!-- AI Models temporarily hidden -->
+                <!-- button class="nb-activity-item" data-tab="models" title="AI Models" data-i18n="[title]notebook.aiModels">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </button -->
+                <button class="nb-activity-item" data-tab="account" title="Account Settings" data-i18n="[title]notebook.accountSettings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" data-tab="history" title="History" data-i18n="[title]notebook.history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="nb-activity-bottom">
+                <button class="nb-activity-item" data-tab="settings" title="Settings" data-i18n="[title]notebook.settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </button>
+                <button class="nb-activity-item" id="shortcuts-trigger" title="Keyboard Shortcuts" data-i18n="[title]notebook.keyboardShortcuts">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" x2="21" y1="14" y2="3"/>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Sidebar Panel -->
+        <aside class="nb-sidebar" id="nb-sidebar">
+            <!-- Unified Project Selector - Shared Across All Panels -->
+            <div class="nb-project-context">
+                <label class="nb-project-label" data-i18n="notebook.projectLabel">PROJECT</label>
+                <select id="project-selector" class="nb-select-project">
+                    <option value="" data-i18n="notebook.allProjects">All Projects</option>
+                </select>
+            </div>
+
+            <!-- Explorer Panel -->
+            <div class="nb-panel active" id="panel-files">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.files">FILES</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="nb-file-sort-btn" title="Sort: Name" data-i18n="[title]notebook.sortByName">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="new-folder-btn" title="New Folder" data-i18n="[title]notebook.newFolder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="upload-file-btn" title="Upload File" data-i18n="[title]notebook.uploadFile">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="refresh-files-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="file-search-row" id="file-search-row" style="display:none;">
+                    <div class="file-search-wrap">
+                        <svg class="file-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <input type="text" class="file-search-input" id="file-search-input" placeholder="Filter files..." oninput="NotebookModule._filterFileTree(this.value)">
+                    </div>
+                </div>
+                <div class="nb-panel-content custom-scroll" id="file-tree">
+                    <!-- Files will be injected here -->
+                    <div class="nb-empty-state" data-i18n="notebook.selectProjectHint">Select a project to view files</div>
+                </div>
+            </div>
+
+            <!-- Notebooks Panel -->
+            <div class="nb-panel" id="panel-notebooks">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.notebooks">NOTEBOOKS</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="new-notebook-trigger" title="New Notebook" data-i18n="[title]notebook.newNotebook">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="refresh-notebooks-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-search-row">
+                    <input type="text" id="notebooks-search" class="nb-panel-search" placeholder="Search notebooks..." autocomplete="off" data-i18n="[placeholder]notebook.searchNotebooks">
+                </div>
+                <div class="nb-panel-content custom-scroll" id="notebooks-list">
+                    <!-- Notebooks list -->
+                    <div class="nb-empty-state" data-i18n="notebook.loadingNotebooks">Loading notebooks...</div>
+                </div>
+            </div>
+
+            <!-- Projects Panel (Bureau project management) -->
+            <div class="nb-panel" id="panel-projects">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="bureau.projects">PROJECTS</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="bureau-new-project-btn" title="New Project" data-i18n="[title]bureau.newProject">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="bureau-refresh-projects-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-search-row">
+                    <input type="text" id="bureau-project-search" class="nb-panel-search" placeholder="Search projects..." autocomplete="off" data-i18n="[placeholder]bureau.searchProjects">
+                </div>
+                <div class="nb-panel-content custom-scroll" id="bureau-projects-list">
+                    <div class="nb-empty-state" data-i18n="bureau.loadingProjects">Loading projects...</div>
+                </div>
+            </div>
+
+            <!-- Runtimes/Kernels Panel -->
+            <div class="nb-panel" id="panel-kernels">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.runtimes">RUNTIMES</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="refresh-kernels-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="stop-all-kernels-btn" title="Stop All" data-i18n="[title]notebook.stopAll">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-content custom-scroll" id="kernels-list">
+                    <div class="nb-empty-state" data-i18n="notebook.noActiveKernels">No active kernels</div>
+                </div>
+            </div>
+
+
+            <!-- Terminal Panel -->
+            <div class="nb-panel" id="panel-terminal">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.terminal">TERMINAL</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="new-terminal-btn" title="New Terminal" data-i18n="[title]notebook.newTerminal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <button class="nb-icon-btn small" id="kill-terminal-btn" title="Kill Terminal" data-i18n="[title]notebook.killTerminal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-content" id="terminal-container" style="padding: 0; background: #000;"></div>
+            </div>
+
+            <!-- AI Models Panel (hidden for now) -->
+            <!-- div class="nb-panel" id="panel-models">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.aiModels">AI MODELS</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="refresh-models-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-content custom-scroll" id="models-panel-content">
+                    <div style="padding: 12px; text-align: center; color: #71717a; font-size: 12px;" data-i18n="notebook.loadingModels">Loading models...</div>
+                </div>
+            </div -->
+
+            <!-- Outline Panel -->
+            <div class="nb-panel" id="panel-outline">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.outline">OUTLINE</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="refresh-outline-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-content custom-scroll" id="outline-container">
+                    <div class="nb-empty-state" data-i18n="notebook.noHeadings">No headings found</div>
+                </div>
+            </div>
+
+            <!-- History Panel -->
+            <div class="nb-panel" id="panel-history">
+                <div class="nb-panel-header">
+                    <span class="nb-panel-title" data-i18n="notebook.history">HISTORY</span>
+                    <div class="nb-panel-actions">
+                        <button class="nb-icon-btn small" id="refresh-history-btn" title="Refresh" data-i18n="[title]notebook.refresh">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nb-panel-content custom-scroll" id="history-commits">
+                    <div class="nb-empty-state" data-i18n="notebook.loadingHistory">Loading history...</div>
+                </div>
+            </div>
+
+            <!-- Collaboration Presence Bar -->
+            <div id="collab-bar" class="nb-collab-bar" style="display:none;"></div>
+
+            <!-- Settings Panel -->
+
+
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="nb-main">
+            <!-- Shown by CSS on narrow screens only -->
+            <div class="nb-mobile-notice" id="nb-mobile-notice" role="note">
+                <span data-i18n="notebook.bestOnDesktop">The notebook editor works best on a desktop screen.</span>
+                <button type="button" id="nb-mobile-notice-close" aria-label="Dismiss" data-i18n="[aria-label]notebook.close">&times;</button>
+            </div>
+
+            <!-- Header -->
+            <header class="nb-header">
+                <div class="nb-header-left">
+                    <button class="nb-toggle-sidebar" id="toggle-sidebar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                    </button>
+                    <div class="nb-breadcrumbs">
+                        <span class="nb-crumb project" id="meta-project">Personal</span>
+                        <span class="nb-crumb-sep">/</span>
+                        <input type="text" class="nb-title-input" id="notebook-name" value="Untitled Notebook">
+                        <span class="nb-saved-status" id="meta-saved" data-i18n="notebook.saved">Saved</span>
+                        <span class="nb-sync-status" id="sync-status" title="Linked to source file"></span>
+                    </div>
+                </div>
+
+                <div class="nb-header-right">
+                    <!-- Kernel Status -->
+                    <div class="nb-kernel-status" id="kernel-status-widget">
+                        <span class="nb-status-dot" id="kernel-indicator"></span>
+                        <span class="nb-kernel-name" id="kernel-text" data-i18n="notebook.noKernel">No Kernel</span>
+                        <button class="nb-kernel-action-btn" id="kernel-action-btn" title="Click to connect/disconnect" data-i18n="[title]notebook.kernelActionTooltip">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="nb-header-actions">
+                         <button class="nb-btn primary small" id="save-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            <span data-i18n="notebook.save">Save</span>
+                        </button>
+                        <div class="nb-dropdown-trigger">
+                            <button class="nb-icon-btn" id="menu-trigger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Toolbar -->
+            <div class="nb-toolbar">
+                <div class="nb-toolbar-group">
+                    <button class="nb-tool-btn" id="add-code-btn" title="Add Code Cell (Ctrl+B)" data-i18n="[title]notebook.addCodeTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span data-i18n="notebook.code">Code</span>
+                    </button>
+                    <button class="nb-tool-btn" id="add-md-btn" title="Add Markdown Cell" data-i18n="[title]notebook.addTextTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <span data-i18n="notebook.text">Text</span>
+                    </button>
+                    <button class="nb-tool-btn nb-tool-btn-wolfram" id="add-wolfram-btn" title="Add Wolfram Cell" data-i18n="[title]notebook.addWolframTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18"/><path d="M6 20l3-12 3 6 3-12 3 12"/><path d="M3 8c2 2 4 3 6 3s4-1 6-3"/></svg>
+                        <span data-i18n="notebook.wolfram">Wolfram</span>
+                    </button>
+                    <button class="nb-tool-btn" id="add-quantum-btn" title="Add Quantum Circuit Cell" style="color:#22d3ee;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
+                        <span>Quantum</span>
+                    </button>
+                    <select id="nb-bio-snippet-select" title="Insert Molecular Discovery Code Template" style="background:#121216;color:#34d399;border:1px solid rgba(16,185,129,0.35);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px;" onchange="window.insertPhonosBioSnippet(this)">
+                        <option value="">+ Bio Snippet…</option>
+                        <option value="rdkit_admet">RDKit 2D + Lipinski/QED</option>
+                        <option value="biopython_seq">Biopython Sequence &amp; pI/MW</option>
+                        <option value="inline_3d">Inline 3D Structure Card</option>
+                        <option value="byom_call">Call Custom BYOM Endpoint</option>
+                    </select>
+                    <button class="nb-tool-btn" type="button" onclick="window.open('/agent', '_blank')" title="Open Phonos Discovery Copilot" style="color:#34d399;">
+                        <span>✨ Copilot</span>
+                    </button>
+                </div>
+
+                <div class="nb-toolbar-sep"></div>
+
+                <div class="nb-toolbar-group" id="education-toolbar" style="display:none;">
+                    <button class="nb-tool-btn" id="make-assignment-btn" title="Turn this notebook into an assignment" style="color:#137CBD;display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <span>Make Assignment</span>
+                    </button>
+                    <button class="nb-tool-btn" id="add-problem-btn" title="Add Problem Cell" style="color:#137CBD;display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span>Problem</span>
+                    </button>
+                    <span id="education-status" class="nb-edu-status" style="display:none;"></span>
+                </div>
+
+                <div class="nb-toolbar-group">
+                    <button class="nb-tool-btn" id="run-btn" title="Run Selected Cell (Ctrl+Enter)" data-i18n="[title]notebook.runCellTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="stop-btn" title="Interrupt Kernel" data-i18n="[title]notebook.interruptKernel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="restart-btn" title="Restart Kernel" data-i18n="[title]notebook.restartKernel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="restart-run-all-btn" title="Restart Kernel &amp; Run All Cells" data-i18n="[title]notebook.restartRunAll">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 3v5h-5"/><path d="M19.36 12.5A8 8 0 1 1 18.36 7L21 8"/><polygon points="10 10 16 13.5 10 17 10 10" fill="currentColor" stroke="none"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="change-runtime-btn" title="Change Runtime" data-i18n="[title]notebook.changeRuntime">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="shutdown-kernel-btn" title="Shut Down Kernel" data-i18n="[title]notebook.shutdownKernel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                    </button>
+                </div>
+
+                <div class="nb-toolbar-sep"></div>
+
+                <div class="nb-toolbar-group">
+                    <button class="nb-tool-btn" id="clear-output-btn" title="Clear Output" data-i18n="[title]notebook.clearOutput">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="clear-all-outputs-btn" title="Clear All Outputs" data-i18n="[title]notebook.clearAllOutputs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="run-all-btn" title="Run All Cells" data-i18n="[title]notebook.runAllCells">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </button>
+                </div>
+
+                <div class="nb-toolbar-sep"></div>
+
+                <div class="nb-toolbar-group">
+                    <button class="nb-tool-btn" id="toggle-wide-btn" title="Toggle Wide Layout" data-i18n="[title]notebook.toggleWideLayout">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8l4 4-4 4"/><path d="M6 8l-4 4 4 4"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                    </button>
+                    <button class="nb-tool-btn" id="find-btn" title="Find (Ctrl+F)" data-i18n="[title]notebook.findTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </button>
+                </div>
+
+                <div class="nb-toolbar-spacer"></div>
+
+                <div class="nb-toolbar-group">
+                    <select id="cell-type-dropdown" class="nb-select-minimal small">
+                        <option value="code" data-i18n="notebook.code">Code</option>
+                        <option value="markdown" data-i18n="notebook.markdown">Markdown</option>
+                        <option value="wolfram" data-i18n="notebook.wolfram">Wolfram</option>
+                        <option value="quantum">Quantum</option>
+                        <option value="c" data-i18n="notebook.typeC">C</option>
+                        <option value="cpp" data-i18n="notebook.typeCpp">C++</option>
+                        <option value="rust" data-i18n="notebook.typeRust">Rust</option>
+                        <option value="r" data-i18n="notebook.typeR">R</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="nb-tab-bar" id="nb-tab-bar" style="display:none;">
+                <div class="nb-tabs-container" id="nb-tabs-container"></div>
+            </div>
+
+            <!-- Find Bar -->
+            <div class="nb-find-bar" id="find-bar">
+                <input type="text" class="nb-find-input" id="find-input" placeholder="Find in notebook..." autocomplete="off" data-i18n="[placeholder]notebook.findPlaceholder">
+                <span class="nb-find-count" id="find-count"></span>
+                <div class="nb-find-nav">
+                    <button class="nb-icon-btn small" id="find-prev" title="Previous (Shift+Enter)" data-i18n="[title]notebook.previousTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    <button class="nb-icon-btn small" id="find-next" title="Next (Enter)" data-i18n="[title]notebook.nextTooltip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                </div>
+                <button class="nb-icon-btn small nb-find-close" id="find-close" title="Close (Escape)" data-i18n="[title]notebook.closeTooltip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Notebook Area -->
+            <div class="nb-editor-area" id="cells-wrapper">
+                <div class="nb-notebook-container custom-scroll" id="cells-container">
+                    
+                    <!-- Welcome / Empty State — hidden by default so it never
+                         overlaps with cells-container before JS runs. The
+                         init() function shows it when no notebook is loaded. -->
+                    <div id="welcome-state" class="nb-welcome-screen" style="display:none">
+                        <div class="nb-welcome-content">
+                            <div class="nb-welcome-logo">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                </svg>
+                            </div>
+                            <h1 data-i18n="notebook.welcomeHeader">Phonos Notebook</h1>
+                            <p data-i18n="notebook.welcomeDesc">Select a project and create a new notebook to get started, or open an existing notebook from the sidebar.</p>
+
+                            <div class="nb-quick-actions">
+                                <div class="nb-quick-action" onclick="NotebookModule.quickCreate('code')">
+                                    <div class="nb-quick-icon code">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="16 18 22 12 16 6"/>
+                                            <polyline points="8 6 2 12 8 18"/>
+                                        </svg>
+                                    </div>
+                                    <div class="nb-quick-info">
+                                        <strong data-i18n="notebook.newCodeNotebook">New Code Notebook</strong>
+                                        <span data-i18n="notebook.newCodeNotebookDesc">Start with an empty code cell</span>
+                                    </div>
+                                    <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+
+                                <div class="nb-quick-action" onclick="NotebookModule.quickCreate('text')">
+                                    <div class="nb-quick-icon text">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <line x1="16" y1="13" x2="8" y2="13"/>
+                                            <line x1="16" y1="17" x2="8" y2="17"/>
+                                        </svg>
+                                    </div>
+                                    <div class="nb-quick-info">
+                                        <strong data-i18n="notebook.newTextNotebook">New Text Notebook</strong>
+                                        <span data-i18n="notebook.newTextNotebookDesc">Start with a markdown introduction cell</span>
+                                    </div>
+                                    <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+
+                                <div class="nb-quick-action" onclick="NotebookModule.quickCreate('analysis')">
+                                    <div class="nb-quick-icon analysis">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="20" x2="18" y2="10"/>
+                                            <line x1="12" y1="20" x2="12" y2="4"/>
+                                            <line x1="6" y1="20" x2="6" y2="14"/>
+                                        </svg>
+                                    </div>
+                                    <div class="nb-quick-info">
+                                        <strong data-i18n="notebook.dataAnalysis">Data Analysis</strong>
+                                        <span data-i18n="notebook.dataAnalysisDesc">Starter notebook with pandas & visualization</span>
+                                    </div>
+                                    <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+
+                                <div class="nb-quick-action" onclick="NotebookModule.quickCreate('protein')">
+                                    <div class="nb-quick-icon protein">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M2 15c6.667-6 13.333 0 20-6"/>
+                                            <path d="M2 9c6.667-6 13.333 0 20-6"/>
+                                            <path d="M2 3c6.667-6 13.333 0 20-6"/>
+                                        </svg>
+                                    </div>
+                                    <div class="nb-quick-info">
+                                        <strong data-i18n="notebook.proteinAnalysis">Protein Analysis</strong>
+                                        <span data-i18n="notebook.proteinAnalysisDesc">Structure prediction with ESMFold</span>
+                                    </div>
+                                    <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+
+                                <div class="nb-quick-action" onclick="NotebookModule.quickCreate('wolfram')">
+                                     <div class="nb-quick-icon wolfram">
+                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <circle cx="12" cy="12" r="9"/>
+                                             <path d="M9 9 L9 15 M9 9 L13 9 Q15 9 15 11 Q15 13 13 13 L9 13"/>
+                                             <path d="M15 15 L18 15"/>
+                                         </svg>
+                                     </div>
+                                     <div class="nb-quick-info">
+                                         <strong data-i18n="notebook.wolframNotebook">Wolfram Notebook</strong>
+                                         <span data-i18n="notebook.wolframNotebookDesc">Symbolic & numeric computation in Wolfram Language</span>
+                                     </div>
+                                     <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                         <polyline points="9 18 15 12 9 6"/>
+                                     </svg>
+                                 </div>
+                                 <div class="nb-quick-action" onclick="NotebookModule.quickCreate('quantum')">
+                                     <div class="nb-quick-icon">
+                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <circle cx="12" cy="12" r="8"/>
+                                             <path d="M12 4 L12 20 M4 12 L20 12"/>
+                                             <path d="M5.6 5.6 A8 8 0 0 1 18.4 18.4"/>
+                                             <path d="M18.4 5.6 A8 8 0 0 0 5.6 18.4"/>
+                                         </svg>
+                                     </div>
+                                     <div class="nb-quick-info">
+                                         <strong data-i18n="notebook.quantumNotebook">Quantum Notebook</strong>
+                                         <span data-i18n="notebook.quantumNotebookDesc">Bell-state circuit with Qiskit (simulator & hardware)</span>
+                                     </div>
+                                     <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                         <polyline points="9 18 15 12 9 6"/>
+                                     </svg>
+                                 </div>
+                                 <div class="nb-quick-action" onclick="NotebookModule.quickCreate('vqe_chemistry')">
+                                     <div class="nb-quick-icon" style="color:#34d399;">
+                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <circle cx="6" cy="12" r="2.5"/>
+                                             <circle cx="18" cy="12" r="2.5"/>
+                                             <line x1="8.5" y1="12" x2="15.5" y2="12"/>
+                                             <path d="M12 5 v3 M12 16 v3" stroke-dasharray="1.5 2"/>
+                                         </svg>
+                                     </div>
+                                     <div class="nb-quick-info">
+                                         <strong data-i18n="notebook.vqeChemistry">Molecular Ground State (VQE)</strong>
+                                         <span data-i18n="notebook.vqeChemistryDesc">Quantum chemistry: H&#8322; energy &amp; dissociation curve, verified on IBM hardware</span>
+                                     </div>
+                                     <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                         <polyline points="9 18 15 12 9 6"/>
+                                     </svg>
+                                 </div>
+                                 <div class="nb-quick-action" onclick="NotebookModule.quickCreate('wolfram_quantum')">
+                                     <div class="nb-quick-icon hybrid" style="color:#c084fc;">
+                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <circle cx="9" cy="12" r="6"/>
+                                             <circle cx="15" cy="12" r="6"/>
+                                         </svg>
+                                     </div>
+                                     <div class="nb-quick-info">
+                                         <strong data-i18n="notebook.wolframQuantum">Wolfram + Quantum</strong>
+                                         <span data-i18n="notebook.wolframQuantumDesc">Experimental hybrid: Wolfram calcs, quantum simulation, then real IBM hardware</span>
+                                     </div>
+                                     <svg class="nb-quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                         <polyline points="9 18 15 12 9 6"/>
+                                     </svg>
+                                 </div>
+                             </div>
+
+                            <div class="nb-welcome-divider">
+                                <span data-i18n="notebook.dividerOr">or</span>
+                            </div>
+
+                            <div class="nb-welcome-actions nb-welcome-secondary">
+                                <button class="nb-btn secondary" id="welcome-new-notebook">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    <span data-i18n="notebook.advancedOptions">Advanced Options</span>
+                                </button>
+                                <button class="nb-btn secondary" id="welcome-import" data-i18n="notebook.importNotebook">Import Notebook</button>
+                            </div>
+
+                            <div class="nb-welcome-hint">
+                                <p class="nb-welcome-hint-text" data-i18n-html data-i18n="notebook.shortcutHint">Press <kbd class="nb-shortcut-kbd">Ctrl+B</kbd> to add a code cell, <kbd class="nb-shortcut-kbd">Ctrl+M</kbd> for markdown</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Bottom padding for scroll -->
+                <div class="nb-scroll-padding"></div>
+
+                <!-- Split Panel (file viewer alongside notebook) -->
+                <div class="nb-split-panel" id="split-panel" style="display:none;">
+                    <div class="nb-split-header">
+                        <span class="nb-split-title" id="split-file-title">File</span>
+                        <div class="nb-split-actions">
+                            <button class="nb-icon-btn small" id="split-save-btn" title="Save (Ctrl+S)" style="display:none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            </button>
+                            <button class="nb-icon-btn small" id="split-close-btn" title="Close">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="nb-split-content custom-scroll" id="split-content"></div>
+                    <div class="nb-split-resize-handle" id="split-resize-handle"></div>
+                </div>
+            </div>
+            
+            <!-- Footer Status Bar -->
+            <footer class="nb-statusbar">
+                <div class="nb-sb-left">
+                    <span class="nb-sb-kernel-dot" id="sb-kernel-dot"></span>
+                    <span id="status-execution" data-i18n="notebook.ready">Ready</span>
+                    <span class="nb-sb-sep"></span>
+                    <span id="status-cell-count">0 cells</span>
+                </div>
+                <div class="nb-sb-right">
+                    <span id="status-active-cell" class="nb-sb-clickable" title="Click to scroll to active cell"></span>
+                    <span class="nb-sb-sep"></span>
+                    <span id="status-position">Ln 1, Col 1</span>
+                    <span class="nb-sb-sep"></span>
+                    <span id="status-language">Python 3.11</span>
+                    <span class="nb-sb-sep"></span>
+                    <span id="status-runtime">--</span>
+                    <span class="nb-sb-sep"></span>
+                    <span id="status-save-indicator" class="nb-sb-saved" data-i18n="notebook.saved">Saved</span>
+                </div>
+             </footer>
+
+            <!-- Full-screen Documentation Reader (populated by NotebookDocs) -->
+            <div class="nb-docs-overlay" id="docs-overlay" hidden role="dialog" aria-modal="true" aria-label="Notebook documentation">
+                <div class="nb-docs-topbar">
+                    <div class="nb-docs-brand">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span data-i18n="notebook.documentation">Documentation</span>
+                    </div>
+                    <div class="nb-docs-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="docs-search-input" data-i18n="[placeholder]notebook.docsSearchPlaceholder" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+                    </div>
+                    <button class="nb-docs-close" id="docs-close-btn" title="Close" data-i18n="[title]notebook.close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="nb-docs-body">
+                    <nav class="nb-docs-toc" id="docs-toc" aria-label="Documentation contents"></nav>
+                    <div class="nb-docs-article" id="docs-article">
+                        <div class="nb-docs-reading" id="docs-reading"></div>
+                        <div class="nb-docs-noresults" id="docs-noresults" data-i18n="notebook.docsNoResults">No sections match your search.</div>
+                    </div>
+                </div>
+            </div>
+         </main>
+
+        <!-- Right Sidebar: Account Settings -->
+        <aside class="nb-rightbar collapsed" id="nb-rightbar" aria-hidden="true">
+            <div class="nb-rightbar-header">
+                <button class="nb-icon-btn" id="nb-rightbar-close" title="Close" data-i18n="[title]notebook.close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <span class="nb-rightbar-title" data-i18n="notebook.accountSettings">ACCOUNT</span>
+                <div class="nb-rightbar-header-spacer"></div>
+            </div>
+            <div class="nb-rightbar-content custom-scroll" id="nb-rightbar-content">
+                <!-- Account card -->
+                <div class="nb-account-card" id="nb-account-card">
+                    <div class="nb-account-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <div class="nb-account-card-body">
+                        <div class="nb-account-username" id="nb-account-username">&nbsp;</div>
+                        <div class="nb-account-role" id="nb-account-role">&nbsp;</div>
+                        <div class="nb-account-email" id="nb-account-email" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- Wolfram Cloud Account card -->
+                <div class="nb-account-card-section" id="quantum-account-section">
+                    <div class="nb-account-section-header">
+                        <span class="nb-account-section-title">IBM Quantum Account</span>
+                        <span class="nb-account-section-badge" id="quantum-account-badge">Not configured</span>
+                    </div>
+                    <p class="nb-account-section-desc">
+                        Configure your quantum execution environment — simulator or real hardware — and connect your IBM Quantum credentials.
+                    </p>
+
+                    <div id="quantum-account-mode-section" style="margin-bottom:10px;">
+                        <div class="nb-account-label" style="margin-bottom:4px;">Execution Mode</div>
+                        <div style="display:flex;gap:10px;">
+                            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+                                <input type="radio" name="nb-quantum-mode" value="simulator" checked>
+                                <span>Simulator</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+                                <input type="radio" name="nb-quantum-mode" value="hardware">
+                                <span>Real Hardware</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="quantum-account-cred-section" style="margin-bottom:10px;">
+                        <div class="nb-account-label" style="margin-bottom:4px;">Credential Provider</div>
+                        <div style="display:flex;gap:10px;">
+                            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+                                <input type="radio" name="nb-quantum-cred-source" value="platform" checked>
+                                <span>Platform Managed</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+                                <input type="radio" name="nb-quantum-cred-source" value="personal">
+                                <span>Personal Key</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="quantum-account-personal-section" style="display:none;">
+                        <div class="nb-account-field">
+                            <label class="nb-account-label">API Key</label>
+                            <div style="display:flex;gap:4px;">
+                                <input type="password" class="nb-account-input" id="quantum-api-key" placeholder="IBM Quantum API key" autocomplete="off" style="flex:1;">
+                                <button class="nb-account-btn" id="quantum-pw-toggle" type="button" style="padding:8px;flex-shrink:0;" title="Show/hide key">Show</button>
+                            </div>
+                            <div id="quantum-key-saved-label" style="display:none;font-size:11px;color:var(--accent-green);margin-top:4px;">API Key Saved</div>
+                        </div>
+                        <div class="nb-account-field">
+                            <label class="nb-account-label">Instance / CRN <span style="color:var(--text-tertiary);font-size:10px;">(optional)</span></label>
+                            <input type="text" class="nb-account-input" id="quantum-instance" placeholder="crn:v1:bluemix:..." autocomplete="off">
+                        </div>
+                        <div class="nb-account-field">
+                            <label class="nb-account-label">Preferred Backend <span style="color:var(--text-tertiary);font-size:10px;">(optional)</span></label>
+                            <select class="nb-account-input" id="quantum-backend-select">
+                                <option value="automatic">Automatic (Recommended)</option>
+                                <option value="ibm_fez">IBM fez</option>
+                                <option value="ibm_marrakesh">IBM marrakesh</option>
+                                <option value="ibm_kingston">IBM kingston</option>
+                            </select>
+                        </div>
+                        <div class="nb-account-actions">
+                            <button class="nb-account-btn primary" id="quantum-save-creds-btn">
+                                <span>Save Credentials</span>
+                            </button>
+                            <button class="nb-account-btn" id="quantum-verify-creds-btn">
+                                <span>Test Connection</span>
+                            </button>
+                            <button class="nb-account-btn danger" id="quantum-clear-creds-btn" style="display:none;">
+                                <span>Remove</span>
+                            </button>
+                        </div>
+                        <div id="quantum-cred-status" class="nb-account-status"></div>
+                        <div id="quantum-cred-message" class="nb-account-message"></div>
+                    </div>
+
+                    <div class="nb-account-actions" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-color-light);">
+                        <button class="nb-account-btn primary" id="quantum-save-btn">
+                            <span>Save Settings</span>
+                        </button>
+                        <button class="nb-account-btn" id="quantum-refresh-btn">
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                    <div id="quantum-account-status" class="nb-account-status"></div>
+                    <div id="quantum-account-message" class="nb-account-message"></div>
+                </div>
+
+                <div class="nb-account-card-section" id="wolfram-account-section">
+                    <div class="nb-account-section-header">
+                        <span class="nb-account-section-title" data-i18n="notebook.wolframAccount">Wolfram Cloud Account</span>
+                        <span class="nb-account-section-badge" id="wolfram-account-badge" data-i18n="notebook.wolframBadgeNotSet">Not configured</span>
+                    </div>
+                    <p class="nb-account-section-desc" data-i18n="notebook.wolframAccountDesc">
+                        Connect your Wolfram Cloud account so Wolfram Language cells run under your own credentials.
+                    </p>
+
+                    <div id="wolfram-account-admin-note" class="nb-account-note" style="display:none;" data-i18n="notebook.wolframAdminNote">
+                        You are signed in as an administrator. Wolfram cells use the global account configured on the server. Personal credentials are disabled.
+                    </div>
+
+                    <div id="wolfram-account-user-form">
+                        <div class="nb-account-field">
+                            <label class="nb-account-label" data-i18n="notebook.wolframId">Wolfram ID (email)</label>
+                            <input type="email" class="nb-account-input" id="setting-wolfram-username" placeholder="user@example.com" autocomplete="off">
+                        </div>
+                        <div class="nb-account-field">
+                            <label class="nb-account-label" data-i18n="notebook.wolframPassword">Password</label>
+                            <div style="display:flex;gap:4px;">
+                                <input type="password" class="nb-account-input" id="setting-wolfram-password" placeholder="••••••••" autocomplete="new-password" style="flex:1;">
+                                <button class="nb-account-btn" id="wolfram-pw-toggle" type="button" onclick="NotebookModule._toggleWolframPassword()" title="Show/hide password" style="padding:8px;flex-shrink:0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="nb-account-actions">
+                            <button class="nb-account-btn primary" id="wolfram-save-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                <span data-i18n="notebook.wolframSave">Save Account</span>
+                            </button>
+                            <button class="nb-account-btn" id="wolfram-verify-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                <span data-i18n="notebook.wolframVerify">Test Connection</span>
+                            </button>
+                            <button class="nb-account-btn danger" id="wolfram-clear-btn" style="display:none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                                <span data-i18n="notebook.wolframClear">Remove</span>
+                            </button>
+                        </div>
+                        <div id="wolfram-account-status" class="nb-account-status"></div>
+                        <div id="wolfram-account-message" class="nb-account-message"></div>
+                    </div>
+                </div>
+
+                <div class="nb-account-footer-note" data-i18n="notebook.accountFooterNote">
+                    Credentials are encrypted at rest with AES-256-GCM. They are sent to Wolfram Cloud only when you execute Wolfram cells.
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Sidebar: Notebook Settings (same slide-out pattern as Account) -->
+        <aside class="nb-rightbar collapsed" id="nb-settings-rightbar" aria-hidden="true">
+            <div class="nb-rightbar-header">
+                <button class="nb-icon-btn" id="nb-settings-rightbar-close" title="Close" data-i18n="[title]notebook.close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <span class="nb-rightbar-title" data-i18n="notebook.settings">SETTINGS</span>
+                <div class="nb-rightbar-header-spacer"></div>
+            </div>
+            <div class="nb-rightbar-content custom-scroll" id="settings-panel-content">
+                <!-- Editor Settings -->
+                <div class="nb-settings-section">
+                    <h4 class="nb-settings-section-title" data-i18n="notebook.editor">Editor</h4>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.fontSize">Font Size</label>
+                        <input type="number" class="nb-settings-input" id="setting-font-size" min="10" max="20" value="14">
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.lineNumbers">Line Numbers</label>
+                        <label class="nb-settings-toggle">
+                            <input type="checkbox" id="setting-line-numbers" checked>
+                            <span class="nb-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.lineWrap">Line Wrap</label>
+                        <label class="nb-settings-toggle">
+                            <input type="checkbox" id="setting-line-wrap">
+                            <span class="nb-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.tabSize">Tab Size</label>
+                        <select class="nb-settings-select" id="setting-tab-size">
+                            <option value="2" data-i18n="notebook.spaces2">2 spaces</option>
+                            <option value="4" selected data-i18n="notebook.spaces4">4 spaces</option>
+                            <option value="8" data-i18n="notebook.spaces8">8 spaces</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Execution Settings -->
+                <div class="nb-settings-section">
+                    <h4 class="nb-settings-section-title" data-i18n="notebook.execution">Execution</h4>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.autosave">Auto-save (seconds)</label>
+                        <input type="number" class="nb-settings-input" id="setting-autosave" min="10" max="120" value="30">
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.cellTimeout">Cell Timeout (seconds)</label>
+                        <input type="number" class="nb-settings-input" id="setting-cell-timeout" min="30" max="3600" value="300">
+                    </div>
+                </div>
+                <!-- Runtime Settings -->
+                <div class="nb-settings-section">
+                    <h4 class="nb-settings-section-title" data-i18n="notebook.runtime">Runtime</h4>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label" data-i18n="notebook.defaultRuntime">Default Runtime</label>
+                        <select class="nb-settings-select" id="setting-default-runtime">
+                            <option value="python" data-i18n="notebook.runtimePython">Basic Python</option>
+                            <option value="wolfram" data-i18n="notebook.runtimeWolfram">Wolfram</option>
+                            <option value="quantum" data-i18n="notebook.runtimeQuantum">Quantum Python 3.11</option>
+                            <option value="hybrid" data-i18n="notebook.runtimeHybrid">Quantum + Wolfram (Experimental)</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Quantum Settings -->
+                <div class="nb-settings-section">
+                    <h4 class="nb-settings-section-title">Quantum</h4>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Execution Mode</label>
+                        <select class="nb-settings-select" id="setting-quantum-mode">
+                            <option value="simulator">Simulator</option>
+                            <option value="hardware">Real Quantum Hardware</option>
+                        </select>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Credential Source</label>
+                        <select class="nb-settings-select" id="setting-quantum-cred-source">
+                            <option value="platform">Platform Managed</option>
+                            <option value="personal">Personal IBM Key</option>
+                        </select>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Backend</label>
+                        <select class="nb-settings-select" id="setting-quantum-backend">
+                            <option value="automatic">Automatic (Recommended)</option>
+                            <option value="ibm_fez">IBM fez</option>
+                            <option value="ibm_marrakesh">IBM marrakesh</option>
+                            <option value="ibm_kingston">IBM kingston</option>
+                        </select>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Auto Session</label>
+                        <select class="nb-settings-select" id="setting-quantum-auto-session">
+                            <option value="0">Disabled</option>
+                            <option value="1">Enabled</option>
+                        </select>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Session Timeout</label>
+                        <input type="number" class="nb-settings-input" id="setting-quantum-timeout"
+                               value="60" min="30" max="300" style="width:80px;">
+                    </div>
+                </div>
+                <div class="nb-settings-section">
+                    <h4 class="nb-settings-section-title">Education Defaults</h4>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Submission Limit</label>
+                        <input type="number" class="nb-settings-input" id="setting-edu-max-submissions"
+                               value="1" min="1" style="width:80px;" title="Max attempts per problem for new assignments you create">
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Late Policy</label>
+                        <select class="nb-settings-select" id="setting-edu-late-policy">
+                            <option value="none">None (no penalty)</option>
+                            <option value="penalty">Penalty (20% off)</option>
+                            <option value="reject">Reject submissions</option>
+                        </select>
+                    </div>
+                    <div class="nb-settings-row">
+                        <label class="nb-settings-label">Time Limit (min)</label>
+                        <input type="number" class="nb-settings-input" id="setting-edu-time-limit"
+                               min="1" placeholder="None" style="width:80px;">
+                    </div>
+                </div>
+                <div class="nb-settings-actions">
+                    <button class="nb-btn primary small" id="save-settings-btn" data-i18n="notebook.saveSettings">Save Settings</button>
+                    <button class="nb-btn small" id="reset-settings-btn" data-i18n="notebook.resetDefaults">Reset Defaults</button>
+                </div>
+            </div>
+        </aside>
+
+
+        <!-- Problem Editor Rightbar (education mode) -->
+        <aside class="nb-rightbar collapsed" id="nb-rightbar-problem" aria-hidden="true">
+            <div class="nb-rightbar-header">
+                <button class="nb-icon-btn" onclick="NotebookModule.closeProblemEditor()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <span class="nb-rightbar-title" id="problem-editor-title">PROBLEM EDITOR</span>
+                <div class="nb-rightbar-header-spacer"></div>
+            </div>
+            <div class="nb-rightbar-content custom-scroll">
+                <h3 style="margin:0 0 12px;font-size:14px;" id="problem-editor-heading">Add Problem</h3>
+                <div class="nb-form-group">
+                    <label>Problem Type</label>
+                    <select id="pe-problem-type" class="nb-select" onchange="NotebookModule._onProblemTypeChange()">
+                        <option value="numeric">Numeric</option>
+                        <option value="formula">Formula</option>
+                        <option value="mc">Multiple Choice</option>
+                        <option value="code">Code</option>
+                        <option value="text">Text (manual grade)</option>
+                        <option value="file">File Upload</option>
+                    </select>
+                </div>
+                <div class="nb-form-group">
+                    <label>Title</label>
+                    <input type="text" id="pe-title" class="nb-input" placeholder="e.g. Question 1">
+                </div>
+                <div class="nb-form-group">
+                    <label>Prompt (Markdown)</label>
+                    <textarea id="pe-prompt" class="nb-input" rows="4" placeholder="What is 2 + 2?"></textarea>
+                </div>
+                <div id="pe-config-fields">
+                    <div class="nb-form-group">
+                        <label>Correct Answer</label>
+                        <input type="text" id="pe-correct-answer" class="nb-input" placeholder="e.g. 42">
+                    </div>
+                    <div class="nb-form-group">
+                        <label>Tolerance</label>
+                        <input type="number" id="pe-tolerance" class="nb-input" value="0.01" step="0.001" min="0">
+                    </div>
+                </div>
+                <div class="nb-form-group" id="pe-mc-options" style="display:none;">
+                    <label>Multiple Choice Options (one per line)</label>
+                    <textarea id="pe-mc-options-text" class="nb-input" rows="4" placeholder="red&#10;blue&#10;green"></textarea>
+                    <label style="margin-top:8px;">Correct Index (0-based)</label>
+                    <input type="number" id="pe-mc-correct-index" class="nb-input" value="0" min="0">
+                </div>
+                <div class="nb-form-group" id="pe-code-config" style="display:none;">
+                    <label>Hidden Test Cases (Python assert statements)</label>
+                    <textarea id="pe-code-tests" class="nb-input" rows="4" placeholder="# each line is a test&#10;assert add(1,2) == 3&#10;assert add(-1,1) == 0"></textarea>
+                </div>
+                <div class="row" style="display:flex;gap:12px;">
+                    <div class="nb-form-group" style="flex:1;">
+                        <label>Points</label>
+                        <input type="number" id="pe-points" class="nb-input" value="1" min="0" step="0.5">
+                    </div>
+                    <div class="nb-form-group" style="flex:1;">
+                        <label>Time Limit (minutes, optional)</label>
+                        <input type="number" id="pe-time-limit" class="nb-input" placeholder="e.g. 10" min="0">
+                    </div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:8px;">
+                    <button class="nb-btn primary" id="pe-save-btn" onclick="NotebookModule._saveProblem()">Save Problem</button>
+                    <button class="nb-btn secondary" onclick="NotebookModule.closeProblemEditor()">Cancel</button>
+                </div>
+            </div>
+        </aside>
+
+     </div>
+
+    <!-- Modals -->
+    <!-- New Notebook Modal -->
+    <div class="nb-modal-overlay" id="new-notebook-modal">
+        <div class="nb-modal">
+            <div class="nb-modal-header">
+                <h3 data-i18n="notebook.newNotebook">New Notebook</h3>
+                <button class="nb-modal-close modal-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="nb-modal-body">
+                <div class="nb-form-group">
+                    <label data-i18n="notebook.name">Name</label>
+                    <input type="text" id="new-notebook-name" placeholder="Analysis 01" class="nb-input">
+                </div>
+                <div class="nb-form-group">
+                    <label data-i18n="notebook.project">Project</label>
+                    <select id="new-notebook-project" class="nb-select">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                <div class="nb-form-group">
+                    <label data-i18n="notebook.template">Template</label>
+                    <div class="nb-template-groups">
+                        <div class="nb-template-group">
+                            <h4 class="nb-template-group-title" data-i18n="notebook.general">General</h4>
+                            <div class="nb-template-options">
+                                <button class="nb-template-opt active" data-template="blank">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.blank">Blank</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.blankDesc">Empty notebook, start from scratch</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt" data-template="data_analysis">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.dataAnalysis">Data Analysis</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.dataAnalysisDesc">Pandas & plotting starter</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt nb-template-opt-quantum" data-template="quantum">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.quantum">Quantum</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.quantumDesc">Qiskit circuits on simulator or IBM hardware</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt nb-template-opt-quantum" data-template="vqe_chemistry">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="12" r="2.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.vqeChemistry">Molecular Ground State (VQE)</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.vqeChemistryDesc">Quantum chemistry: H&#8322; energy &amp; dissociation curve, verified on IBM hardware</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="nb-template-group">
+                            <h4 class="nb-template-group-title" data-i18n="notebook.wolframCategory">Wolfram</h4>
+                            <div class="nb-template-options">
+                                <button class="nb-template-opt nb-template-opt-wolfram" data-template="wolfram">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20h18"/><path d="M6 20l3-12 3 6 3-12 3 12"/><path d="M3 8c2 2 4 3 6 3s4-1 6-3"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.wolfram">Wolfram</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.wolframDesc">Wolfram Language basics</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt nb-template-opt-wolfram" data-template="wolfram_scientific">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 9.5V2"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="7" y1="16" x2="17" y2="16"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.wolframScientific">Wolfram Scientific</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.wolframScientificDesc">Symbolic math, calculus & equation solving</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt nb-template-opt-wolfram" data-template="wolfram_visualization">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.wolframVisualization">Wolfram Plots</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.wolframVisualizationDesc">2D/3D plotting & visualization</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="nb-template-group">
+                            <h4 class="nb-template-group-title" data-i18n="notebook.hybridCategory">Hybrid</h4>
+                            <div class="nb-template-options">
+                                <button class="nb-template-opt nb-template-opt-hybrid" data-template="wolfram_quantum">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.wolframQuantum">Wolfram + Quantum</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.wolframQuantumDesc">Wolfram calcs feeding quantum circuits, results back for analysis</span>
+                                    </span>
+                                </button>
+                                <button class="nb-template-opt nb-template-opt-hybrid" data-template="hybrid_v2">
+                                    <span class="nb-template-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M5.6 5.6l2.1 2.1"/><path d="M16.3 16.3l2.1 2.1"/><path d="M5.6 18.4l2.1-2.1"/><path d="M16.3 7.7l2.1-2.1"/></svg></span>
+                                    <span class="nb-template-meta">
+                                        <span class="nb-template-name" data-i18n="notebook.hybridV2">Hybrid v2</span>
+                                        <span class="nb-template-sub" data-i18n="notebook.hybridV2Desc">Wolfram + quantum + C++ + Rust + R + Python viz in one pipeline</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nb-modal-footer">
+                <button class="nb-btn secondary modal-close" id="cancel-new-notebook" data-i18n="common.cancel">Cancel</button>
+                <button class="nb-btn primary" id="create-notebook-btn" data-i18n="common.create">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="nb-modal-overlay" id="import-modal">
+        <div class="nb-modal">
+            <div class="nb-modal-header">
+                <h3 data-i18n="notebook.importTitle">Import Notebook</h3>
+                <button class="nb-modal-close modal-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="nb-modal-body">
+                <div class="nb-dropzone" id="import-dropzone">
+                    <p data-i18n="notebook.dropIpynb">Drop .ipynb or .nb/.wl/.wls/.m file here</p>
+                    <button class="nb-btn small secondary" data-i18n="common.browse">Browse</button>
+                    <input type="file" id="import-file-input" hidden accept=".ipynb,.nb,.wl,.wls,.m" multiple>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shortcuts Modal -->
+    <div class="nb-modal-overlay" id="shortcuts-modal">
+        <div class="nb-modal wide">
+             <div class="nb-modal-header">
+                 <h3 data-i18n="notebook.keyboardShortcuts">Keyboard Shortcuts</h3>
+                 <button class="nb-modal-close modal-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+             </div>
+              <div class="nb-modal-body">
+                  <div class="nb-shortcuts-list">
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">Enter</span> <span class="desc" data-i18n="notebook.runCell">Run Cell</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Shift</span> + <span class="key">Enter</span> <span class="desc" data-i18n="notebook.runAndSelectNext">Run & Select Next</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">B</span> <span class="desc" data-i18n="notebook.insertCodeBelow">Insert Code Cell Below</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">M</span> <span class="desc" data-i18n="notebook.insertMarkdownBelow">Insert Markdown Cell Below</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Alt</span> + <span class="key">↑/↓</span> <span class="desc" data-i18n="notebook.moveCell">Move Cell Up/Down</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">D</span> <span class="desc" data-i18n="notebook.duplicateCell">Duplicate Cell</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">Shift</span> + <span class="key">D</span> <span class="desc" data-i18n="notebook.deleteCell">Delete Cell</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Alt</span> + <span class="key">C</span> <span class="desc" data-i18n="notebook.collapseCell">Collapse/Expand Cell</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">S</span> <span class="desc" data-i18n="notebook.saveNotebook">Save Notebook</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">Shift</span> + <span class="key">P</span> <span class="desc" data-i18n="notebook.commandPalette">Command Palette</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">F</span> <span class="desc" data-i18n="notebook.findInNotebook">Find in Notebook</span></div>
+                      <div class="nb-shortcut-row"><span class="key">Ctrl</span> + <span class="key">Shift</span> + <span class="key">E</span> <span class="desc" data-i18n="notebook.focusExplorerFilter">Focus Explorer Filter</span></div>
+                  </div>
+              </div>
+         </div>
+     </div>
+
+    <!-- Input Request Modal -->
+    <div class="nb-modal-overlay" id="input-request-modal">
+        <div class="nb-modal" style="max-width: 400px;">
+            <div class="nb-modal-header">
+                <h3 data-i18n="notebook.inputRequired">Input Required</h3>
+                <button class="nb-modal-close modal-close" id="input-modal-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="nb-modal-body">
+                <div class="nb-form-group">
+                    <label id="input-prompt-label" data-i18n="notebook.enterValue">Enter value:</label>
+                    <input type="text" id="input-request-field" class="nb-input" placeholder="Type your answer..." autocomplete="off" data-i18n="[placeholder]notebook.typeAnswer">
+                </div>
+            </div>
+            <div class="nb-modal-footer">
+                <button class="nb-btn secondary" id="input-cancel-btn" data-i18n="common.cancel">Cancel</button>
+                <button class="nb-btn primary" id="input-submit-btn" data-i18n="notebook.submit">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette -->
+    <div class="nb-command-palette-overlay" id="command-palette-overlay">
+        <div class="nb-command-palette">
+            <div class="nb-cp-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nb-cp-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="nb-cp-input" id="command-palette-input" placeholder="Type a command..." autocomplete="off" spellcheck="false" data-i18n="[placeholder]notebook.typeCommand">
+                <kbd class="nb-cp-esc">ESC</kbd>
+            </div>
+            <div class="nb-cp-results custom-scroll" id="command-palette-results">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    
+    <!-- CodeMirror 5 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/r/r.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/scroll/simplescrollbars.min.js"></script>
+    
+    <!-- Marked JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <!-- DOMPurify for safety -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+    <script>
+        window.PHONOS_USER = {{ current_user | tojson }};
+    </script>
+
+    <script src="{{ url_for('static', filename='js/wolfram_nb.js') }}?v=283211a9"></script>
+    <script src="{{ url_for('static', filename='js/wolfram_ui.js') }}?v=ea73216f"></script>
+    <script src="{{ url_for('static', filename='js/quantum_circuit.js') }}?v=819f40f7"></script>
+    <script src="{{ url_for('static', filename='js/notebook.js') }}?v=4ae6a9be"></script>
+    <script src="{{ url_for('static', filename='js/bureau_projects.js') }}?v=16dcbbb6"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.NotebookModule) {
+                NotebookModule.init({
+                    projectId: {{ current_project_id|tojson }},
+                    notebookId: {{ notebook_id|tojson }}
+                });
+            }
+        });
+        // Handle back/forward (bfcache) navigation: the browser may restore a
+        // stale DOM snapshot (including an open split panel, welcome screen,
+        // or unrefreshed CodeMirror editors) and DOMContentLoaded/init do NOT
+        // re-run. Clean up the restored state so the notebook looks correct
+        // after navigating away and back.
+        window.addEventListener('pageshow', function(ev) {
+            if (!ev.persisted || !window.NotebookModule) return;
+            try {
+                if (typeof NotebookModule.closeSplitPanel === 'function') NotebookModule.closeSplitPanel();
+                var ws = document.getElementById('welcome-state');
+                if (ws && NotebookModule.notebookId && NotebookModule.notebookId !== 'undefined') ws.style.display = 'none';
+                if (NotebookModule._activeTabId && typeof NotebookModule.switchTab === 'function') {
+                    NotebookModule.switchTab(NotebookModule._activeTabId);
+                }
+                // Re-hide the account panel unless it should be shown
+                if (typeof NotebookModule._initWolframAccountGate === 'function') NotebookModule._initWolframAccountGate();
+            } catch (e) { /* best effort */ }
+        });
+        window.insertPhonosBioSnippet = function(sel) {
+            var kind = sel && sel.value;
+            if (!kind) return;
+            sel.value = '';
+            var snippets = {
+                rdkit_admet: "# RDKit 2D Depiction + Lipinski/QED Screening\nfor name, smi in [\n    ('Aspirin', 'CC(=O)OC1=CC=CC=C1C(=O)O'),\n    ('Gefitinib (EGFR)', 'COC1=C(C=C2C(=C1)N=CN=C2NC3=CC(=C(C=C3)F)Cl)OCCCN4CCOCC4'),\n]:\n    show_smiles(smi, title=name)\n",
+                biopython_seq: "# Biopython Sequence Physicochemical Profile\nfrom Bio.SeqUtils.ProtParam import ProteinAnalysis\nseq = 'MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAK'\npa = ProteinAnalysis(seq)\nprint(f'Length: {len(seq)} aa | MW: {pa.molecular_weight():.1f} Da | pI: {pa.isoelectric_point():.2f} | GRAVY: {pa.gravy():.3f}')\n",
+                inline_3d: "# Synthesize & preview a 3D alpha-helix backbone card directly in Notebook\nimport math\nlines = ['HEADER    NOTEBOOK INLINE 3D PREVIEW']\nfor i in range(1, 25):\n    ang = math.radians(i * 100.0)\n    x, y, z = 2.3 * math.cos(ang), 2.3 * math.sin(ang), i * 1.5\n    lines.append(f'ATOM  {i:5d}  CA  ALA A{i:4d}    {x:8.3f}{y:8.3f}{z:8.3f}  1.00 91.50           C')\nlines.append('END')\nshow_structure('\\n'.join(lines), title='Synthetic 24-Residue Alpha Helix')\n",
+                byom_call: "# Invoke a Custom BYOM Model Server (e.g. python3 examples/custom_model_server.py)\nimport requests\nresp = requests.post('http://127.0.0.1:8090/predict', json={'sequence': 'MKTAYIAKQRQISFVKSHFSRQLE'}, timeout=30).json()\nshow_structure(resp['pdb'], title=f\"BYOM Prediction (mean pLDDT {resp['metrics']['mean_plddt']})\")\n"
+            };
+            var code = snippets[kind] || '';
+            if (!code) return;
+            if (window.NotebookModule && typeof NotebookModule.addCell === 'function') {
+                NotebookModule.addCell('code', code);
+            } else {
+                navigator.clipboard && navigator.clipboard.writeText(code);
+                alert('Snippet copied to clipboard!');
+            }
+        };
+    </script>
+</body>
+</html>

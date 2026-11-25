@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <!-- Always use dark mode -->
+    <script>
+        (function() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title data-i18n="dashboard.pageTitle">Phonos - Dashboard</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#10B981" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#059669" media="(prefers-color-scheme: light)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Phonos">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- DNS prefetch / preconnect for CDN domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.socket.io" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdn.socket.io">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}?v=c76ad435">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/model_io.css') }}?v=f733c2a0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=dc892a0f">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-models-spa.css') }}?v=24e25a2b">
+    <link rel="preload" href="{{ url_for('static', filename='css/notifications-sidebar.css') }}?v=19a4ecca" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{{ url_for('static', filename='css/file-upload-preview.css') }}?v=54e85791" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{{ url_for('static', filename='css/wolfram_nb.css') }}?v=bd5d9fe0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{{ url_for('static', filename='css/databases.css') }}?v=a2fac745" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}?v=709660b6">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}?v=20261115o">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ligand_diagram.css') }}?v=f6729a4e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/oversight.css') }}?v=72ffc802">
+    {% include '_i18n_scripts.html' %}
+    <script defer src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% include '_molstar_head.html' %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body data-page="dashboard">
+    <div class="app-container">
+        <!-- Skip to main content for accessibility -->
+        <a href="#content-area" class="skip-to-content" data-i18n="nav.skipToMain">Skip to main content</a>
+
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Phonos Logo" width="48" height="48" style="border-radius: var(--r-ui, 0px);" loading="lazy">
+                    <div class="sidebar-branding">
+                        <span class="sidebar-title">Phonos</span>
+                        <span class="sidebar-version">{{ phonos_version }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" role="navigation" aria-label="Primary navigation">
+                <!-- My Lab Context -->
+                <div class="nav-section">
+                    <div class="nav-section-title" role="heading" aria-level="3" data-i18n="nav.myLab">Workspace</div>
+                    <button class="nav-item active" data-view="dashboard" data-i18n-aria="nav.dashboard" aria-label="Dashboard" aria-current="page">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="9"/>
+                            <rect x="14" y="3" width="7" height="5"/>
+                            <rect x="14" y="12" width="7" height="9"/>
+                            <rect x="3" y="16" width="7" height="5"/>
+                        </svg>
+                        <span data-i18n="nav.dashboard">Dashboard</span>
+                        {% if pending_invitations and pending_invitations|length > 0 %}
+                        <span class="badge badge-primary" style="margin-left: auto; font-size: 11px; padding: 2px 6px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">{{ pending_invitations|length }}</span>
+                        {% endif %}
+                    </button>
+                    <button class="nav-item" data-view="projects" data-i18n-aria="nav.projects" aria-label="Projects">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span data-i18n="nav.projects">Projects</span>
+                    </button>
+                    <button class="nav-item" data-view="submit-job" data-i18n-aria="nav.submitJob" aria-label="Submit Job">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        <span data-i18n="nav.newJob">New Job</span>
+                    </button>
+                    <button class="nav-item" data-view="jobs" data-i18n-aria="nav.jobs" aria-label="Jobs">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        <span data-i18n="nav.jobs">Jobs</span>
+                    </button>
+
+                </div>
+
+                <!-- Data Section -->
+                <div class="nav-section">
+                    <div class="nav-section-title" role="heading" aria-level="3" data-i18n="nav.data">Data</div>
+                    <button class="nav-item" data-view="databases" data-i18n-aria="nav.databases" aria-label="Databases" style="--nav-accent-color: #10b981;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #10b981;">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                        </svg>
+                        <span data-i18n="nav.databases">Databases</span>
+                    </button>
+                    <button class="nav-item" data-view="files" data-i18n-aria="files.title" aria-label="File Manager" style="--nav-accent-color: #3b82f6;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #3b82f6;">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span data-i18n="nav.files">Files</span>
+                    </button>
+                </div>
+
+                <!-- Compute Grid Context -->
+                <div class="nav-section">
+                    <div class="nav-section-title" role="heading" aria-level="3" data-i18n="nav.computeGrid">Resources</div>
+                    <button class="nav-item" data-view="usage" data-i18n-aria="usage.title" aria-label="Usage">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 20V10"/>
+                            <path d="M18 20V4"/>
+                            <path d="M6 20v-4"/>
+                        </svg>
+                        <span data-i18n="nav.resourceUsage">Resource Usage</span>
+                    </button>
+                     <!-- Placeholder for Node Status -->
+                     <!--
+                    <button class="nav-item" data-view="nodes" aria-label="Nodes">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                            <line x1="6" y1="6" x2="6.01" y2="6"/>
+                            <line x1="6" y1="18" x2="6.01" y2="18"/>
+                        </svg>
+                        <span>Node Status</span>
+                    </button>
+                    -->
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title" role="heading" aria-level="3" data-i18n="nav.tools">Tools</div>
+                    <button class="nav-item" data-view="visualizer" data-i18n-aria="nav.visualizer" aria-label="3D Visualizer" style="--nav-accent-color: #10b981;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #06b6d4;">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        <span data-i18n="nav.visualizer3D">3D Visualizer</span>
+                    </button>
+                    <button class="nav-item" data-agent-open aria-label="Phonos Copilot" title="Phonos Copilot (Ctrl+Shift+A)" style="--nav-accent-color: #10b981;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #34d399;">
+                            <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+                            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/>
+                        </svg>
+                        <span>Copilot</span>
+                    </button>
+                    <button class="nav-item" onclick="window.open('/notebook', '_blank')" aria-label="Notebook IDE" style="--nav-accent-color: #f97316;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #f97316;">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span>Notebook</span>
+                    </button>
+                    <button class="nav-item" onclick="window.location.href='/custom-models'" aria-label="Custom Models &amp; Endpoints" style="--nav-accent-color: #a855f7;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #a855f7;">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                        <span>Models &amp; Endpoints</span>
+                    </button>
+                </div>
+
+                {% if session.get('is_admin') %}
+                <div class="nav-section">
+                    <div class="nav-section-title" role="heading" aria-level="3" data-i18n="nav.admin">Admin</div>
+                    <button class="nav-item" onclick="window.location.href='/admin/accounts'" aria-label="Lab Accounts &amp; Updates" style="--nav-accent-color: #10b981;">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #10b981;">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span>Accounts &amp; Updates</span>
+                    </button>
+                    <button class="nav-item" data-view="admin" data-i18n-aria="nav.adminPanel" aria-label="Admin Panel">
+                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <span data-i18n="nav.adminPanel">Admin Panel</span>
+                    </button>
+                </div>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="nav-item" data-view="settings" data-i18n-aria="nav.settings" aria-label="Settings">
+                    <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span data-i18n="nav.settings">Settings</span>
+                </button>
+                <button class="nav-item" id="logout-btn" data-i18n-aria="nav.logout" aria-label="Logout">
+                    <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span data-i18n="nav.logout">Logout</span>
+                </button>
+                {% set legal_footer_class = 'legal-footer--sidebar' %}{% include 'partials/_legal_footer.html' %}
+            </div>
+        </aside>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+            <svg class="hamburger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+            <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+
+        <!-- Main Content -->
+        <main class="main-content" role="main">
+            <!-- Dynamic System Warnings -->
+            <div id="system-warnings-container" style="margin: var(--space-4);"></div>
+            
+            <header class="header">
+                {% include '_app_switcher.html' %}
+                <h1 class="header-title" id="page-title" data-i18n="dashboard.title">Dashboard</h1>
+
+                <div class="header-actions">
+
+                    <button class="btn btn-ghost btn-icon" id="pa-header-toggle" aria-label="Open Phonos Copilot" title="Phonos Copilot (Ctrl+Shift+A)" data-agent-open>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+                            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/>
+                        </svg>
+                    </button>
+
+                    <button class="btn btn-ghost btn-icon" id="notifications-btn" data-i18n-aria="header.notifications" data-i18n-title="header.notifications" aria-label="Notifications" title="Notifications">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <span class="notification-badge" id="notification-count" style="display: none;">0</span>
+                    </button>
+
+                    <button class="btn btn-ghost btn-icon" id="bug-report-btn" data-i18n-aria="header.reportBug" data-i18n-title="header.reportBug" aria-label="Report a bug" title="Report a bug">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M9 9h6"/>
+                            <path d="M10 13h4"/>
+                            <path d="M9 3h6l1 3H8l1-3z"/>
+                            <path d="M8 6v11a4 4 0 0 0 8 0V6"/>
+                            <path d="M5 10h3"/>
+                            <path d="M16 10h3"/>
+                            <path d="M4 15h4"/>
+                            <path d="M16 15h4"/>
+                        </svg>
+                    </button>
+
+                    <!-- User Menu -->
+                    <div class="dropdown" id="user-dropdown">
+                        <button class="user-menu-btn" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="header.userMenu" aria-label="User menu">
+                            <span id="username-display">{{ session.get('username', 'User') }}</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" role="menu" aria-label="User menu">
+                            <div class="dropdown-header">
+                                <div class="dropdown-header-name">{{ session.get('username', 'User') }}</div>
+                                <div class="dropdown-header-email">{{ session.get('email', '') }}</div>
+                            </div>
+                            <button class="dropdown-item" data-view="dashboard" role="menuitem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="3" y="3" width="7" height="9"/>
+                                    <rect x="14" y="3" width="7" height="5"/>
+                                    <rect x="14" y="12" width="7" height="9"/>
+                                    <rect x="3" y="16" width="7" height="5"/>
+                                </svg>
+                                <span data-i18n="nav.dashboard">Dashboard</span>
+                            </button>
+                            <button class="dropdown-item" data-view="usage" role="menuitem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M12 20V10"/>
+                                    <path d="M18 20V4"/>
+                                    <path d="M6 20v-4"/>
+                                </svg>
+                                <span data-i18n="header.usageAndCredits">Usage & Credits</span>
+                            </button>
+                            <button class="dropdown-item" data-view="settings" role="menuitem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                                <span data-i18n="nav.settings">Settings</span>
+                            </button>
+                            <button class="dropdown-item" id="dropdown-bug-report" role="menuitem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M9 9h6"/>
+                                    <path d="M10 13h4"/>
+                                    <path d="M9 3h6l1 3H8l1-3z"/>
+                                    <path d="M8 6v11a4 4 0 0 0 8 0V6"/>
+                                    <path d="M5 10h3"/>
+                                    <path d="M16 10h3"/>
+                                    <path d="M4 15h4"/>
+                                    <path d="M16 15h4"/>
+                                </svg>
+                                <span data-i18n="header.reportBug">Report Bug</span>
+                            </button>
+                            <div class="dropdown-divider" role="separator"></div>
+                            <button class="dropdown-item danger" id="dropdown-logout" role="menuitem">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                <span data-i18n="nav.logout">Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Breadcrumb Navigation -->
+            <div class="breadcrumb-container" id="breadcrumb-nav" style="display: none;">
+                <!-- Populated by BreadcrumbManager -->
+            </div>
+
+            <div class="content-area" id="content-area" role="region" aria-live="polite" aria-label="Main content">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <!-- Screen reader announcements -->
+            <div id="sr-announcements" class="sr-only" aria-live="assertive" aria-atomic="true" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;"></div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="shortcuts-modal" id="shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+        <div class="shortcuts-modal__content">
+            <div class="shortcuts-modal__header">
+                <h2 class="shortcuts-modal__title" id="shortcuts-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M6 16h8"/>
+                    </svg>
+                    <span data-i18n="shortcuts.title">Keyboard Shortcuts</span>
+                </h2>
+                <button class="shortcuts-modal__close" id="shortcuts-close" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="shortcuts-modal__body">
+                <div class="shortcuts-section">
+                    <h3 class="shortcuts-section__title" data-i18n="shortcuts.navigation">Navigation</h3>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.goToDashboard">Go to Dashboard</span>
+                        <div class="shortcut-keys"><kbd class="kbd">G</kbd><kbd class="kbd">D</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.goToJobs">Go to Jobs</span>
+                        <div class="shortcut-keys"><kbd class="kbd">G</kbd><kbd class="kbd">J</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.goToProjects">Go to Projects</span>
+                        <div class="shortcut-keys"><kbd class="kbd">G</kbd><kbd class="kbd">P</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.goToFiles">Go to Files</span>
+                        <div class="shortcut-keys"><kbd class="kbd">G</kbd><kbd class="kbd">F</kbd></div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3 class="shortcuts-section__title" data-i18n="shortcuts.actions">Actions</h3>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.newJob">New Job</span>
+                        <div class="shortcut-keys"><kbd class="kbd">N</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.search">Search</span>
+                        <div class="shortcut-keys"><kbd class="kbd">/</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.commandPalette">Command Palette</span>
+                        <div class="shortcut-keys"><kbd class="kbd">⌘</kbd><kbd class="kbd">K</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.refreshData">Refresh Data</span>
+                        <div class="shortcut-keys"><kbd class="kbd">R</kbd></div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3 class="shortcuts-section__title" data-i18n="shortcuts.general">General</h3>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.showShortcuts">Show Keyboard Shortcuts</span>
+                        <div class="shortcut-keys"><kbd class="kbd">?</kbd></div>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-desc" data-i18n="shortcuts.closeModal">Close Modal/Dialog</span>
+                        <div class="shortcut-keys"><kbd class="kbd">Esc</kbd></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+        <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title"></h3>
+                <button class="modal-close" id="modal-close" aria-label="Close modal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Modal content -->
+            </div>
+            <div class="modal-footer" id="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel" data-i18n="modal.cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-confirm" data-i18n="modal.confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Popup (commented out)
+    <div id="maintenance-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--color-bg-elevated, #22222e); padding: 2rem; border-radius: var(--r-ui, 0px); max-width: 500px; width: 90%; text-align: center; border: 1px solid var(--color-border, #2a2a38); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+            <div style="margin-bottom: 1rem;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <h3 style="color: var(--color-text-primary, #fff); margin-bottom: 0.5rem; font-size: 1.5rem;">Scheduled Maintenance</h3>
+            <p style="color: var(--color-text-secondary, #a1a1aa); margin-bottom: 1.5rem; line-height: 1.6;">
+                scheduled maintanace at 19. Dec at 17 cet
+            </p>
+            <button onclick="document.getElementById('maintenance-popup').style.display='none'" class="btn btn-primary" style="min-width: 120px;">
+                Got it
+            </button>
+        </div>
+    </div>
+    <script>
+        setTimeout(function() {
+            var popup = document.getElementById('maintenance-popup');
+            if (popup) popup.style.display = 'flex';
+        }, 1000);
+    </script>
+    -->
+
+    <!-- Command Palette -->
+    <div class="command-palette-overlay" id="command-palette-overlay" style="display: none;">
+        <div class="command-palette-modal">
+            <div class="command-palette-header">
+                <svg class="command-palette-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text"
+                       id="command-palette-input"
+                       class="command-palette-input"
+                       data-i18n-placeholder="commandPalette.placeholder"
+                       placeholder="Type a command or search..."
+                       autocomplete="off">
+                <div class="command-palette-badge">ESC</div>
+            </div>
+            <div class="command-palette-body" id="command-palette-results">
+                <!-- Results injected here -->
+            </div>
+            <div class="command-palette-footer">
+                <div class="command-palette-hint">
+                    <span class="shortcut">↑↓</span> <span data-i18n="commandPalette.navigate">to navigate</span>
+                </div>
+                <div class="command-palette-hint">
+                    <span class="shortcut">↵</span> <span data-i18n="commandPalette.select">to select</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer Container -->
+    <div class="drawer-overlay" id="drawer-overlay" aria-hidden="true">
+        <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+            <div class="drawer-header">
+                <h3 class="drawer-title" id="drawer-title">Drawer Title</h3>
+                <button class="drawer-close" id="drawer-close" aria-label="Close drawer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="drawer-body" id="drawer-body">
+                <!-- Drawer content -->
+            </div>
+            <div class="drawer-footer" id="drawer-footer" style="display: none;">
+                <!-- Drawer footer actions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Sidebar -->
+    <aside id="notifications-sidebar" class="notifications-sidebar hidden">
+        <div class="notifications-header">
+            <h3 data-i18n="notifications.title">Notifications</h3>
+            <div class="notifications-actions">
+                <button id="mark-all-read-btn" class="btn btn-ghost btn-sm" data-i18n="notifications.markAllRead">Mark all read</button>
+                <button id="close-notifications-btn" class="btn btn-ghost btn-icon" aria-label="Close notifications">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="notifications-body" id="notifications-list">
+            <!-- Rendered via JS -->
+        </div>
+    </aside>
+
+    <!-- Phonos Copilot mounts its launcher and right-hand panel here. -->
+    <div id="phonos-agent-root"></div>
+
+    <!-- Pass server data to JavaScript -->
+    <script>
+        window.PHONOS_CONFIG = {
+            username: {{ session.get('username', 'User') | tojson }},
+            userId: {{ session.get('user_id', 0) | tojson }},
+            isAdmin: {{ session.get('is_admin', False) | tojson }},
+            systemRole: {{ session.get('system_role', 'admin' if session.get('is_admin') else 'scientist') | tojson }},
+            enable2FA: {{ (config.get('ENABLE_2FA', False)) | tojson }},
+            localLabMode: {{ (config.get('LOCAL_LAB_MODE', True)) | tojson }},
+            currentPlan: {{ current_plan | tojson }},
+            supportedModels: {{ supported_models | tojson }},
+            storageSummary: {{ storage_summary | tojson }},
+            pendingInvitations: {{ pending_invitations | length }},
+            csrfToken: {{ csrf_token | tojson }}
+        };
+
+        // DSGVO/GDPR Cookie Consent Check (handled by _google_analytics.html)
+        (function() {
+            const consent = localStorage.getItem('cookie-consent-v2');
+            if (consent === 'accepted') {
+                console.log('Cookie consent: accepted - Analytics loaded via _google_analytics.html');
+            }
+        })();
+    </script>
+    <!-- Legacy monolithic scripts (used when Vite bundle is not active) -->
+    <script>
+    (function() {
+        var useVite = window.PHONOS_CONFIG && window.PHONOS_CONFIG.useViteBundle;
+        if (!useVite) {
+            document.write('<script defer src="{{ url_for('static', filename='js/file-upload-preview.js') }}?v=76d1aae8"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/job-prefetch.js') }}?v=7ad42b28"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/ui-utils.js') }}?v=fb3eacd8"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/theme-manager.js') }}?v=7dd5e1dc"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/model_io.js') }}?v=a2e0a9b5"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/ligand_diagram.js') }}?v=496f5c40"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/app.js') }}?v=3cc8b068"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/app-shell.js') }}?v=c4128740"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/bunches.js') }}?v=42858b45"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/flows_module.js') }}?v=4dfcbd80"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/databases.js') }}?v=fea076bd"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/pipelines.js') }}?v=448d3a55"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/user_model_format_examples.js') }}?v=1219d3ea"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/notebook.js') }}?v=4ae6a9be"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/wolfram_nb.js') }}?v=283211a9"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/iot.js') }}?v=b2a69b97"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/system_warnings.js') }}?v=8ab47f32"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/notifications-sidebar.js') }}?v=83381dfd"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/notifications.js') }}?v=1a4474e4"><\/script>');
+            document.write('<script defer src="{{ url_for('static', filename='js/oversight.js') }}?v=aa02e540"><\/script>');
+        }
+    })();
+    </script>
+    <script defer src="{{ url_for('static', filename='js/agent-context.js') }}?v=20261115o"></script>
+    <script defer src="{{ url_for('static', filename='js/agent.js') }}?v=20261115o"></script>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

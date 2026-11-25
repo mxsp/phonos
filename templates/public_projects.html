@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="{{ user_language|default('en') }}">
+<head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
+    {% include '_google_analytics.html' %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="publicProjects.pageTitle">Phonos - Community Projects</title>
+    <meta name="description" content="Explore public computational biology projects shared by the Phonos community — protein structure predictions, molecular docking results, and protein designs from Boltz2, AlphaFold2, ESMFold, DiffDock and more." data-i18n="[content]publicProjects.metaDescription">
+    <link rel="canonical" href="{{ url_for('public_projects', _external=True) }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url_for('public_projects', _external=True) }}">
+    <meta property="og:title" content="Phonos — Community Projects">
+    <meta property="og:description" content="Public protein structure prediction, docking, and design projects shared by the Phonos community.">
+    <meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=6e8a3deb">
+    {% include '_i18n_scripts.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}?v=9e43b44e">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}?v=191f838c" data-snap=".card, .dash-v4-panel, .dash-v4-command-bar, .dash-v4-stat-card, .page-container > .page-header, .hero-banner, .auth-card, .stats-overview-item, .model-table" data-snap-skip=".modal .card, .modal-content .card, .dropdown-menu .card" defer></script>
+</head>
+<body>
+    <div style="padding: var(--space-6); max-width: 1200px; margin: 0 auto;">
+        <div class="flex justify-between items-center" style="margin-bottom: var(--space-6);">
+            <div>
+                <h1 data-i18n="community.publicProjects">Community Projects</h1>
+                <p class="text-muted" data-i18n="community.explore">Explore public research projects</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{{ url_for('index') }}" class="btn btn-ghost" data-i18n="community.home">Home</a>
+                <a href="{{ url_for('login') }}" class="btn btn-primary" data-i18n="community.signIn">Sign In</a>
+            </div>
+        </div>
+
+        <div class="flex gap-3" style="margin-bottom: var(--space-4);">
+            <input type="text" class="form-input" placeholder="Search projects..." data-i18n="[placeholder]community.searchPlaceholder" id="search-input" style="flex: 1;">
+            <select class="form-select" id="category-filter" style="width: 200px;">
+                <option value="" data-i18n="community.allCategories">All Categories</option>
+            </select>
+        </div>
+
+        <div class="grid grid-3" id="projects-grid">
+            <div class="spinner" style="grid-column: span 3; text-align: center; padding: var(--space-8);"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProjects() {
+            try {
+                const projects = await fetch('/api/public_projects').then(r => r.json());
+
+                if (projects.length === 0) {
+                    document.getElementById('projects-grid').innerHTML = `
+                        <div class="empty-state" style="grid-column: span 3;">
+                            <h3 class="empty-state-title">${window.i18n.t('community.noPublicProjects')}</h3>
+                            <p class="empty-state-description">${window.i18n.t('community.beFirst')}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                document.getElementById('projects-grid').innerHTML = projects.map(p => `
+                    <div class="project-card" onclick="window.location.href='/public_projects?id=${p.id}'">
+                        <div class="project-card-header">
+                            <h4 class="project-card-title">${p.name}</h4>
+                        </div>
+                        <p class="project-card-description">${p.description || window.i18n.t('community.noDescription')}</p>
+                        <div class="project-card-meta">
+                            <span>${p.view_count || 0} ${window.i18n.t('community.views')}</span>
+                            <span>${p.vote_score || 0} ${window.i18n.t('community.votes')}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProjects);
+    </script>
+    {% include 'partials/_cookie_consent_modal.html' %}
+</body>
+</html>

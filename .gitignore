@@ -1,0 +1,77 @@
+# Dependency & virtual-env directories
+node_modules/
+venv/
+.venv/
+*.egg-info/
+build/
+dist/
+packaging/build/
+packaging/dist/
+.pytest_cache/
+
+# Python compiled files
+__pycache__/
+*.pyc
+
+# Runtime state, local databases & secrets (NEVER COMMIT)
+.data/
+.env
+.env.*
+!.env.example
+*.log
+*.out
+*.db
+*.db-wal
+*.db-shm
+*.db.backup
+job_outputs/
+job_outputs_fallback/
+production/user_uploads/
+user_uploads/
+data/notebooks/
+*.mmdb
+!deploy/**/secret.yaml.example
+deploy/workers/kubernetes/secret.yaml
+deploy/**/secret.yaml
+services/hpc-worker/.cluster*.env
+
+# Private keys & certificates
+*.pem
+*.key
+
+# Backup & scratch artifacts
+*.backup
+*.backup2
+*.bak
+*.bak.*
+*.bak-*
+static/**/*.map
+/boltz2_test_*.json
+/boltz2_test_structure.cif
+/iot_*_report.json
+/test_output_*.cif
+/*.mp4
+production/new_workers_*.json
+production/boltz2_test_*
+phonos-main/
+
+# Editor / AI dev tool local configs & internal notes
+.vscode/
+.idea/
+.DS_Store
+.code-review-graph/
+.code-review-graphignore
+.claude/
+.codex
+.cursorrules
+.mcp.json
+.opencode.json
+.windsurfrules
+CLAUDE.md
+GEMINI.md
+AGENTS.md
+NB_IMPROVEMENTS_TODO.md
+TODO.md
+.github/workflows/
+.github/workflows-disabled/
+release-assets/

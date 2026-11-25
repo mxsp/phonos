@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phonos-workers-config
+  namespace: phonos-workers
+  labels:
+    app.kubernetes.io/name: phonos
+    app.kubernetes.io/component: workers
+data:
+  # Redis Configuration
+  REDIS_HOST: "127.0.0.1"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_SSL: "false"
+
+  # Worker Configuration
+  WORKER_HEARTBEAT_INTERVAL: "30"
+  MAX_RETRIES: "3"
+  POLL_TIMEOUT: "5"
+
+  # Logging
+  LOG_LEVEL: "INFO"
+
+  # Performance
+  PYTORCH_JIT: "1"
+  OMP_NUM_THREADS: "8"
+  MKL_NUM_THREADS: "6"
+  OPENBLAS_NUM_THREADS: "6"
+  NUMEXPR_NUM_THREADS: "6"
+
+  # Model Cache
+  TRANSFORMERS_CACHE: "/app/cache"
+  TORCH_HOME: "/app/cache"
+
+  # DiffDock specific
+  DIFFDOCK_INSTALL_DIR: "/opt/DiffDock"
+  DIFFDOCK_CONDA_ENV: "diffdock"
+  DIFFDOCK_CACHE_DIR: "/app/cache"

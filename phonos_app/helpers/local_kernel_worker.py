@@ -73,16 +73,21 @@ def _make_helpers(workspace: Path) -> Dict[str, Any]:
             logp = round(Crippen.MolLogP(mol), 2)
             tpsa = round(rdMolDescriptors.CalcTPSA(mol), 2)
             qed_v = round(float(QED.qed(mol)), 3)
-            hdr = f"<div style='font-weight:600;margin-bottom:6px;color:#34d399;'>{html.escape(title or smiles)}</div>"
+            hdr = (
+                "<div style='font-family:IBM Plex Mono,ui-monospace,monospace;font-size:11px;"
+                "letter-spacing:0.1em;text-transform:uppercase;color:#34d399;margin-bottom:6px;'>"
+                f"MOLECULE // {html.escape(title or smiles)}</div>"
+            )
             card = (
                 "<div style='display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:12px;"
-                "background:#121216;border:1px solid rgba(255,255,255,0.1);border-radius:10px;margin:6px 0;'>"
-                f"<div style='background:#fff;border-radius:8px;padding:4px;'>{svg}</div>"
-                "<div style='font-size:13px;color:#e4e4e7;line-height:1.7;'>"
+                "background:#30404D;border:1px solid rgba(255,255,255,0.24);border-top:2px solid rgba(245,248,250,0.72);"
+                "border-radius:0;margin:6px 0;'>"
+                f"<div style='background:#fff;border:1px solid rgba(255,255,255,0.24);border-radius:0;padding:4px;'>{svg}</div>"
+                "<div style='font-family:IBM Plex Mono,ui-monospace,monospace;font-size:12px;color:#F5F8FA;line-height:1.75;'>"
                 f"{hdr}"
-                f"<div><b>Formula:</b> {rdMolDescriptors.CalcMolFormula(mol)}</div>"
-                f"<div><b>MW:</b> {mw} Da &nbsp;·&nbsp; <b>cLogP:</b> {logp}</div>"
-                f"<div><b>TPSA:</b> {tpsa} Å² &nbsp;·&nbsp; <b>QED:</b> {qed_v}</div>"
+                f"<div><span style='color:#A3B3C5;'>FORMULA:</span> {rdMolDescriptors.CalcMolFormula(mol)}</div>"
+                f"<div><span style='color:#A3B3C5;'>MW:</span> {mw} Da &nbsp;|&nbsp; <span style='color:#A3B3C5;'>CLOGP:</span> {logp}</div>"
+                f"<div><span style='color:#A3B3C5;'>TPSA:</span> {tpsa} A^2 &nbsp;|&nbsp; <span style='color:#A3B3C5;'>QED:</span> {qed_v}</div>"
                 "</div></div>"
             )
             _ACTIVE_COLLECTOR.push_html(card)
@@ -113,13 +118,16 @@ def _make_helpers(workspace: Path) -> Dict[str, Any]:
         mean_plddt = f"{sum(ca_bfacs)/len(ca_bfacs):.1f}" if ca_bfacs else "n/a"
         b64_pdb = base64.b64encode(content.encode("utf-8")).decode("ascii")
         card = (
-            "<div style='padding:12px 14px;background:#121216;border:1px solid rgba(16,185,129,0.32);"
-            "border-radius:10px;margin:6px 0;color:#f4f4f5;font-size:13px;'>"
-            f"<div style='display:flex;justify-content:space-between;align-items:center;gap:12px;'>"
-            f"<div><strong style='color:#34d399;'>🧬 {html.escape(title)}</strong>"
-            f"<div style='color:#a1a1aa;font-size:12px;margin-top:3px;'>Atoms: {atom_cnt} · Chains: {', '.join(sorted(chains)) or 'A'} · Residues (Cα): {len(ca_bfacs)} · Mean pLDDT/B: {mean_plddt}</div></div>"
+            "<div style='padding:12px 14px;background:#30404D;border:1px solid rgba(255,255,255,0.24);"
+            "border-top:2px solid rgba(245,248,250,0.72);border-radius:0;margin:6px 0;color:#F5F8FA;font-size:12px;'>"
+            "<div style='display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;'>"
+            "<div>"
+            f"<div style='font-family:IBM Plex Mono,ui-monospace,monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;'>STRUCTURE // {html.escape(title)}</div>"
+            f"<div style='font-family:IBM Plex Mono,ui-monospace,monospace;color:#C7D0DB;font-size:12px;margin-top:4px;'>ATOMS: {atom_cnt} | CHAINS: {', '.join(sorted(chains)) or 'A'} | CA RESIDUES: {len(ca_bfacs)} | MEAN PLDDT: {mean_plddt}</div>"
+            "</div>"
             f"<a download='notebook_structure.pdb' href='data:chemical/x-pdb;base64,{b64_pdb}' "
-            "style='padding:5px 10px;background:#10b981;color:#052e1c;font-weight:700;border-radius:6px;text-decoration:none;font-size:12px;'>Download .pdb</a>"
+            "style='padding:5px 10px;background:#0F9960;color:#fff;border:1px solid #34d399;border-radius:0;"
+            "font-family:IBM Plex Mono,ui-monospace,monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;'>Download PDB</a>"
             "</div></div>"
         )
         _ACTIVE_COLLECTOR.push_html(card)

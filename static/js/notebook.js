@@ -2085,12 +2085,13 @@ window.NotebookModule = {
             });
             if (res.ok) {
                 var data = await res.json();
-                if (!this.notebook.id) {
-                    this.notebook.id = data.id;
+                var resolvedId = (data && data.id) || this.notebook.id;
+                if (!this.notebook.id && resolvedId) {
+                    this.notebook.id = resolvedId;
                 }
                 // Only update URL bar for the primary notebook tab
-                if (activeTab && activeTab.containerId === 'cells-container') {
-                    history.replaceState(null, '', '?id=' + data.id);
+                if (resolvedId && activeTab && activeTab.containerId === 'cells-container') {
+                    history.replaceState(null, '', '?id=' + encodeURIComponent(resolvedId));
                 }
                 this.notebook.dirty = false;
                 this.updateSaveStatus(window.i18n ? window.i18n.t('notebook.saved') : 'Saved');

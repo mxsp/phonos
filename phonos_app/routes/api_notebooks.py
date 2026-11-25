@@ -3606,6 +3606,30 @@ def wolfram_bridge():
 # needing the user to relay it manually. Remove once the bug is found.
 # ============================================================================
 
+@notebook_bp.route('/<int:notebook_id>/source-status', methods=['GET'])
+@login_required
+def get_notebook_source_status(notebook_id):
+    """Return whether a notebook is mirrored to an external .nb source file."""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Authentication required'}), 401
+    db = get_db()
+    nb = db.execute('SELECT id, user_id, project_id FROM notebooks WHERE id = %s', (notebook_id,)).fetchone()
+    if not nb:
+        return jsonify({'linked': False, 'exists': False})
+    return jsonify({'linked': False, 'exists': False})
+
+
+@notebook_bp.route('/<int:notebook_id>/sync-to-source', methods=['POST'])
+@login_required
+def sync_notebook_to_source(notebook_id):
+    """Best-effort no-op sync when no external .nb mirror is attached."""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Authentication required'}), 401
+    return jsonify({'synced': False, 'linked': False})
+
+
 @notebook_bp.route('/debug_log', methods=['POST'])
 @login_required
 def client_debug_log():

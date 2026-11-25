@@ -383,15 +383,16 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
                         <span>Quantum</span>
                     </button>
-                    <select id="nb-bio-snippet-select" title="Insert Molecular Discovery Code Template" style="background:#121216;color:#34d399;border:1px solid rgba(16,185,129,0.35);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px;" onchange="window.insertPhonosBioSnippet(this)">
-                        <option value="">+ Bio Snippet…</option>
+                    <select id="nb-bio-snippet-select" title="Insert Molecular Discovery Code Template" style="background:rgba(0,0,0,0.28);color:var(--text-primary,#F5F8FA);border:1px solid rgba(255,255,255,0.24);border-radius:0;padding:3px 8px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;margin-left:4px;" onchange="window.insertPhonosBioSnippet(this)">
+                        <option value="">+ Bio Snippet</option>
                         <option value="rdkit_admet">RDKit 2D + Lipinski/QED</option>
                         <option value="biopython_seq">Biopython Sequence &amp; pI/MW</option>
                         <option value="inline_3d">Inline 3D Structure Card</option>
                         <option value="byom_call">Call Custom BYOM Endpoint</option>
                     </select>
                     <button class="nb-tool-btn" type="button" onclick="window.open('/agent', '_blank')" title="Open Phonos Discovery Copilot" style="color:#34d399;">
-                        <span>✨ Copilot</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="0"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/><polyline points="8 18 8 21 12 18"/></svg>
+                        <span>Copilot</span>
                     </button>
                 </div>
 

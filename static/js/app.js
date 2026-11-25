@@ -20979,13 +20979,31 @@ if signature == expected:
                 }
 
                 @media (max-width: 1120px) {
+                    #content-area.mol-vis-active {
+                        overflow-y: auto;
+                    }
+
                     .mol-vis-shell {
                         height: auto;
-                        min-height: 0;
+                        min-height: 100%;
+                        overflow: visible;
                     }
 
                     .mol-vis-shell-body {
                         flex-direction: column;
+                        overflow: visible;
+                    }
+
+                    .mol-vis-viewport-grid {
+                        flex: 0 0 auto;
+                        width: 100%;
+                        min-width: 0;
+                        height: clamp(440px, 58vh, 660px);
+                        min-height: 440px;
+                    }
+
+                    .mol-vis-stage-card {
+                        min-height: 440px;
                     }
 
                     .mol-vis-shell-divider {
@@ -21344,7 +21362,9 @@ if signature == expected:
                             <button class="mol-vis-sidebar-command" data-act="screenshot" title="Save image">Image</button>
                             <button class="mol-vis-sidebar-command" data-act="spin" title="Toggle spin">Spin</button>
                             <button class="mol-vis-sidebar-command" data-act="sequence" title="Toggle sequence panel">Sequence</button>
+                            <button class="mol-vis-sidebar-command" data-act="ruler" title="Measure atom-to-atom distance (M)">Ruler</button>
                             <button class="mol-vis-sidebar-command" id="mol-vis-detach-all" data-act="detach" title="Open controls in a separate window"><span id="mol-vis-detach-label">Pop Out</span></button>
+                            <button class="mol-vis-sidebar-command primary" data-act="copilot" style="grid-column: span 2;" title="Ask Discovery Copilot about this 3D structure (A)">Ask Copilot (A)</button>
                         </div>
                     </aside>
                 </div>
@@ -22843,6 +22863,15 @@ if signature == expected:
                         state.seqVisible = !state.seqVisible;
                         v.toggleSequencePanel(state.seqVisible);
                         document.querySelectorAll('.mol-vis-shell [data-act="sequence"]').forEach((b) => b.classList.toggle('active', state.seqVisible));
+                    } else if (act === 'ruler') {
+                        const on = typeof v.toggleDistanceRuler === 'function' ? v.toggleDistanceRuler() : false;
+                        document.querySelectorAll('.mol-vis-shell [data-act="ruler"]').forEach((b) => b.classList.toggle('active', !!on));
+                    } else if (act === 'copilot') {
+                        if (typeof v.askCopilotAboutStructure === 'function') {
+                            v.askCopilotAboutStructure();
+                        } else if (typeof window.PhonosCopilotAsk === 'function') {
+                            window.PhonosCopilotAsk('Analyze the currently loaded 3D molecular structure.');
+                        }
                     }
                 } catch (e) {
                     console.warn('[MolVis] viewer command failed:', act, e);

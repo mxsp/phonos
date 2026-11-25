@@ -263,88 +263,113 @@ INDEX_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phonos — Guided Lab Installer</title>
+<title>Phonos - Guided Lab Installer</title>
 <style>
-  :root { --bg:#09090b; --card:#131318; --border:#27272a; --text:#fafafa; --muted:#a1a1aa; --accent:#10b981; --danger:#ef4444; }
+  :root {
+    --bg:#293742; --card:#30404D; --field:rgba(0,0,0,0.22);
+    --border:rgba(255,255,255,0.24); --border-strong:rgba(245,248,250,0.72);
+    --text:#F5F8FA; --muted:#A3B3C5; --accent:#0F9960; --accent-light:#34d399;
+    --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:2rem 1rem; line-height:1.5; }
-  .wrap { max-width:820px; margin:0 auto; }
-  .hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
-  h1 { font-size:1.5rem; font-weight:700; letter-spacing:-0.02em; }
-  .badge { font-size:0.75rem; padding:0.25rem 0.65rem; border-radius:999px; background:rgba(16,185,129,0.14); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.35rem; margin-bottom:1.1rem; }
-  .card h2 { font-size:1rem; margin-bottom:0.85rem; color:#e4e4e7; }
-  .checks { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.65rem; }
-  .chk { padding:0.65rem 0.8rem; border-radius:10px; background:#18181f; border:1px solid var(--border); font-size:0.84rem; }
-  .chk b { display:block; margin-bottom:0.15rem; }
-  .ok { color:#34d399; } .warn { color:#fbbf24; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; }
+  body {
+    background-color:var(--bg);
+    background-image:
+      linear-gradient(rgba(245,248,250,0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,248,250,0.09) 1px, transparent 1px),
+      linear-gradient(rgba(245,248,250,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,248,250,0.045) 1px, transparent 1px);
+    background-size:160px 160px, 160px 160px, 32px 32px, 32px 32px;
+    color:var(--text);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    padding:2rem 1rem 3rem;
+    line-height:1.5;
+  }
+  .wrap { max-width:860px; margin:0 auto; }
+  .hdr { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border-strong); }
+  h1 { font-size:1.35rem; font-weight:700; letter-spacing:-0.02em; }
+  .badge { font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:4px 9px; border-radius:0; background:var(--field); color:var(--accent-light); border:1px solid var(--accent-light); }
+  .card { background:var(--card); border:1px solid var(--border); border-top:2px solid var(--border-strong); border-radius:0; margin-bottom:1.25rem; }
+  .card h2 { font-family:var(--mono); font-size:12px; letter-spacing:0.12em; text-transform:uppercase; padding:10px 16px; background:var(--field); border-bottom:1px solid var(--border); color:var(--text); font-weight:500; }
+  .card-body { padding:16px; }
+  .checks { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }
+  .chk { padding:10px 12px; border-radius:0; background:var(--field); border:1px solid var(--border); border-top:2px solid var(--border-strong); font-size:0.84rem; }
+  .chk b { display:block; font-family:var(--mono); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .ok { color:var(--accent-light); font-family:var(--mono); } .warn { color:#fbbf24; font-family:var(--mono); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media(max-width:640px){ .grid { grid-template-columns:1fr; } }
-  label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:0.3rem; }
-  input, select { width:100%; padding:0.6rem 0.75rem; background:#09090b; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.9rem; }
-  input:focus, select:focus { outline:none; border-color:var(--accent); }
-  .row-chk { display:flex; align-items:center; gap:0.55rem; margin-top:0.75rem; font-size:0.86rem; color:#d4d4d8; }
-  .row-chk input { width:auto; }
-  .btn { background:var(--accent); color:#042f2e; font-weight:700; border:none; border-radius:9px; padding:0.75rem 1.35rem; font-size:0.95rem; cursor:pointer; width:100%; margin-top:0.5rem; }
+  label { display:block; font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+  input, select { width:100%; padding:8px 10px; background:var(--field); border:1px solid var(--border); border-radius:0; color:var(--text); font-size:0.9rem; }
+  input:focus, select:focus { outline:2px solid var(--accent-light); border-color:var(--accent-light); }
+  .row-chk { display:flex; align-items:center; gap:8px; margin-top:10px; font-family:inherit; text-transform:none; letter-spacing:0; font-size:0.86rem; color:#C7D0DB; cursor:pointer; }
+  .row-chk input { width:auto; accent-color:var(--accent); }
+  .btn { background:var(--accent); color:#fff; font-family:var(--mono); font-size:12px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border:1px solid var(--accent-light); border-radius:0; padding:11px 18px; cursor:pointer; width:100%; margin-top:12px; }
+  .btn:hover:not(:disabled) { box-shadow:3px 3px 0 rgba(0,0,0,0.55); transform:translate(-2px,-2px); }
   .btn:disabled { opacity:0.5; cursor:not-allowed; }
-  pre { background:#050507; border:1px solid var(--border); border-radius:10px; padding:0.9rem; font-size:0.78rem; color:#d4d4d8; max-height:280px; overflow:auto; white-space:pre-wrap; margin-top:0.75rem; }
-  .links a { display:inline-block; margin-right:0.75rem; margin-top:0.6rem; padding:0.55rem 1rem; border-radius:8px; background:var(--accent); color:#042f2e; font-weight:700; text-decoration:none; font-size:0.88rem; }
-  .ruo { font-size:0.78rem; color:var(--muted); margin-top:0.75rem; }
+  pre { background:rgba(0,0,0,0.34); border:1px solid var(--border); border-radius:0; padding:12px; font-family:var(--mono); font-size:12px; color:#C7D0DB; max-height:280px; overflow:auto; white-space:pre-wrap; margin-top:10px; }
+  .links a { display:inline-block; margin-right:8px; margin-top:8px; padding:7px 14px; border-radius:0; background:var(--accent); color:#fff; border:1px solid var(--accent-light); font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; text-decoration:none; }
+  .ruo { font-size:0.78rem; color:var(--muted); margin-top:10px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="hdr">
     <div>
-      <h1>Phonos — Guided One-Time Setup</h1>
+      <h1>PHONOS // GUIDED ONE-TIME SETUP</h1>
       <div style="font-size:0.85rem;color:var(--muted);">Self-Hosted Molecular Discovery, 3D Mol* Viewer, Python Notebook &amp; Copilot</div>
     </div>
-    <span class="badge">Zero-SMTP · Local Lab Mode</span>
+    <span class="badge">ZERO-SMTP // LOCAL LAB</span>
   </div>
 
   <div class="card">
-    <h2>1. System Environment Check</h2>
-    <div id="checks" class="checks">Checking host…</div>
-  </div>
-
-  <div class="card">
-    <h2>2. Lab &amp; First Admin Account Configuration</h2>
-    <div class="grid">
-      <div>
-        <label>Install &amp; Launch Mode</label>
-        <select id="mode">
-          <option value="both">Playground (:5040) + Production (:5041)</option>
-          <option value="production">Production Lab Only (:5041)</option>
-          <option value="playground">Playground Sandbox Only (:5040)</option>
-        </select>
-      </div>
-      <div>
-        <label>Lab / Organization Name</label>
-        <input id="lab_name" value="Phonos Lab" placeholder="e.g. Structural Biology Lab">
-      </div>
-      <div>
-        <label>Production Admin Username (optional — or create at /setup)</label>
-        <input id="admin_user" placeholder="admin">
-      </div>
-      <div>
-        <label>Production Admin Password (min. 8 chars)</label>
-        <input id="admin_password" type="password" placeholder="Leave blank to set up in browser">
-      </div>
-      <div style="grid-column: 1 / -1;">
-        <label>Optional NVIDIA NIM API Key (can also be added encrypted later in Settings → Model Providers)</label>
-        <input id="nvidia_api_key" type="password" placeholder="nvapi-...">
-      </div>
+    <h2>01 // System Environment Check</h2>
+    <div class="card-body">
+      <div id="checks" class="checks">Checking host...</div>
     </div>
-    <label class="row-chk"><input type="checkbox" id="lan_access" checked> Allow access from devices on your local LAN</label>
-    <label class="row-chk"><input type="checkbox" id="auto_launch" checked> Start Phonos immediately after setup completes</label>
-    <p class="ruo">Research Use Only (RUO): Computational predictions require independent wet-lab validation and are not for clinical or diagnostic use.</p>
-    <button class="btn" id="startBtn" onclick="startInstall()">Install &amp; Launch Phonos</button>
+  </div>
+
+  <div class="card">
+    <h2>02 // Lab &amp; First Admin Configuration</h2>
+    <div class="card-body">
+      <div class="grid">
+        <div>
+          <label>Install &amp; Launch Mode</label>
+          <select id="mode">
+            <option value="both">Playground (:5040) + Production (:5041)</option>
+            <option value="production">Production Lab Only (:5041)</option>
+            <option value="playground">Playground Sandbox Only (:5040)</option>
+          </select>
+        </div>
+        <div>
+          <label>Lab / Organization Name</label>
+          <input id="lab_name" value="Phonos Lab" placeholder="Structural Biology Lab">
+        </div>
+        <div>
+          <label>Production Admin Username (Optional)</label>
+          <input id="admin_user" placeholder="admin">
+        </div>
+        <div>
+          <label>Production Admin Password (Min 8 Chars)</label>
+          <input id="admin_password" type="password" placeholder="Leave blank to configure at /setup">
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>Optional NVIDIA NIM API Key (Can Be Added Encrypted Later)</label>
+          <input id="nvidia_api_key" type="password" placeholder="nvapi-...">
+        </div>
+      </div>
+      <label class="row-chk"><input type="checkbox" id="lan_access" checked> Allow access from devices on your local LAN</label>
+      <label class="row-chk"><input type="checkbox" id="auto_launch" checked> Start Phonos immediately after setup completes</label>
+      <p class="ruo">Research Use Only (RUO): Computational predictions require independent wet-lab validation and are not for clinical or diagnostic use.</p>
+      <button class="btn" id="startBtn" onclick="startInstall()">Install &amp; Launch Phonos</button>
+    </div>
   </div>
 
   <div class="card" id="statusCard" style="display:none;">
-    <h2 id="stepTitle">Starting setup…</h2>
-    <div id="openLinks" class="links"></div>
-    <pre id="logBox"></pre>
+    <h2 id="stepTitle">Starting setup...</h2>
+    <div class="card-body">
+      <div id="openLinks" class="links"></div>
+      <pre id="logBox"></pre>
+    </div>
   </div>
 </div>
 <script>

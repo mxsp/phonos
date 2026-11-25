@@ -136,17 +136,18 @@ def _ensure_edu_settings_table(db):
                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
            )'''
     )
-    # Ensure columns exist on pre-existing rows (older installs).
-    cols = {c['column_name'] for c in db.execute(
-        "SELECT column_name FROM information_schema.columns WHERE table_name = 'user_education_settings'"
-    ).fetchall()} if not isinstance(db.execute("SELECT 1").__class__.__name__, str) else set()
+    cols = set()
     try:
         existing = db.execute(
             "SELECT column_name FROM information_schema.columns WHERE table_name = 'user_education_settings'"
         ).fetchall()
         cols = {r['column_name'] for r in existing}
     except Exception:
-        cols = set()
+        try:
+            existing = db.execute("PRAGMA table_info(user_education_settings)").fetchall()
+            cols = {r['name'] for r in existing}
+        except Exception:
+            cols = set()
     if 'default_late_policy' not in cols:
         try:
             db.execute("ALTER TABLE user_education_settings ADD COLUMN default_late_policy TEXT NOT NULL DEFAULT 'none'")

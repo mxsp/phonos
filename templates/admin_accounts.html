@@ -1,168 +1,342 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Accounts, Roles &amp; Updates – Phonos Admin</title>
+    <title>Lab Accounts, Roles &amp; Updates - Phonos Admin</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}">
+    <script src="{{ url_for('static', filename='js/grid-snap.js') }}" data-snap=".card, .stats-overview-item" defer></script>
     <style>
-        :root { --bg: #09090b; --panel: #121216; --panel-2: #18181d; --border: rgba(255,255,255,0.09); --text: #f4f4f5; --muted: #a1a1aa; --accent: #10b981; --danger: #ef4444; --warn: #f59e0b; --info: #3b82f6; }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
-        header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: #0c0c0f; position: sticky; top: 0; z-index: 20; }
-        .brand { display: flex; align-items: center; gap: 0.85rem; font-weight: 700; font-size: 1.05rem; }
-        .nav-links { display: flex; gap: 0.75rem; align-items: center; }
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 0.48rem 0.85rem; border-radius: 7px; font-weight: 600; font-size: 0.83rem; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); cursor: pointer; text-decoration: none; }
-        .btn:hover { border-color: rgba(255,255,255,0.22); }
-        .btn-primary { background: var(--accent); color: #052e1c; border-color: var(--accent); }
-        .btn-danger { background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
-        .container { max-width: 1280px; margin: 0 auto; padding: 1.75rem 2rem 4rem; display: grid; gap: 1.5rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.85rem; }
-        .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.15rem; }
-        .stat-val { font-size: 1.55rem; font-weight: 700; }
-        .stat-lbl { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-        .grid-2 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.25rem; }
-        @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.35rem; }
-        .card h2 { margin: 0 0 0.35rem; font-size: 1.05rem; }
-        .card p.desc { margin: 0 0 1rem; color: var(--muted); font-size: 0.84rem; }
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem; }
-        label { display: block; font-size: 0.78rem; font-weight: 600; color: #d4d4d8; margin-bottom: 0.28rem; }
-        input, select { width: 100%; padding: 0.52rem 0.7rem; background: #09090b; border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 0.86rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
-        th, td { text-align: left; padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
-        .b-admin { background: rgba(16,185,129,0.16); color: #34d399; }
-        .b-scientist { background: rgba(59,130,246,0.16); color: #93c5fd; }
-        .b-operator { background: rgba(245,158,11,0.16); color: #fcd34d; }
-        .b-viewer { background: rgba(161,161,170,0.16); color: #d4d4d8; }
-        .b-off { background: rgba(239,68,68,0.16); color: #fca5a5; }
-        .role-matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.65rem; margin-top: 0.75rem; font-size: 0.79rem; }
-        .rm-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem; }
-        .toast { position: fixed; bottom: 1.25rem; right: 1.25rem; background: #18181b; border: 1px solid var(--accent); color: var(--text); padding: 0.7rem 1rem; border-radius: 8px; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .aa-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+            padding: 12px 24px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--bz-line-strong);
+        }
+        .aa-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .aa-brand-title {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .aa-nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .aa-shell {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px 24px 56px;
+            display: grid;
+            gap: 20px;
+        }
+        .aa-page-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--bz-line);
+        }
+        .aa-page-head h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+        .aa-page-head p { margin: 0; font-size: 13px; color: var(--text-secondary); }
+        .aa-grid-2 {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 1024px) { .aa-grid-2 { grid-template-columns: 1fr; } }
+        .aa-form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .aa-field label.form-label { display: block; margin-bottom: 5px; }
+        .aa-field input, .aa-field select {
+            width: 100%;
+            padding: 8px 10px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .aa-role-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+        @media (max-width: 720px) { .aa-role-matrix { grid-template-columns: repeat(2, 1fr); } }
+        .aa-rm-cell {
+            background: var(--bz-field);
+            border: 1px solid var(--bz-line);
+            border-top: 2px solid var(--bz-line-strong);
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+        .aa-rm-cell strong {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .aa-upd-box {
+            background: var(--bz-field);
+            border: 1px solid var(--bz-line);
+            padding: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .aa-upd-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+        .aa-upd-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .aa-card-head-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .aa-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .aa-subtext {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+        .aa-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .aa-check input { width: auto; accent-color: var(--accent-primary); }
+        .aa-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 120;
+            display: none;
+            padding: 10px 16px;
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--accent-primary-light);
+            box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            max-width: 440px;
+        }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.14);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.55);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.26);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="brand">
-            <span style="color:var(--accent);">●</span>
-            <span>Phonos Lab Control Center</span>
-            <span class="badge b-viewer">v{{ version }}</span>
-        </div>
-        <div class="nav-links">
-            <a href="/oversight" class="btn">← Dashboard</a>
-            <a href="/custom-models" class="btn">Models &amp; Endpoints</a>
-            <a href="/agent" class="btn">Copilot Lab</a>
-            <a href="/admin" class="btn">Worker &amp; Job Oversight</a>
-        </div>
+    <header class="aa-topbar">
+        <a href="{{ url_for('dashboard') }}" class="aa-brand">
+            <img src="{{ url_for('static', filename='logo-small.png') }}" alt="Phonos" width="24" height="24">
+            <span class="aa-brand-title">PHONOS</span>
+            <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px;">//</span>
+            <span class="aa-brand-title" style="color:var(--text-secondary);">LAB CONTROL CENTER</span>
+            <span class="status-pill queued">v{{ version }}</span>
+        </a>
+        <nav class="aa-nav">
+            <a href="/dashboard" class="btn btn-secondary btn-sm">Workbench</a>
+            <a href="/custom-models" class="btn btn-secondary btn-sm">Models &amp; Endpoints</a>
+            <a href="/agent" class="btn btn-secondary btn-sm">Discovery Copilot</a>
+            <a href="/admin" class="btn btn-secondary btn-sm">Worker Oversight</a>
+        </nav>
     </header>
 
-    <div class="container">
-        <div class="stats-grid" id="summary-cards">
-            <div class="stat-card"><div class="stat-val" id="st-total">–</div><div class="stat-lbl">Total Accounts</div></div>
-            <div class="stat-card"><div class="stat-val" id="st-admins">–</div><div class="stat-lbl">Admins</div></div>
-            <div class="stat-card"><div class="stat-val" id="st-scientists">–</div><div class="stat-lbl">Scientists</div></div>
-            <div class="stat-card"><div class="stat-val" id="st-operators">–</div><div class="stat-lbl">Operators</div></div>
-            <div class="stat-card"><div class="stat-val" id="st-viewers">–</div><div class="stat-lbl">Viewers</div></div>
-            <div class="stat-card"><div class="stat-val" id="st-locked">–</div><div class="stat-lbl">Locked Out</div></div>
+    <main class="aa-shell">
+        <div class="aa-page-head">
+            <div>
+                <h1>Lab Accounts, Roles &amp; Release Updates</h1>
+                <p>Zero-SMTP local account provisioning, 2-layer global &times; project RBAC, and SHA-256 verified GitHub release updates.</p>
+            </div>
+            <div class="status-pill completed">LOCAL AUTH // ZERO TELEMETRY</div>
         </div>
 
-        <div class="grid-2">
-            <div class="card">
-                <h2>Create Local Lab Account (Zero-SMTP)</h2>
-                <p class="desc">Provision accounts with a plain username (e.g. <code>alice</code>, <code>bench-1</code>) and password. Combine global Lab Role with Default Lab Team project inheritance.</p>
-                <form id="create-acct-form">
-                    <div class="form-row">
-                        <div>
-                            <label>Username *</label>
-                            <input type="text" id="c-username" placeholder="alice or bench-1" required minlength="2">
-                        </div>
-                        <div>
-                            <label>Password * (min 8 chars)</label>
-                            <input type="password" id="c-password" placeholder="Initial password" required minlength="8">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div>
-                            <label>Global Lab Role</label>
-                            <select id="c-role">
-                                <option value="scientist" selected>Scientist (create projects, run models/notebooks)</option>
-                                <option value="operator">Operator (assigned projects only)</option>
-                                <option value="viewer">Viewer (strictly read-only ceiling)</option>
-                                <option value="admin">Administrator (full system, keys &amp; updates)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Default Lab Team Access</label>
-                            <select id="c-lab-team">
-                                <option value="none" selected>Assigned projects only</option>
-                                <option value="member">Lab Team Contributor (shared projects)</option>
-                                <option value="viewer">Lab Team Viewer (read-only shared projects)</option>
-                                <option value="admin">Lab Team Manager (manage shared projects)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label>Compute Credits</label>
-                            <input type="number" id="c-credits" value="100000" min="0">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">+ Create Account</button>
-                </form>
+        <div class="stats-overview" id="summary-cards">
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-total">-</span>
+                <span class="stats-overview-label">Total Accounts</span>
+            </div>
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-admins">-</span>
+                <span class="stats-overview-label">Admins</span>
+            </div>
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-scientists">-</span>
+                <span class="stats-overview-label">Scientists</span>
+            </div>
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-operators">-</span>
+                <span class="stats-overview-label">Operators</span>
+            </div>
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-viewers">-</span>
+                <span class="stats-overview-label">Viewers</span>
+            </div>
+            <div class="stats-overview-item">
+                <span class="stats-overview-value" id="st-locked">-</span>
+                <span class="stats-overview-label">Locked Out</span>
+            </div>
+        </div>
 
-                <div class="role-matrix">
-                    <div class="rm-box"><strong style="color:#34d399;">admin</strong><br>Accounts, updates, API keys, All-Lab project override.</div>
-                    <div class="rm-box"><strong style="color:#93c5fd;">scientist</strong><br>Creates projects, custom endpoints, notebooks &amp; jobs.</div>
-                    <div class="rm-box"><strong style="color:#fcd34d;">operator</strong><br>Works inside assigned projects per Project Role.</div>
-                    <div class="rm-box"><strong style="color:#d4d4d8;">viewer</strong><br>Read-only cap across all projects (0 compute/kernels).</div>
+        <div class="aa-grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Provision Local Lab Account</h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted" style="margin-top:0; margin-bottom:12px; font-size:13px;">
+                        Create accounts with a plain username (for example <code>alice</code> or <code>bench-1</code>) and initial password. Global Lab Role combines with per-project roles and optional Default Lab Team inheritance.
+                    </p>
+                    <form id="create-acct-form">
+                        <div class="aa-form-row">
+                            <div class="aa-field">
+                                <label class="form-label" for="c-username">Username *</label>
+                                <input type="text" class="form-input" id="c-username" placeholder="alice or bench-1" required minlength="2">
+                            </div>
+                            <div class="aa-field">
+                                <label class="form-label" for="c-password">Password * (min 8 chars)</label>
+                                <input type="password" class="form-input" id="c-password" placeholder="Initial password" required minlength="8" autocomplete="new-password">
+                            </div>
+                        </div>
+                        <div class="aa-form-row">
+                            <div class="aa-field">
+                                <label class="form-label" for="c-role">Global Lab Role</label>
+                                <select class="form-select" id="c-role">
+                                    <option value="scientist" selected>Scientist (create projects, run models/notebooks)</option>
+                                    <option value="operator">Operator (assigned projects only)</option>
+                                    <option value="viewer">Viewer (read-only ceiling across lab)</option>
+                                    <option value="admin">Administrator (system, keys &amp; updates)</option>
+                                </select>
+                            </div>
+                            <div class="aa-field">
+                                <label class="form-label" for="c-lab-team">Default Lab Team Access</label>
+                                <select class="form-select" id="c-lab-team">
+                                    <option value="none" selected>Assigned projects only</option>
+                                    <option value="member">Lab Team Contributor (shared projects)</option>
+                                    <option value="viewer">Lab Team Viewer (read-only shared)</option>
+                                    <option value="admin">Lab Team Manager (manage shared)</option>
+                                </select>
+                            </div>
+                            <div class="aa-field">
+                                <label class="form-label" for="c-credits">Compute Credits</label>
+                                <input type="number" class="form-input" id="c-credits" value="100000" min="0">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </form>
+
+                    <div class="aa-role-matrix">
+                        <div class="aa-rm-cell"><strong style="color:var(--accent-primary-light);">01 / ADMIN</strong>Accounts, updates, API vault, all-lab override.</div>
+                        <div class="aa-rm-cell"><strong style="color:var(--accent-info-light, #22d3ee);">02 / SCIENTIST</strong>Creates projects, BYOM endpoints, notebooks, jobs.</div>
+                        <div class="aa-rm-cell"><strong style="color:var(--accent-warning-light, #fbbf24);">03 / OPERATOR</strong>Works inside assigned projects per project role.</div>
+                        <div class="aa-rm-cell"><strong style="color:var(--text-secondary);">04 / VIEWER</strong>Strict read-only ceiling (0 compute/kernels).</div>
+                    </div>
                 </div>
             </div>
 
             <div class="card">
-                <h2>GitHub Release Updater &amp; Instance Settings</h2>
-                <p class="desc">Connected to <code id="upd-repo">mxsp/phonos</code>. Checks SHA-256 verified releases and applies updates cleanly.</p>
-                <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:0.9rem; margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div><strong>Installed:</strong> <code id="upd-cur">v{{ version }}</code> (<span id="upd-kind">detecting…</span>)</div>
-                            <div style="color:var(--muted); font-size:0.82rem; margin-top:3px;" id="upd-status-text">Checking release status…</div>
-                        </div>
-                        <div style="display:flex; gap:6px;">
-                            <button type="button" class="btn" onclick="checkUpdates(true)">Check Now</button>
-                            <button type="button" class="btn btn-primary" id="btn-apply-upd" style="display:none;" onclick="applyUpdate()">Apply Update</button>
-                        </div>
-                    </div>
+                <div class="card-header">
+                    <h2 class="card-title">GitHub Release Updater &amp; Instance</h2>
                 </div>
-
-                <div class="form-row">
-                    <div>
-                        <label>Lab Instance Name</label>
-                        <input type="text" id="s-instance-name" value="Phonos Lab">
+                <div class="card-body">
+                    <p class="text-muted" style="margin-top:0; margin-bottom:12px; font-size:13px;">
+                        Upstream repository <code id="upd-repo">mxsp/phonos</code>. Release archives are checked against published <code>SHA256SUMS.txt</code> digests before applying.
+                    </p>
+                    <div class="aa-upd-box">
+                        <div>
+                            <div class="aa-upd-meta">INSTALLED: <code id="upd-cur">v{{ version }}</code> (<span id="upd-kind">detecting</span>)</div>
+                            <div class="aa-upd-sub" id="upd-status-text">Checking release status...</div>
+                        </div>
+                        <div class="aa-actions">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="checkUpdates(true)">Check Now</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-apply-upd" style="display:none;" onclick="applyUpdate()">Apply Update</button>
+                        </div>
                     </div>
-                    <div style="display:flex; align-items:flex-end;">
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:0.5rem;">
-                            <input type="checkbox" id="s-allow-signup" style="width:auto;">
-                            <span>Allow open <code>/register</code> signups</span>
+
+                    <div class="aa-form-row">
+                        <div class="aa-field">
+                            <label class="form-label" for="s-instance-name">Lab Instance Name</label>
+                            <input type="text" class="form-input" id="s-instance-name" value="Phonos Lab">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <label class="aa-check">
+                            <input type="checkbox" id="s-allow-signup">
+                            <span>Allow open self-registration at <code>/register</code></span>
                         </label>
                     </div>
+                    <button type="button" class="btn btn-secondary" onclick="saveLabSettings()">Save Instance Settings</button>
                 </div>
-                <button type="button" class="btn" onclick="saveLabSettings()">Save Instance Settings</button>
             </div>
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
-                <div>
-                    <h2>Local Accounts</h2>
-                    <p class="desc" style="margin-bottom:0;">Manage roles, shared Lab Team inheritance, compute credits, passwords, lockouts, and sessions.</p>
-                </div>
-                <div style="display:flex; gap:0.5rem;">
-                    <input type="text" id="q-search" placeholder="Filter accounts…" style="width:220px;" oninput="loadAccounts()">
+            <div class="card-header">
+                <div class="aa-card-head-row">
+                    <h2 class="card-title">Local Accounts Directory</h2>
+                    <input type="text" class="form-input" id="q-search" placeholder="Filter by username..." style="width:240px; padding:6px 10px;" oninput="loadAccounts()">
                 </div>
             </div>
-            <div style="overflow-x:auto;">
-                <table>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="table" style="width:100%; border:0;">
                     <thead>
                         <tr>
                             <th>User</th>
@@ -181,15 +355,14 @@
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <h2>All Lab Projects (Admin Override View)</h2>
-                    <p class="desc" style="margin-bottom:0;">Your personal sidebar stays clean with only your own projects. Inspect or open any project across the lab here.</p>
+            <div class="card-header">
+                <div class="aa-card-head-row">
+                    <h2 class="card-title">All Lab Projects (Admin Override View)</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="loadAllLabProjects()">Refresh Projects</button>
                 </div>
-                <button type="button" class="btn" onclick="loadAllLabProjects()">Refresh Lab Projects</button>
             </div>
-            <div style="overflow-x:auto;">
-                <table>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="table" style="width:100%; border:0;">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -204,12 +377,22 @@
                 </table>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="toast" id="toast"></div>
+    <div class="aa-toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
         const CSRF = {{ csrf_token|tojson }};
+
+        function escHtml(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg;
@@ -217,6 +400,7 @@
             clearTimeout(window.__toastT);
             window.__toastT = setTimeout(() => { t.style.display = 'none'; }, 3500);
         }
+
         async function api(url, opts = {}) {
             const headers = Object.assign({ 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF }, opts.headers || {});
             const res = await fetch(url, Object.assign({}, opts, { headers }));
@@ -224,6 +408,7 @@
             if (!res.ok) throw new Error(data.message || data.detail || ('HTTP ' + res.status));
             return data;
         }
+
         async function loadSummary() {
             const s = await api('/api/accounts/summary');
             document.getElementById('st-total').textContent = s.total;
@@ -235,6 +420,7 @@
             document.getElementById('s-instance-name').value = s.instance_name || 'Phonos Lab';
             document.getElementById('s-allow-signup').checked = !!s.allow_public_signup;
         }
+
         async function loadAccounts() {
             const q = encodeURIComponent(document.getElementById('q-search').value.trim());
             const res = await api('/api/accounts?q=' + q);
@@ -242,38 +428,46 @@
             tb.innerHTML = '';
             for (const a of (res.accounts || [])) {
                 const tr = document.createElement('tr');
+                const safeUser = escHtml(a.username);
+                const safeEmail = escHtml(a.email);
+                const id = Number(a.id);
                 tr.innerHTML = `
-                    <td><strong>${a.username}</strong><div style="font-size:0.75rem;color:var(--muted);">${a.email}</div></td>
+                    <td><strong>${safeUser}</strong><div class="aa-subtext">${safeEmail}</div></td>
                     <td>
-                        <select onchange="patchAcct(${a.id}, {role: this.value})" style="width:135px;">
+                        <select class="form-select" onchange="patchAcct(${id}, {role: this.value})" style="width:130px;padding:5px 8px;">
                             ${['admin','scientist','operator','viewer'].map(r => `<option value="${r}" ${a.role===r?'selected':''}>${r}</option>`).join('')}
                         </select>
                     </td>
                     <td>
-                        <select onchange="patchAcct(${a.id}, {lab_team_role: this.value})" style="width:155px;">
+                        <select class="form-select" onchange="patchAcct(${id}, {lab_team_role: this.value})" style="width:155px;padding:5px 8px;">
                             <option value="none" ${a.lab_team_role==='none'?'selected':''}>Assigned only</option>
                             <option value="member" ${a.lab_team_role==='member'?'selected':''}>Lab Contributor</option>
                             <option value="billing" ${a.lab_team_role==='billing'?'selected':''}>Lab Viewer</option>
                             <option value="admin" ${(a.lab_team_role==='admin'||a.lab_team_role==='owner')?'selected':''}>Lab Manager</option>
                         </select>
                     </td>
-                    <td><input type="number" value="${a.credits}" style="width:105px;" onchange="patchAcct(${a.id}, {credits: parseInt(this.value||0,10)})"></td>
-                    <td>${a.project_count}</td>
+                    <td class="num"><input type="number" class="form-input" value="${Number(a.credits || 0)}" style="width:105px;padding:5px 8px;" onchange="patchAcct(${id}, {credits: parseInt(this.value||0,10)})"></td>
+                    <td class="num">${Number(a.project_count || 0)}</td>
                     <td>
-                        ${a.active ? '<span class="badge b-admin">Active</span>' : '<span class="badge b-off">Disabled</span>'}
-                        ${a.locked ? '<span class="badge b-off">Locked</span>' : ''}
+                        ${a.active ? '<span class="status-pill completed">ACTIVE</span>' : '<span class="status-pill failed">DISABLED</span>'}
+                        ${a.locked ? '<span class="status-pill failed" style="margin-left:4px;">LOCKED</span>' : ''}
                     </td>
-                    <td style="font-size:0.78rem;color:var(--muted);">${a.last_login_at ? a.last_login_at.slice(0,16).replace('T',' ') : 'Never'}</td>
-                    <td style="display:flex; gap:4px; flex-wrap:wrap;">
-                        <button class="btn" onclick="resetPw(${a.id}, '${a.username}')">Passwd</button>
-                        ${a.locked ? `<button class="btn" onclick="unlockAcct(${a.id})">Unlock</button>` : ''}
-                        <button class="btn" onclick="patchAcct(${a.id}, {active: ${!a.active}})">${a.active ? 'Disable' : 'Enable'}</button>
-                        <button class="btn btn-danger" onclick="removeAcct(${a.id}, '${a.username}')">Delete</button>
+                    <td class="num" style="font-size:12px;color:var(--text-muted);">${a.last_login_at ? escHtml(a.last_login_at.slice(0,16).replace('T',' ')) : 'NEVER'}</td>
+                    <td>
+                        <div class="aa-actions">
+                            <button type="button" class="btn btn-secondary btn-sm" data-action="pw">Passwd</button>
+                            ${a.locked ? `<button type="button" class="btn btn-secondary btn-sm" onclick="unlockAcct(${id})">Unlock</button>` : ''}
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="patchAcct(${id}, {active: ${!a.active}})">${a.active ? 'Disable' : 'Enable'}</button>
+                            <button type="button" class="btn btn-danger btn-sm" data-action="del">Delete</button>
+                        </div>
                     </td>
                 `;
+                tr.querySelector('[data-action="pw"]').addEventListener('click', () => resetPw(id, a.username));
+                tr.querySelector('[data-action="del"]').addEventListener('click', () => removeAcct(id, a.username));
                 tb.appendChild(tr);
             }
         }
+
         async function patchAcct(id, body) {
             try {
                 await api('/api/accounts/' + id, { method: 'PATCH', body: JSON.stringify(body) });
@@ -281,14 +475,16 @@
                 await Promise.all([loadSummary(), loadAccounts()]);
             } catch (e) { showToast('Error: ' + e.message); loadAccounts(); }
         }
+
         async function resetPw(id, uname) {
             const pw = prompt('New password for ' + uname + ' (min 8 chars):');
             if (!pw) return;
             try {
                 await api('/api/accounts/' + id + '/password', { method: 'POST', body: JSON.stringify({ password: pw }) });
-                showToast('Password updated & active sessions revoked.');
+                showToast('Password updated and active sessions revoked.');
             } catch (e) { showToast('Error: ' + e.message); }
         }
+
         async function unlockAcct(id) {
             try {
                 await api('/api/accounts/' + id + '/unlock', { method: 'POST', body: '{}' });
@@ -296,14 +492,16 @@
                 loadAccounts(); loadSummary();
             } catch (e) { showToast('Error: ' + e.message); }
         }
+
         async function removeAcct(id, uname) {
-            if (!confirm('Delete or deactivate account "' + uname + '"? (Accounts with projects/jobs are safely deactivated so scientific history is preserved.)')) return;
+            if (!confirm('Delete or deactivate account "' + uname + '"? Accounts with projects or jobs are safely deactivated to preserve scientific history.')) return;
             try {
                 const r = await api('/api/accounts/' + id, { method: 'DELETE', body: '{}' });
-                showToast(r.detail || 'Done.');
+                showToast(r.detail || 'Account updated.');
                 loadAccounts(); loadSummary();
             } catch (e) { showToast('Error: ' + e.message); }
         }
+
         document.getElementById('create-acct-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             try {
@@ -323,6 +521,7 @@
                 loadSummary(); loadAccounts();
             } catch (ex) { showToast('Error: ' + ex.message); }
         });
+
         async function saveLabSettings() {
             try {
                 await api('/api/accounts/lab-settings', {
@@ -335,6 +534,7 @@
                 showToast('Instance settings saved.');
             } catch (e) { showToast('Error: ' + e.message); }
         }
+
         async function checkUpdates(force) {
             try {
                 const u = await api('/api/updates/status?force=' + (force ? 'true' : 'false'));
@@ -353,13 +553,15 @@
                 document.getElementById('upd-status-text').textContent = 'Could not check updates: ' + e.message;
             }
         }
+
         async function applyUpdate() {
-            if (!confirm('Download, verify, and apply the latest GitHub release update?')) return;
+            if (!confirm('Download, verify SHA-256 digest, and apply the latest GitHub release update?')) return;
             try {
                 const r = await api('/api/updates/apply', { method: 'POST', body: JSON.stringify({ auto_restart: true }) });
                 showToast(r.detail || (r.command_hint ? ('Run: ' + r.command_hint) : 'Update complete.'));
             } catch (e) { showToast('Update error: ' + e.message); }
         }
+
         async function loadAllLabProjects() {
             try {
                 const projs = await api('/api/projects?scope=all_lab');
@@ -367,18 +569,20 @@
                 tb.innerHTML = '';
                 for (const p of (Array.isArray(projs) ? projs : [])) {
                     const tr = document.createElement('tr');
+                    const pid = Number(p.id);
                     tr.innerHTML = `
-                        <td>#${p.id}</td>
-                        <td><strong>${p.name}</strong></td>
-                        <td>${p.owner_username || '–'}</td>
-                        <td><span class="badge b-scientist">${p.project_type || 'private'}</span></td>
-                        <td style="font-size:0.78rem;color:var(--muted);">${(p.created_at || '').slice(0,10)}</td>
-                        <td><a class="btn" href="/oversight?project=${p.id}">Open in Workbench</a></td>
+                        <td class="num">#${pid}</td>
+                        <td><strong>${escHtml(p.name)}</strong></td>
+                        <td>${escHtml(p.owner_username || '-')}</td>
+                        <td><span class="status-pill running">${escHtml(p.project_type || 'private')}</span></td>
+                        <td class="num" style="font-size:12px;color:var(--text-muted);">${escHtml((p.created_at || '').slice(0,10))}</td>
+                        <td><a class="btn btn-secondary btn-sm" href="/dashboard?project=${pid}">Open in Workbench</a></td>
                     `;
                     tb.appendChild(tr);
                 }
             } catch (e) { showToast('Error loading lab projects: ' + e.message); }
         }
+
         loadSummary(); loadAccounts(); checkUpdates(false); loadAllLabProjects();
     </script>
 </body>

@@ -73,6 +73,12 @@ try:
     register_project_history_routes(app)
     register_quantum_routes(app)
     register_hpc_routes(app)
+    try:
+        from .api_education import register_education_routes
+        register_education_routes(app)
+    except Exception as edu_exc:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).warning("Education routes unavailable: %s", edu_exc)
     # Phonos Copilot: additive tables and its own /api/agent + /agent surface.
     # A failure here must never prevent the rest of Phonos from starting.
     try:

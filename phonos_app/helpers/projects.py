@@ -6,12 +6,14 @@ from typing import Optional
 PROJECT_ROLE_MANAGER = "Project Manager"
 PROJECT_ROLE_CONTRIBUTOR = "Project Contributor"
 PROJECT_ROLE_VIEWER = "Project Viewer"
+PROJECT_ROLE_STUDENT = "Student"
 PROJECT_MUTABLE_ROLES = {PROJECT_ROLE_CONTRIBUTOR, PROJECT_ROLE_VIEWER}
 
 PROJECT_ROLE_LABELS = {
     "owner": PROJECT_ROLE_MANAGER,
     "collaborator": PROJECT_ROLE_CONTRIBUTOR,
     "spectator": PROJECT_ROLE_VIEWER,
+    "student": PROJECT_ROLE_STUDENT,
 }
 PROJECT_ROLE_REVERSE_LABELS = {value: key for key, value in PROJECT_ROLE_LABELS.items()}
 

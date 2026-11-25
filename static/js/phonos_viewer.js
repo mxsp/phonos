@@ -3864,8 +3864,8 @@
         // Add 1-click Copilot 3D analysis action button to Focus & Analysis panel
         var bodyEl = panel.querySelector('.pv-panel-body') || panel;
         var copilotWrap = document.createElement('div');
-        copilotWrap.style.cssText = 'padding:8px 10px;border-top:1px solid rgba(255,255,255,0.08);';
-        copilotWrap.innerHTML = '<button type="button" data-action="ask-copilot" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.14);color:#34d399;font-weight:600;font-size:12px;cursor:pointer;">✨ Ask Copilot About 3D Structure (A)</button>';
+        copilotWrap.style.cssText = 'padding:8px 10px;border-top:1px solid rgba(255,255,255,0.2);';
+        copilotWrap.innerHTML = '<button type="button" data-action="ask-copilot" style="width:100%;padding:6px 10px;border-radius:0;border:1px solid #34d399;background:#0F9960;color:#fff;font-family:\'IBM Plex Mono\',ui-monospace,monospace;font-weight:500;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Ask Copilot About Structure (A)</button>';
         bodyEl.appendChild(copilotWrap);
 
         // Sync the Rendering buttons to the resolved preset (may come from
@@ -4091,7 +4091,7 @@
         this.container.style.position = this.container.style.position || 'relative';
         var hud = document.createElement('div');
         hud.className = 'phonos-sci-hud';
-        hud.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:28;display:none;padding:6px 11px;border-radius:7px;background:rgba(9,9,11,0.86);border:1px solid rgba(16,185,129,0.38);color:#f4f4f5;font:600 12px/1.4 Inter,system-ui,sans-serif;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.45);';
+        hud.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:28;display:none;padding:6px 11px;border-radius:0;background:rgba(41,55,66,0.95);border:1px solid rgba(245,248,250,0.68);border-left:3px solid #34d399;color:#F5F8FA;font:500 11px/1.45 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:0.05em;pointer-events:none;box-shadow:4px 4px 0 rgba(0,0,0,0.55);';
         this.container.appendChild(hud);
         this._sciHud = hud;
         return hud;

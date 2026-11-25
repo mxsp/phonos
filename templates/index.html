@@ -8,273 +8,410 @@
     <title data-i18n="index.pageTitle">Phonos: AI-Powered Molecular Discovery &amp; 3D Bio-AI Workbench</title>
     <meta name="description" content="Self-hosted computational biology workbench unifying Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, custom BYOM endpoints, Mol* 3D analysis, Python notebooks, and Discovery Copilot.">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}?v=6248268e">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
     {% include '_i18n_scripts.html' %}
     <style>
-        :root {
-            --bg: #09090b;
-            --bg-panel: #111115;
-            --bg-card: rgba(24, 24, 29, 0.78);
-            --border: rgba(255, 255, 255, 0.09);
-            --text: #fafafa;
-            --muted: #a1a1aa;
-            --accent: #10b981;
-            --accent-bright: #34d399;
-            --blue: #3b82f6;
-            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow-x: hidden; }
-        body { min-height: 100dvh; display: flex; flex-direction: column; }
-
-        .hero-shell {
-            flex: 1;
-            display: grid;
-            grid-template-columns: minmax(380px, 1.05fr) minmax(420px, 1.15fr);
-            min-height: 100dvh;
+        html, body {
+            min-height: 100%;
+            background: #09090b;
+            color: #fafafa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
         }
-
-        /* Left Column */
-        .left-col {
+        .split-layout {
+            display: grid;
+            grid-template-columns: minmax(420px, 1fr) minmax(440px, 1.15fr);
+            width: 100%;
+        }
+        .content-side {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: clamp(1.5rem, 3.8vh, 3rem) clamp(1.75rem, 4vw, 4rem);
+            padding: clamp(1.5rem, 3.2vh, 2.75rem) clamp(1.75rem, 3.8vw, 3.5rem);
             position: relative;
             z-index: 5;
         }
-        .top-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-        .brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
-        .brand-mark {
-            width: 34px; height: 34px; border-radius: 9px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            display: grid; place-items: center; font-weight: 800; color: #042f1e;
-            box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+        .top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(250, 250, 250, 0.16);
         }
-        .brand-title {
-            font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #ffffff 0%, #6ee7b7 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
         }
-        .top-badges { display: flex; align-items: center; gap: 0.5rem; }
-        .oss-pill {
-            font-size: 0.72rem; font-weight: 600; color: var(--accent-bright);
-            background: rgba(16, 185, 129, 0.11); border: 1px solid rgba(16, 185, 129, 0.28);
-            padding: 4px 10px; border-radius: 999px; letter-spacing: 0.02em;
+        .top-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sys-tag {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #a1a1aa;
+            border: 1px solid rgba(250, 250, 250, 0.22);
+            padding: 4px 8px;
         }
         .lang-toggle {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted);
-            border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+            background: transparent;
+            border: 1px solid rgba(250, 250, 250, 0.35);
+            color: #fafafa;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
         }
-        .lang-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.28); }
-
-        .hero-copy { margin: auto 0; padding: 1.25rem 0; max-width: 580px; }
+        .lang-toggle:hover {
+            border-color: #10B981;
+            color: #10B981;
+        }
+        .hero-copy {
+            margin: auto 0;
+            padding: 1.75rem 0;
+            max-width: 580px;
+        }
         .eyebrow {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-size: 0.78rem; font-weight: 600; color: #d4d4d8;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #a1a1aa;
             margin-bottom: 0.9rem;
         }
-        .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
         h1.headline {
-            font-size: clamp(2.15rem, 4.2vw, 3.35rem);
-            font-weight: 800; line-height: 1.07; letter-spacing: -0.035em;
-            margin-bottom: 1rem;
+            font-size: clamp(2.1rem, 3.8vw, 3.15rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.15rem;
+            color: #fafafa;
         }
-        h1.headline span {
-            background: linear-gradient(135deg, #10b981 0%, #34d399 55%, #60a5fa 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        p.subheadline {
+            line-height: 1.55;
+            margin-bottom: 1.6rem;
         }
-        p.lead {
-            font-size: clamp(0.95rem, 1.3vw, 1.08rem);
-            color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem;
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1.75rem;
+        }
+        .cta-row .btn, .cta-row .btn-primary, .cta-row .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            border-top: 1px solid rgba(250, 250, 250, 0.22);
+            border-left: 1px solid rgba(250, 250, 250, 0.22);
+        }
+        .spec-cell {
+            padding: 12px 14px;
+            border-right: 1px solid rgba(250, 250, 250, 0.22);
+            border-bottom: 1px solid rgba(250, 250, 250, 0.22);
+            background: rgba(9, 9, 11, 0.72);
+        }
+        .spec-idx {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            color: #10B981;
+            margin-bottom: 4px;
+        }
+        .spec-cell strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 3px;
+        }
+        .spec-cell span {
+            display: block;
+            font-size: 12px;
+            color: #a1a1aa;
+            line-height: 1.4;
+        }
+        .footer-nav {
+            padding-top: 1rem;
+            border-top: 1px solid rgba(250, 250, 250, 0.16);
+            color: #a1a1aa;
+        }
+        .legal-footer__nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 6px;
+        }
+        .legal-footer__nav a {
+            color: #a1a1aa;
+            text-decoration: none;
+        }
+        .legal-footer__nav a:hover { color: #fafafa; }
+        .legal-footer__line {
+            font-size: 10px;
+            color: #71717a;
+            text-transform: none;
+            letter-spacing: 0.02em;
         }
 
-        .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.6rem; }
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
-            padding: 0.78rem 1.35rem; border-radius: 9px; font-weight: 600; font-size: 0.94rem;
-            text-decoration: none; border: 1px solid transparent; transition: all 0.18s ease; cursor: pointer;
-        }
-        .btn-primary { background: var(--text); color: #09090b; }
-        .btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.16); }
-        .btn-secondary { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.32); }
-        .btn-secondary:hover { background: rgba(16, 185, 129, 0.2); transform: translateY(-1px); }
-        .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text); border-color: var(--border); }
-        .btn-ghost:hover { background: rgba(255,255,255,0.09); }
-
-        .pillars {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;
-        }
-        .pillar {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 0.7rem 0.85rem;
-        }
-        .pillar strong { display: block; font-size: 0.82rem; color: #f4f4f5; margin-bottom: 2px; }
-        .pillar span { font-size: 0.75rem; color: var(--muted); line-height: 1.35; display: block; }
-
-        .bottom-bar { font-size: 0.78rem; color: var(--muted); }
-        .legal-footer__nav { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 0.3rem; }
-        .legal-footer__nav a { color: var(--muted); text-decoration: none; }
-        .legal-footer__nav a:hover { color: var(--text); }
-        .legal-footer__line { font-size: 0.72rem; color: #71717a; }
-
-        /* Right Column: Interactive 3D Molecular Ribbon & Discovery HUD */
-        .right-col {
-            background: radial-gradient(circle at 55% 42%, rgba(16, 185, 129, 0.14), rgba(59, 130, 246, 0.06) 45%, transparent 75%), var(--bg-panel);
-            border-left: 1px solid var(--border);
+        /* Visual Side */
+        .visual-side {
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 1.5rem;
+            padding: 1.5rem 1.75rem 3.25rem;
             overflow: hidden;
         }
-        .grid-bg {
-            position: absolute; inset: 0; pointer-events: none;
-            background-image: linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
-            background-size: 36px 36px;
+        .hud-bar {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(250, 250, 250, 0.22);
         }
-        .canvas-stage {
-            position: relative; flex: 1; min-height: 320px; display: grid; place-items: center; cursor: grab;
+        .hud-title {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #d4d4d8;
         }
-        .canvas-stage:active { cursor: grabbing; }
-        #mol-hero-canvas { width: 100%; height: 100%; max-height: 62vh; display: block; }
-
-        .hud-top {
-            position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+        .hud-controls {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
         }
-        .hud-chip {
-            background: rgba(9, 9, 11, 0.82); border: 1px solid var(--border); backdrop-filter: blur(10px);
-            padding: 6px 11px; border-radius: 8px; font-size: 0.75rem; color: #e4e4e7; display: flex; align-items: center; gap: 8px;
+        .hud-btn {
+            background: #09090b;
+            border: 1px solid rgba(250, 250, 250, 0.35);
+            color: #fafafa;
+            padding: 5px 10px;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
         }
-        .plddt-legend { display: flex; gap: 8px; align-items: center; font-size: 0.71rem; color: var(--muted); }
-        .plddt-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 3px; }
-
+        .hud-btn:hover {
+            border-color: #10B981;
+            color: #10B981;
+        }
+        .viewport-frame {
+            position: relative;
+            flex: 1;
+            min-height: 330px;
+            margin: 14px 0;
+            border: 1px solid rgba(250, 250, 250, 0.35);
+            background: rgba(9, 9, 11, 0.85);
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+        }
+        .viewport-frame:active { cursor: grabbing; }
+        .viewport-legend {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 7px 10px;
+            border-bottom: 1px solid rgba(250, 250, 250, 0.18);
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            color: #a1a1aa;
+            text-transform: uppercase;
+        }
+        .legend-items {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .plddt-dot {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            margin-right: 4px;
+            vertical-align: -1px;
+        }
+        #mol-hero-canvas {
+            width: 100%;
+            flex: 1;
+            min-height: 290px;
+            max-height: 56vh;
+            display: block;
+        }
         .model-dock {
-            position: relative; z-index: 3;
-            background: rgba(9, 9, 11, 0.84); border: 1px solid var(--border); backdrop-filter: blur(12px);
-            border-radius: 11px; padding: 0.85rem 1rem;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem;
+            position: relative;
+            z-index: 3;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid rgba(250, 250, 250, 0.22);
+            border-left: 1px solid rgba(250, 250, 250, 0.22);
+            background: rgba(9, 9, 11, 0.9);
         }
-        .m-item { font-size: 0.74rem; }
-        .m-item b { display: block; color: #fafafa; font-size: 0.79rem; }
-        .m-item em { font-style: normal; color: var(--accent-bright); font-size: 0.7rem; }
+        .m-item {
+            padding: 10px 12px;
+            border-right: 1px solid rgba(250, 250, 250, 0.22);
+            border-bottom: 1px solid rgba(250, 250, 250, 0.22);
+            font-size: 12px;
+        }
+        .m-item b {
+            display: block;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #fafafa;
+            margin-bottom: 3px;
+        }
+        .m-item span {
+            display: block;
+            color: #d4d4d8;
+            font-size: 12px;
+        }
+        .m-item em {
+            display: block;
+            font-style: normal;
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            color: #10B981;
+            margin-top: 2px;
+        }
 
         @media (max-width: 1024px) {
-            .hero-shell { grid-template-columns: 1fr; }
-            .right-col { border-left: none; border-top: 1px solid var(--border); min-height: 440px; }
+            .split-layout { grid-template-columns: 1fr; }
+            .visual-side { min-height: 460px; }
             .model-dock { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 560px) {
-            .pillars { grid-template-columns: 1fr; }
+            .spec-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}">
 </head>
 <body>
-    <main class="hero-shell">
-        <!-- Left Content -->
-        <section class="left-col">
+    <main class="split-layout">
+        <!-- Left Column: Brand, Overview & Specs -->
+        <section class="content-side">
             <div class="top-row">
-                <a href="/" class="brand">
-                    <div class="brand-mark">P</div>
-                    <span class="brand-title" data-i18n="common.phonos">Phonos</span>
+                <a href="/" class="brand-header">
+                    <span class="brand-name" data-i18n="common.phonos">Phonos</span>
                 </a>
-                <div class="top-badges">
-                    <span class="oss-pill">Self-Hosted · Linux · Windows · Docker</span>
+                <div class="top-meta">
+                    <span class="sys-tag">LINUX // WIN // DOCKER</span>
                     <button class="lang-toggle" id="lang-toggle" onclick="window.i18n && window.i18n.toggleLanguage()" title="Switch language">DE</button>
                 </div>
             </div>
 
             <div class="hero-copy">
-                <div class="eyebrow">
-                    <span class="eyebrow-dot"></span>
-                    <span>Open Molecular Discovery &amp; Bio-AI Workbench</span>
-                </div>
+                <div class="eyebrow">OPEN-SOURCE MOLECULAR DISCOVERY WORKBENCH</div>
                 <h1 class="headline">
                     From Sequence to <span>3D Structure &amp; Lead Design</span>
                 </h1>
-                <p class="lead" data-i18n="landing.subtitle">
-                    Run Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, or plug in your own custom GPU endpoints—unified with interactive Mol* 3D analysis, local Python notebooks, and a Gimel-grade Discovery Copilot.
+                <p class="subheadline" data-i18n="landing.subtitle">
+                    Self-hosted computational biology suite unifying Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, and custom BYOM endpoints with Mol* 3D analysis, local Python notebooks, and Discovery Copilot.
                 </p>
 
                 <div class="cta-row">
-                    <a href="{{ url_for('login') }}" class="btn btn-primary" data-i18n="auth.signInCta">Open Workbench →</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary" data-i18n="auth.signInCta">Open Workbench</a>
                     <a href="/setup" class="btn btn-secondary">First-Run Lab Setup</a>
-                    <a href="https://github.com/mxsp/phonos" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">GitHub</a>
+                    <a href="https://github.com/mxsp/phonos" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GitHub Repo</a>
                 </div>
 
-                <div class="pillars">
-                    <div class="pillar">
-                        <strong>🧬 Bring Your Own Model (BYOM)</strong>
-                        <span>Connect FastAPI/PyTorch servers, self-hosted NIMs, Hugging Face, or Ollama with sealed keys.</span>
+                <div class="spec-grid">
+                    <div class="spec-cell">
+                        <div class="spec-idx">01 // BYOM</div>
+                        <strong>Custom Model Endpoints</strong>
+                        <span>Connect FastAPI/PyTorch services, self-hosted NIMs, Hugging Face, or Ollama with AES-GCM sealed keys.</span>
                     </div>
-                    <div class="pillar">
-                        <strong>🔬 Mol* 3D &amp; Distance Ruler</strong>
-                        <span>pLDDT confidence bands, pocket isolation, Ångström atom ruler, and 4K transparent renders.</span>
+                    <div class="spec-cell">
+                        <div class="spec-idx">02 // 3D MOL*</div>
+                        <strong>Structural Analytics &amp; Ruler</strong>
+                        <span>pLDDT confidence bands, binding-pocket isolation, atom-to-atom distance ruler, and 4K transparent renders.</span>
                     </div>
-                    <div class="pillar">
-                        <strong>📓 Zero-Docker Python Notebooks</strong>
-                        <span>Instant stateful Biopython &amp; RDKit execution out of the box on Linux, Windows &amp; Docker.</span>
+                    <div class="spec-cell">
+                        <div class="spec-idx">03 // NOTEBOOK</div>
+                        <strong>Zero-Docker Python Kernel</strong>
+                        <span>Stateful local Biopython and RDKit execution with inline 2D/3D molecular views out of the box.</span>
                     </div>
-                    <div class="pillar">
-                        <strong>✨ Discovery Copilot</strong>
-                        <span>70+ typed bio-tools, Lipinski/QED ADMET screening, loop redesign audits, and routines.</span>
+                    <div class="spec-cell">
+                        <div class="spec-idx">04 // COPILOT</div>
+                        <strong>Discovery Copilot</strong>
+                        <span>Typed bio-tools for ADMET/Lipinski screening, PDB auditing, sequence mutations, and multi-step routines.</span>
                     </div>
                 </div>
             </div>
 
-            <div class="bottom-bar">
+            <div class="footer-nav">
                 {% include 'partials/_legal_footer.html' %}
             </div>
         </section>
 
-        <!-- Right Interactive 3D Molecular Canvas -->
-        <section class="right-col" aria-label="Interactive 3D Molecular Preview">
-            <div class="grid-bg"></div>
-
-            <div class="hud-top">
-                <div class="hud-chip">
-                    <span style="color:var(--accent);">●</span>
-                    <span>Interactive 3D Complex Preview (drag to rotate)</span>
-                </div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" id="btn-hero-spin" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Toggle auto-spin">⏸ Pause Spin</button>
-                    <button type="button" id="btn-hero-pocket" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Zoom into ligand binding pocket">🔍 Pocket Zoom</button>
-                    <button type="button" id="btn-hero-reset" class="hud-chip" style="cursor:pointer;color:var(--text);" title="Reset 3D camera">↺ Reset View</button>
-                </div>
-                <div class="hud-chip plddt-legend">
-                    <span><i class="plddt-dot" style="background:#0053d6;"></i>&gt;90 Very High</span>
-                    <span><i class="plddt-dot" style="background:#65cbf3;"></i>70–90</span>
-                    <span><i class="plddt-dot" style="background:#ffdb13;"></i>50–70</span>
-                    <span><i class="plddt-dot" style="background:#10b981;"></i>Docked Ligand</span>
+        <!-- Right Column: Interactive 3D Preview Viewport -->
+        <section class="visual-side" aria-label="Interactive 3D Molecular Preview">
+            <div class="hud-bar">
+                <span class="hud-title">3D COMPLEX PREVIEW // DRAG TO ROTATE</span>
+                <div class="hud-controls">
+                    <button type="button" id="btn-hero-spin" class="hud-btn" title="Toggle auto-spin">PAUSE SPIN</button>
+                    <button type="button" id="btn-hero-pocket" class="hud-btn" title="Zoom into ligand binding pocket">POCKET ZOOM</button>
+                    <button type="button" id="btn-hero-reset" class="hud-btn" title="Reset 3D camera">RESET VIEW</button>
                 </div>
             </div>
 
-            <div class="canvas-stage" id="canvas-stage">
+            <div class="viewport-frame" id="canvas-stage">
+                <div class="viewport-legend">
+                    <span>PLDDT CONFIDENCE SCALE</span>
+                    <div class="legend-items">
+                        <span><i class="plddt-dot" style="background:#0053d6;"></i>&gt;90</span>
+                        <span><i class="plddt-dot" style="background:#65cbf3;"></i>70-90</span>
+                        <span><i class="plddt-dot" style="background:#ffdb13;"></i>50-70</span>
+                        <span><i class="plddt-dot" style="background:#10b981;"></i>LIGAND</span>
+                    </div>
+                </div>
                 <canvas id="mol-hero-canvas"></canvas>
             </div>
 
             <div class="model-dock">
                 <div class="m-item">
-                    <b>Structure</b>
-                    <span>Boltz-2 · OpenFold3</span>
+                    <b>01 Structure</b>
+                    <span>Boltz-2 / OpenFold3</span>
                     <em>Complex + pLDDT</em>
                 </div>
                 <div class="m-item">
-                    <b>De Novo Design</b>
-                    <span>RFdiffusion · MPNN</span>
-                    <em>Backbone → Seq</em>
+                    <b>02 Design</b>
+                    <span>RFdiffusion / MPNN</span>
+                    <em>Backbone to Seq</em>
                 </div>
                 <div class="m-item">
-                    <b>Docking &amp; Leads</b>
-                    <span>DiffDock · GenMol</span>
+                    <b>03 Docking</b>
+                    <span>DiffDock / GenMol</span>
                     <em>Poses + ADMET</em>
                 </div>
                 <div class="m-item">
-                    <b>Custom BYOM</b>
-                    <span>REST · NIM · Local</span>
-                    <em>Your Endpoints</em>
+                    <b>04 BYOM</b>
+                    <span>REST / NIM / Local</span>
+                    <em>Custom Endpoints</em>
                 </div>
             </div>
         </section>
@@ -292,15 +429,12 @@
                 window.addEventListener('i18n:change', updateLangToggle);
             });
 
-            // Lightweight 60fps interactive 3D protein helix + ligand pocket preview
             var canvas = document.getElementById('mol-hero-canvas');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             var nodes = [];
             var bonds = [];
-            // Build two alpha-helices + connecting loop + central docked small-molecule pocket
             for (var i = 0; i < 68; i++) {
-                var t = i / 67;
                 var x, y, z, col, rad;
                 if (i < 28) {
                     var a1 = i * 1.02;
@@ -330,7 +464,6 @@
                 if (i >= 4 && i < 28) bonds.push([i - 4, i, 'hbond']);
                 if (i >= 44) bonds.push([i - 4, i, 'hbond']);
             }
-            // Central docked ligand ring atoms
             var ligBase = nodes.length;
             for (var k = 0; k < 8; k++) {
                 var la = (k / 8) * Math.PI * 2;
@@ -357,20 +490,20 @@
             var resetBtn = document.getElementById('btn-hero-reset');
             if (spinBtn) spinBtn.addEventListener('click', function () {
                 autoSpin = !autoSpin;
-                spinBtn.textContent = autoSpin ? '⏸ Pause Spin' : '▶ Auto Spin';
+                spinBtn.textContent = autoSpin ? 'PAUSE SPIN' : 'AUTO SPIN';
             });
             if (pocketBtn) pocketBtn.addEventListener('click', function () {
                 zoomMul = zoomMul > 1.2 ? 1.0 : 1.55;
                 rotX = 0.12;
-                pocketBtn.textContent = zoomMul > 1.2 ? '🔍 Full Complex' : '🔍 Pocket Zoom';
+                pocketBtn.textContent = zoomMul > 1.2 ? 'FULL COMPLEX' : 'POCKET ZOOM';
             });
             if (resetBtn) resetBtn.addEventListener('click', function () {
                 rotY = 0.4; rotX = 0.22; zoomMul = 1.0; autoSpin = true;
-                if (spinBtn) spinBtn.textContent = '⏸ Pause Spin';
-                if (pocketBtn) pocketBtn.textContent = '🔍 Pocket Zoom';
+                if (spinBtn) spinBtn.textContent = 'PAUSE SPIN';
+                if (pocketBtn) pocketBtn.textContent = 'POCKET ZOOM';
             });
             function resize() {
-                var rect = canvas.parentElement.getBoundingClientRect();
+                var rect = canvas.getBoundingClientRect();
                 var dpr = Math.min(window.devicePixelRatio || 1, 2);
                 canvas.width = Math.max(300, rect.width) * dpr;
                 canvas.height = Math.max(280, rect.height) * dpr;
@@ -400,7 +533,7 @@
 
             function draw() {
                 if (!dragging && autoSpin) rotY += 0.0045;
-                var w = canvas.clientWidth || 500, h = canvas.clientHeight || 400;
+                var w = canvas.clientWidth || 500, h = canvas.clientHeight || 360;
                 ctx.clearRect(0, 0, w, h);
                 var cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);
                 var pts = nodes.map(function (n) { return project(n, w, h, cy, sy, cx, sx); });
@@ -411,16 +544,16 @@
                     ctx.moveTo(p1.sx, p1.sy);
                     ctx.lineTo(p2.sx, p2.sy);
                     if (kind === 'backbone') {
-                        ctx.strokeStyle = 'rgba(148, 197, 255, 0.52)';
-                        ctx.lineWidth = 3.2 * ((p1.s + p2.s) * 0.35);
+                        ctx.strokeStyle = 'rgba(148, 197, 255, 0.55)';
+                        ctx.lineWidth = 3.0 * ((p1.s + p2.s) * 0.35);
                         ctx.setLineDash([]);
                     } else if (kind === 'lig') {
-                        ctx.strokeStyle = 'rgba(52, 211, 153, 0.9)';
-                        ctx.lineWidth = 3.4;
+                        ctx.strokeStyle = 'rgba(52, 211, 153, 0.92)';
+                        ctx.lineWidth = 3.2;
                         ctx.setLineDash([]);
                     } else {
-                        ctx.strokeStyle = 'rgba(250, 204, 21, 0.42)';
-                        ctx.lineWidth = 1.3;
+                        ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+                        ctx.lineWidth = 1.25;
                         ctx.setLineDash([4, 4]);
                     }
                     ctx.stroke();
@@ -431,17 +564,11 @@
                 order.forEach(function (idx) {
                     var n = nodes[idx], p = pts[idx];
                     var r = Math.max(2.5, n.r * p.s * 0.72);
-                    if (n.kind === 'lig') {
-                        ctx.beginPath();
-                        ctx.arc(p.sx, p.sy, r * 2.1, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
-                        ctx.fill();
-                    }
                     ctx.beginPath();
                     ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
                     ctx.fillStyle = n.color;
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(9,9,11,0.65)';
+                    ctx.strokeStyle = 'rgba(9,9,11,0.75)';
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 });

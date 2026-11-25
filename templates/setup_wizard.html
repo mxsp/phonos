@@ -1,58 +1,261 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+    <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>First-Run Setup – Phonos Lab</title>
+    <title>First-Run Setup - Phonos Lab</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
     <style>
-        :root { --bg: #09090b; --card: #121216; --border: rgba(255,255,255,0.1); --text: #fafafa; --muted: #a1a1aa; --accent: #10b981; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { min-height: 100vh; background: radial-gradient(circle at top right, rgba(16,185,129,0.12), transparent 45%), var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; display: grid; place-items: center; padding: 1.5rem; }
-        .card { width: 100%; max-width: 480px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 2.25rem; box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
-        .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--accent); background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); border-radius: 999px; padding: 3px 10px; margin-bottom: 1rem; }
-        h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
-        p.sub { color: var(--muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.5rem; }
-        label { display: block; font-size: 0.82rem; font-weight: 600; color: #e4e4e7; margin: 0.95rem 0 0.35rem; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 0.7rem 0.85rem; background: #09090b; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none; }
-        input:focus { border-color: var(--accent); }
-        .check-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 1.1rem; font-size: 0.84rem; color: var(--muted); }
-        .btn { width: 100%; margin-top: 1.4rem; padding: 0.8rem 1rem; background: var(--accent); color: #052e1c; font-weight: 700; font-size: 0.95rem; border: none; border-radius: 8px; cursor: pointer; transition: filter 0.15s; }
-        .btn:hover { filter: brightness(1.08); }
-        .err { display: none; margin-top: 1rem; padding: 0.7rem 0.9rem; border-radius: 8px; background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; font-size: 0.85rem; }
-        .meta { margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; }
+        body {
+            min-height: 100vh;
+            background: #09090b;
+            color: #fafafa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+        .split-layout {
+            display: flex;
+            flex: 1;
+            flex-direction: row-reverse;
+        }
+        .content-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem 3.5rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .ver-tag {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.55);
+            padding: 3px 8px;
+        }
+        h1.headline {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.65rem;
+        }
+        p.subheadline {
+            font-size: 0.98rem !important;
+            line-height: 1.55;
+            margin-bottom: 1.75rem;
+        }
+        .form-group { margin-bottom: 1.15rem; }
+        .form-label { display: block; margin-bottom: 0.4rem; }
+        .form-input {
+            width: 100%;
+            padding: 0.78rem 0.9rem;
+            color: #fafafa;
+            font-size: 0.95rem;
+        }
+        .check-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            margin: 1rem 0 1.25rem;
+            font-size: 0.84rem;
+            color: #a1a1aa;
+            cursor: pointer;
+        }
+        .check-row input { margin-top: 3px; accent-color: #10B981; }
+        .btn-primary {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            cursor: pointer;
+        }
+        .error-toast {
+            display: none;
+            margin-bottom: 1rem;
+            padding: 0.75rem 0.9rem;
+            background: rgba(239, 68, 68, 0.14);
+            color: #fca5a5;
+            font-size: 0.85rem;
+        }
+        .auth-footer {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(250, 250, 250, 0.18);
+            display: flex;
+            justify-content: space-between;
+            color: #a1a1aa;
+        }
+
+        .visual-side {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+        .spec-panel {
+            width: 100%;
+            max-width: 540px;
+            background: #09090b;
+            border: 1px solid rgba(250, 250, 250, 0.65);
+            box-shadow: 10px 10px 0 rgba(16, 185, 129, 0.85);
+        }
+        .spec-panel-head {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(250, 250, 250, 0.25);
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #d4d4d8;
+            display: flex;
+            justify-content: space-between;
+        }
+        .spec-panel-body {
+            padding: 18px 16px;
+            display: grid;
+            gap: 14px;
+        }
+        .spec-note {
+            font-size: 13px;
+            color: #a1a1aa;
+            line-height: 1.5;
+        }
+        .rbac-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            border: 1px solid rgba(250, 250, 250, 0.22);
+        }
+        .rbac-table th, .rbac-table td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(250, 250, 250, 0.16);
+            border-right: 1px solid rgba(250, 250, 250, 0.16);
+        }
+        .rbac-table th {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #a1a1aa;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .rbac-table td:first-child {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 11px;
+            color: #10B981;
+            text-transform: uppercase;
+        }
+        .rbac-table tr:last-child td { border-bottom: 0; }
+        .rbac-table th:last-child, .rbac-table td:last-child { border-right: 0; }
+
+        @media (max-width: 1024px) {
+            .split-layout { flex-direction: column; }
+            .content-side { max-width: 100%; padding: 2rem; }
+            .visual-side { padding: 2rem 2rem 3.5rem; }
+        }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/brutalist.css') }}">
 </head>
 <body>
-    <div class="card">
-        <span class="pill">Phonos v{{ version }} · Zero-SMTP Local Setup</span>
-        <h1>Initialize Your Phonos Lab</h1>
-        <p class="sub">Create the first Administrator account and name your shared Lab Workspace. No email server or external 2FA required.</p>
+    <div class="split-layout">
+        <section class="content-side">
+            <div class="brand-header">
+                <span class="brand-name">Phonos</span>
+                <span class="ver-tag">v{{ version }} // SETUP</span>
+            </div>
 
-        <form id="setup-form">
-            <label for="lab_name">Lab / Organization Name</label>
-            <input type="text" id="lab_name" name="lab_name" value="Phonos Lab" required maxlength="120">
+            <h1 class="headline">Initialize Lab Instance</h1>
+            <p class="subheadline">Create the primary Administrator account and configure your local workspace. Zero SMTP or external 2FA required.</p>
 
-            <label for="username">Administrator Username</label>
-            <input type="text" id="username" name="username" placeholder="e.g. admin or max" required minlength="2" maxlength="120" autocomplete="username">
+            <form id="setup-form">
+                <div class="form-group">
+                    <label class="form-label" for="lab_name">Lab / Organization Name</label>
+                    <input type="text" class="form-input" id="lab_name" name="lab_name" value="Phonos Lab" required maxlength="120">
+                </div>
 
-            <label for="password">Administrator Password (min. 8 characters)</label>
-            <input type="password" id="password" name="password" placeholder="Strong passphrase" required minlength="8" autocomplete="new-password">
+                <div class="form-group">
+                    <label class="form-label" for="username">Administrator Username</label>
+                    <input type="text" class="form-input" id="username" name="username" placeholder="admin or max" required minlength="2" maxlength="120" autocomplete="username">
+                </div>
 
-            <label class="check-row">
-                <input type="checkbox" id="allow_public_signup" style="margin-top:3px;">
-                <span>Allow open self-registration on <code>/register</code> (leave unchecked so only Administrators create lab accounts)</span>
-            </label>
+                <div class="form-group">
+                    <label class="form-label" for="password">Administrator Password (min. 8 characters)</label>
+                    <input type="password" class="form-input" id="password" name="password" placeholder="Strong passphrase" required minlength="8" autocomplete="new-password">
+                </div>
 
-            <div class="err" id="err-box"></div>
-            <button type="submit" class="btn" id="submit-btn">Create Administrator &amp; Launch Lab →</button>
-        </form>
+                <label class="check-row">
+                    <input type="checkbox" id="allow_public_signup">
+                    <span>Allow open self-registration on <code>/register</code> (leave unchecked so only Administrators provision lab accounts)</span>
+                </label>
 
-        <div class="meta">
-            <span>100% Local · Zero Telemetry</span>
-            <span>Research Use Only (RUO)</span>
-        </div>
+                <div class="error-toast" id="err-box"></div>
+                <button type="submit" class="btn btn-primary" id="submit-btn">Create Administrator &amp; Launch Lab</button>
+            </form>
+
+            <div class="auth-footer">
+                <span>100% LOCAL // ZERO TELEMETRY</span>
+                <span>RESEARCH USE ONLY</span>
+            </div>
+        </section>
+
+        <section class="visual-side" aria-label="Phonos Architecture Summary">
+            <div class="spec-panel">
+                <div class="spec-panel-head">
+                    <span>ACCESS ARCHITECTURE // 2-LAYER RBAC</span>
+                    <span style="color:#10B981;">SQLITE + AES-GCM</span>
+                </div>
+                <div class="spec-panel-body">
+                    <p class="spec-note">
+                        Global Lab Roles govern instance capabilities (account management, API vault, updates) while per-project roles control collaboration inside each discovery workspace.
+                    </p>
+                    <table class="rbac-table">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Scope &amp; Permissions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>admin</td>
+                                <td>Full account provisioning, AES-GCM API vault, GitHub updater, and all-lab project inspection.</td>
+                            </tr>
+                            <tr>
+                                <td>scientist</td>
+                                <td>Creates projects, registers custom BYOM endpoints, launches Bio-AI jobs and Python kernels.</td>
+                            </tr>
+                            <tr>
+                                <td>operator</td>
+                                <td>Executes workflows inside assigned projects according to per-project membership role.</td>
+                            </tr>
+                            <tr>
+                                <td>viewer</td>
+                                <td>Strict read-only ceiling across all projects with zero compute submission or kernel execution.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -62,7 +265,7 @@
             const err = document.getElementById('err-box');
             err.style.display = 'none';
             btn.disabled = true;
-            btn.textContent = 'Initializing Lab...';
+            btn.textContent = 'INITIALIZING LAB...';
             try {
                 const res = await fetch('/api/accounts/setup', {
                     method: 'POST',
@@ -79,7 +282,7 @@
                     err.textContent = data.message || data.detail || 'Setup failed.';
                     err.style.display = 'block';
                     btn.disabled = false;
-                    btn.textContent = 'Create Administrator & Launch Lab →';
+                    btn.textContent = 'Create Administrator & Launch Lab';
                     return;
                 }
                 window.location.href = data.redirect || '/oversight';
@@ -87,7 +290,7 @@
                 err.textContent = 'Network error: ' + ex.message;
                 err.style.display = 'block';
                 btn.disabled = false;
-                btn.textContent = 'Create Administrator & Launch Lab →';
+                btn.textContent = 'Create Administrator & Launch Lab';
             }
         });
     </script>

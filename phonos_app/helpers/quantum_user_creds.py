@@ -280,9 +280,18 @@ def get_platform_credentials() -> Optional[Tuple[str, Optional[str], Optional[st
     to the frontend. Returns None when the env var is unset.
     """
     api_key = os.environ.get("IBM_QUANTUM_API_KEY")
+    instance = os.environ.get("IBM_QUANTUM_INSTANCE") or None
+    if not api_key:
+        try:
+            from .model_providers import resolve_ibm_cloud_credentials
+            vault = resolve_ibm_cloud_credentials()
+            api_key = vault.get("api_key") or None
+            if not instance:
+                instance = vault.get("instance_crn") or None
+        except Exception:
+            api_key = None
     if not api_key:
         return None
-    instance = os.environ.get("IBM_QUANTUM_INSTANCE") or None
     default_backend = os.environ.get("IBM_QUANTUM_DEFAULT_BACKEND") or None
     return api_key, instance, default_backend
 

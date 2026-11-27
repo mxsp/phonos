@@ -181,6 +181,32 @@
             background: rgba(239, 68, 68, 0.26);
             color: #fff;
         }
+        .aa-prov-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        @media (max-width: 1080px) { .aa-prov-grid { grid-template-columns: 1fr; } }
+        .aa-prov-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--bz-line);
+            border-top: 2px solid var(--bz-line-strong);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .aa-prov-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--bz-line);
+        }
+        .aa-prov-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .aa-prov-desc { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+        .aa-mono { font-family: var(--font-mono); font-size: 12px !important; }
     </style>
 </head>
 <body>
@@ -194,8 +220,8 @@
         </a>
         <nav class="aa-nav">
             <a href="/dashboard" class="btn btn-secondary btn-sm">Workbench</a>
-            <a href="/custom-models" class="btn btn-secondary btn-sm">Models &amp; Endpoints</a>
-            <a href="/agent" class="btn btn-secondary btn-sm">Discovery Copilot</a>
+            <a href="/dashboard#settings" class="btn btn-secondary btn-sm">Account Settings</a>
+            <a href="/custom-models" class="btn btn-secondary btn-sm">Custom Models</a>
             <a href="/admin" class="btn btn-secondary btn-sm">Worker Oversight</a>
         </nav>
     </header>
@@ -325,6 +351,21 @@
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="saveLabSettings()">Save Instance Settings</button>
                 </div>
+            </div>
+        </div>
+
+        <div class="card" id="api-keys">
+            <div class="card-header">
+                <div class="aa-card-head-row">
+                    <h2 class="card-title">Platform API Keys // NVIDIA, Wolfram &amp; IBM Cloud</h2>
+                    <span class="status-pill completed">AES-GCM VAULT // ADMIN ONLY</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-muted" style="margin-top:0; margin-bottom:14px; font-size:13px;">
+                    Instance-wide credentials sealed at rest for Bio-AI models (NVIDIA NIM), Wolfram Language cells, and IBM Cloud Quantum hardware. Environment variables take precedence when set.
+                </p>
+                <div class="aa-prov-grid" id="admin-providers-grid">Loading providers...</div>
             </div>
         </div>
 
@@ -583,7 +624,101 @@
             } catch (e) { showToast('Error loading lab projects: ' + e.message); }
         }
 
-        loadSummary(); loadAccounts(); checkUpdates(false); loadAllLabProjects();
+        async function loadAdminProviders() {
+            const grid = document.getElementById('admin-providers-grid');
+            if (!grid) return;
+            try {
+                const res = await api('/api/model-providers');
+                grid.innerHTML = (res.providers || []).map(p => {
+                    const safeId = escHtml(p.id);
+                    const srcBadge = p.key_source === 'environment'
+                        ? `<span class="status-pill running">ENV // ${escHtml(p.env_var)}</span>`
+                        : (p.has_key
+                            ? `<span class="status-pill completed">SEALED</span>`
+                            : `<span class="status-pill queued">NOT SET</span>`);
+                    const extraField = p.extra_field ? `
+                        <div class="aa-field">
+                            <label class="form-label" for="px-${safeId}">${escHtml(p.extra_label || p.extra_field)}</label>
+                            <input type="text" class="form-input aa-mono" id="px-${safeId}" value="${escHtml((p.extra && p.extra[p.extra_field]) || '')}" placeholder="${escHtml(p.extra_placeholder || '')}">
+                        </div>` : '';
+                    return `
+                    <div class="aa-prov-card">
+                        <div class="aa-prov-top">
+                            <div>
+                                <div class="aa-prov-title">${escHtml(p.label)}</div>
+                                <div class="aa-prov-desc">${escHtml(p.description)}</div>
+                            </div>
+                            ${srcBadge}
+                        </div>
+                        <div class="aa-field">
+                            <label class="form-label" for="pu-${safeId}">${escHtml(p.url_label || 'Base URL')}</label>
+                            <input type="text" class="form-input aa-mono" id="pu-${safeId}" value="${escHtml(p.base_url || '')}">
+                        </div>
+                        <div class="aa-field">
+                            <label class="form-label" for="pk-${safeId}">${escHtml(p.key_label || 'API Key')} ${p.env_var ? '(' + escHtml(p.env_var) + ')' : ''}</label>
+                            <input type="password" class="form-input" id="pk-${safeId}" placeholder="${p.has_key ? 'Saved (enter new value to replace)' : escHtml(p.key_placeholder || 'Paste API key')}" autocomplete="new-password">
+                        </div>
+                        ${extraField}
+                        <div class="aa-actions" style="margin-top:auto; padding-top:4px;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveAdminProv('${safeId}')">Save</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="testAdminProv('${safeId}')">Test</button>
+                            ${(p.has_key && p.key_source !== 'environment') ? `<button type="button" class="btn btn-danger btn-sm" onclick="clearAdminProv('${safeId}')">Clear</button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                grid.innerHTML = '<div style="color:#f87171;">Failed to load API providers: ' + escHtml(e.message) + '</div>';
+            }
+        }
+
+        async function saveAdminProv(pid) {
+            const keyEl = document.getElementById('pk-' + pid);
+            const urlEl = document.getElementById('pu-' + pid);
+            const crnEl = document.getElementById('px-' + pid);
+            const body = {
+                api_key: keyEl ? keyEl.value : '',
+                base_url: urlEl ? urlEl.value.trim() : ''
+            };
+            if (crnEl) body.instance_crn = crnEl.value.trim();
+            try {
+                await api('/api/model-providers/' + encodeURIComponent(pid), {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+                if (keyEl) keyEl.value = '';
+                showToast('Saved encrypted credentials for ' + pid + '.');
+                loadAdminProviders();
+            } catch (e) { showToast('Error: ' + e.message); }
+        }
+
+        async function clearAdminProv(pid) {
+            try {
+                await api('/api/model-providers/' + encodeURIComponent(pid), {
+                    method: 'POST',
+                    body: JSON.stringify({ clear_key: true })
+                });
+                showToast('Cleared stored key for ' + pid + '.');
+                loadAdminProviders();
+            } catch (e) { showToast('Error: ' + e.message); }
+        }
+
+        async function testAdminProv(pid) {
+            const keyEl = document.getElementById('pk-' + pid);
+            const urlEl = document.getElementById('pu-' + pid);
+            showToast('Testing ' + pid + '...');
+            try {
+                const r = await api('/api/model-providers/' + encodeURIComponent(pid) + '/test', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        api_key: keyEl ? keyEl.value : '',
+                        base_url: urlEl ? urlEl.value.trim() : ''
+                    })
+                });
+                showToast((r.detail || 'Connected') + ' (' + (r.latency_ms || 0) + ' ms)');
+            } catch (e) { showToast('Connection test failed: ' + e.message); }
+        }
+
+        loadSummary(); loadAccounts(); loadAdminProviders(); checkUpdates(false); loadAllLabProjects();
     </script>
 </body>
 </html>

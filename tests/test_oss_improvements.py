@@ -217,21 +217,73 @@ class PhonosOSSImprovementsTestCase(unittest.TestCase):
 
             self._login_as(sci["id"], "builder", is_admin=True, role="admin")
 
-            # 1. Save encrypted personal provider API key in vault
+            # 1. Verify Admin-only 3-provider vault (NVIDIA, Wolfram, IBM Cloud)
+            with app.app_context():
+                db = get_db()
+                non_adm = create_local_account(db, username="sci_no_vault", password="QuantumVaultKey!88", system_role="scientist")
+                db.commit()
+            self._login_as(non_adm["id"], "sci_no_vault", is_admin=False, role="scientist")
+            r_forbid = self.client.post(
+                "/api/model-providers/nvidia-nim",
+                headers=self._csrf_headers(),
+                json={"api_key": "nvapi-should-fail"},
+            )
+            self.assertEqual(r_forbid.status_code, 403)
+
+            self._login_as(sci["id"], "builder", is_admin=True, role="admin")
+            r_bad_prov = self.client.post(
+                "/api/model-providers/openai",
+                headers=self._csrf_headers(),
+                json={"api_key": "sk-unsupported"},
+            )
+            self.assertEqual(r_bad_prov.status_code, 400)
+
             r_vault = self.client.post(
                 "/api/model-providers/nvidia-nim",
                 headers=self._csrf_headers(),
-                json={"scope": "user", "api_key": "nvapi-test-encrypted-vault-key-123456"},
+                json={"api_key": "nvapi-test-encrypted-vault-key-123456"},
             )
             self.assertEqual(r_vault.status_code, 200, r_vault.get_data(as_text=True))
+            r_wolf = self.client.post(
+                "/api/model-providers/wolfram",
+                headers=self._csrf_headers(),
+                json={"api_key": "wolf-test-license-key-999", "base_url": "http://127.0.0.1:5100"},
+            )
+            self.assertEqual(r_wolf.status_code, 200, r_wolf.get_data(as_text=True))
+            r_ibm = self.client.post(
+                "/api/model-providers/ibm-cloud",
+                headers=self._csrf_headers(),
+                json={"api_key": "ibm-test-cloud-key-777", "instance_crn": "crn:v1:bluemix:public:quantum-computing:us-east:a/test::"},
+            )
+            self.assertEqual(r_ibm.status_code, 200, r_ibm.get_data(as_text=True))
 
             r_list_vault = self.client.get("/api/model-providers")
             self.assertEqual(r_list_vault.status_code, 200)
-            providers = {p["id"]: p for p in r_list_vault.get_json()["providers"]}
+            prov_list = r_list_vault.get_json()["providers"]
+            self.assertEqual([p["id"] for p in prov_list], ["nvidia-nim", "wolfram", "ibm-cloud"])
+            providers = {p["id"]: p for p in prov_list}
             self.assertTrue(providers["nvidia-nim"]["has_key"])
-            self.assertEqual(providers["nvidia-nim"]["key_source"], "user")
-            # Ensure plaintext key is never leaked back
-            self.assertNotIn("nvapi-test-encrypted-vault-key-123456", r_list_vault.get_data(as_text=True))
+            self.assertEqual(providers["nvidia-nim"]["key_source"], "instance")
+            self.assertTrue(providers["wolfram"]["has_key"])
+            self.assertEqual(providers["wolfram"]["key_source"], "instance")
+            self.assertTrue(providers["ibm-cloud"]["has_key"])
+            self.assertEqual(providers["ibm-cloud"]["key_source"], "instance")
+            self.assertEqual(providers["ibm-cloud"]["extra"].get("instance_crn"), "crn:v1:bluemix:public:quantum-computing:us-east:a/test::")
+            # Clear IBM Cloud key and confirm it returns cleanly to none
+            r_clear_ibm = self.client.post(
+                "/api/model-providers/ibm-cloud",
+                headers=self._csrf_headers(),
+                json={"clear_key": True},
+            )
+            self.assertEqual(r_clear_ibm.status_code, 200)
+            after_clear = {p["id"]: p for p in r_clear_ibm.get_json()["providers"]}
+            self.assertFalse(after_clear["ibm-cloud"]["has_key"])
+            self.assertEqual(after_clear["ibm-cloud"]["key_source"], "none")
+            # Ensure plaintext keys are never leaked back
+            raw_body = r_list_vault.get_data(as_text=True)
+            self.assertNotIn("nvapi-test-encrypted-vault-key-123456", raw_body)
+            self.assertNotIn("wolf-test-license-key-999", raw_body)
+            self.assertNotIn("ibm-test-cloud-key-777", raw_body)
 
             # 2. Register a direct_http BYOM custom model pointing to our mock HTTP server
             r_create_model = self.client.post(
@@ -303,12 +355,12 @@ class PhonosOSSImprovementsTestCase(unittest.TestCase):
             server.server_close()
 
     def test_copilot_discovery_tools_and_keyless_local_provider(self) -> None:
+        from phonos_app.agent.tools import ToolContext
         from phonos_app.agent.bio_tools import (
             admet_lipinski_profile,
             design_mutation_scan,
             structure_confidence_plddt,
         )
-        from phonos_app.agent.tools import ToolContext
         from phonos_app.agent import viewer_context
 
         with app.app_context():
@@ -343,31 +395,9 @@ class PhonosOSSImprovementsTestCase(unittest.TestCase):
             self.assertIn(">A1K", mut["fasta"])
 
         self._login_as(u["id"], "copilotuser", role="scientist")
-        r_routines = self.client.get("/api/agent/routines")
-        self.assertEqual(r_routines.status_code, 200)
-        self.assertGreaterEqual(len(r_routines.get_json()["routines"]), 4)
-
-        # Non-admin scientist cannot overwrite instance-wide Copilot settings
-        r_non_adm = self.client.put(
-            "/api/agent/settings",
-            headers=self._csrf_headers(),
-            json={"provider": "ollama", "model": "qwen2.5:14b", "base_url": "http://127.0.0.1:11434/v1"},
-        )
-        self.assertEqual(r_non_adm.status_code, 403)
-
-        # Admin configures keyless Ollama instance provider
-        with app.app_context():
-            db = get_db()
-            adm = create_local_account(db, username="copilotadmin", password="QuantumOrbitKey!77", system_role="admin")
-            db.commit()
-        self._login_as(adm["id"], "copilotadmin", is_admin=True, role="admin")
-        r_ollama = self.client.put(
-            "/api/agent/settings",
-            headers=self._csrf_headers(),
-            json={"provider": "ollama", "model": "qwen2.5:14b", "base_url": "http://127.0.0.1:11434/v1"},
-        )
-        self.assertEqual(r_ollama.status_code, 200, r_ollama.get_data(as_text=True))
-        self.assertTrue(r_ollama.get_json()["settings"]["api_key_set"])
+        # Copilot routes are unmounted (404) by default unless ENABLE_COPILOT=true
+        self.assertEqual(self.client.get("/agent").status_code, 404)
+        self.assertEqual(self.client.get("/api/agent/routines").status_code, 404)
 
     def test_zero_docker_local_notebook_kernel(self) -> None:
         backend = LocalPythonBackend()

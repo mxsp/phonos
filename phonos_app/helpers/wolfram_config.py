@@ -16,6 +16,12 @@ logger = logging.getLogger(__name__)
 def get_wolfram_config() -> Optional[Dict[str, Any]]:
     """Get Wolfram Engine activation credentials from environment."""
     license_key = os.environ.get('WOLFRAM_LICENSE', '').strip()
+    if not license_key:
+        try:
+            from .model_providers import resolve_wolfram_api_key
+            license_key = resolve_wolfram_api_key()
+        except Exception:
+            license_key = ''
     username = os.environ.get('WOLFRAM_USERNAME', '').strip()
     password = os.environ.get('WOLFRAM_PASSWORD', '').strip()
 

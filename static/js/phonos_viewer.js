@@ -3861,13 +3861,6 @@
         this._wirePanelActions(panel);
         this._wirePanelInputs(panel);
 
-        // Add 1-click Copilot 3D analysis action button to Focus & Analysis panel
-        var bodyEl = panel.querySelector('.pv-panel-body') || panel;
-        var copilotWrap = document.createElement('div');
-        copilotWrap.style.cssText = 'padding:8px 10px;border-top:1px solid rgba(255,255,255,0.2);';
-        copilotWrap.innerHTML = '<button type="button" data-action="ask-copilot" style="width:100%;padding:6px 10px;border-radius:0;border:1px solid #34d399;background:#0F9960;color:#fff;font-family:\'IBM Plex Mono\',ui-monospace,monospace;font-weight:500;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Ask Copilot About Structure (A)</button>';
-        bodyEl.appendChild(copilotWrap);
-
         // Sync the Rendering buttons to the resolved preset (may come from
         // localStorage, not just the options default the panel was built with).
         var self = this;
@@ -4068,7 +4061,6 @@
                 case 'f': e.preventDefault(); self.toggleFullscreen(); break;
                 case 'm': e.preventDefault(); self.toggleDistanceRuler(); break;
                 case 'd': e.preventDefault(); self.exportCoordinates(); break;
-                case 'a': e.preventDefault(); self.askCopilotAboutStructure(); break;
                 case 'escape':
                     e.preventDefault();
                     if (self._shortcutSheet && self._shortcutSheet.classList.contains('visible')) {

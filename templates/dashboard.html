@@ -43,7 +43,6 @@
     <link rel="preload" href="{{ url_for('static', filename='css/wolfram_nb.css') }}?v=bd5d9fe0" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="{{ url_for('static', filename='css/databases.css') }}?v=a2fac745" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}?v=709660b6">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}?v=20261115o">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ligand_diagram.css') }}?v=f6729a4e">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/oversight.css') }}?v=72ffc802">
     {% include '_i18n_scripts.html' %}
@@ -165,13 +164,6 @@
                         </svg>
                         <span data-i18n="nav.visualizer3D">3D Visualizer</span>
                     </button>
-                    <button class="nav-item" data-agent-open aria-label="Phonos Copilot" title="Phonos Copilot (Ctrl+Shift+A)" style="--nav-accent-color: #10b981;">
-                        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #34d399;">
-                            <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
-                            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/>
-                        </svg>
-                        <span>Copilot</span>
-                    </button>
                     <button class="nav-item" onclick="window.open('/notebook', '_blank')" aria-label="Notebook IDE" style="--nav-accent-color: #f97316;">
                         <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color: #f97316;">
                             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -255,13 +247,6 @@
                 <h1 class="header-title" id="page-title" data-i18n="dashboard.title">Dashboard</h1>
 
                 <div class="header-actions">
-
-                    <button class="btn btn-ghost btn-icon" id="pa-header-toggle" aria-label="Open Phonos Copilot" title="Phonos Copilot (Ctrl+Shift+A)" data-agent-open>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
-                            <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/>
-                        </svg>
-                    </button>
 
                     <button class="btn btn-ghost btn-icon" id="notifications-btn" data-i18n-aria="header.notifications" data-i18n-title="header.notifications" aria-label="Notifications" title="Notifications">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -552,9 +537,6 @@
         </div>
     </aside>
 
-    <!-- Phonos Copilot mounts its launcher and right-hand panel here. -->
-    <div id="phonos-agent-root"></div>
-
     <!-- Pass server data to JavaScript -->
     <script>
         window.PHONOS_CONFIG = {
@@ -607,8 +589,6 @@
         }
     })();
     </script>
-    <script defer src="{{ url_for('static', filename='js/agent-context.js') }}?v=20261115o"></script>
-    <script defer src="{{ url_for('static', filename='js/agent.js') }}?v=20261115o"></script>
     {% include 'partials/_cookie_consent_modal.html' %}
 </body>
 </html>

@@ -79,14 +79,15 @@ try:
     except Exception as edu_exc:  # noqa: BLE001
         import logging
         logging.getLogger(__name__).warning("Education routes unavailable: %s", edu_exc)
-    # Phonos Copilot: additive tables and its own /api/agent + /agent surface.
-    # A failure here must never prevent the rest of Phonos from starting.
-    try:
-        from ..agent import register_agent_routes
-        register_agent_routes(app)
-    except Exception as agent_exc:  # noqa: BLE001
-        import logging
-        logging.getLogger(__name__).warning("Phonos Copilot routes unavailable: %s", agent_exc)
+    # Phonos Copilot is disabled by default; opt in via ENABLE_COPILOT=true.
+    import os as _os
+    if _os.environ.get("ENABLE_COPILOT", "").strip().lower() in ("1", "true", "yes"):
+        try:
+            from ..agent import register_agent_routes
+            register_agent_routes(app)
+        except Exception as agent_exc:  # noqa: BLE001
+            import logging
+            logging.getLogger(__name__).warning("Phonos Copilot routes unavailable: %s", agent_exc)
     # Don't register user model routes here - it causes circular import
     # They will be registered in app.py after initialization
 except ImportError:

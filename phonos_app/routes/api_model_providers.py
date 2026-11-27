@@ -10,10 +10,10 @@ from ..helpers import admin_required, get_db, login_required
 from ..helpers.lab_accounts import get_user_auth_state
 from ..helpers.model_providers import (
     PRESET_BY_ID,
+    PROVIDER_ALIASES,
     ensure_provider_schema,
     list_providers_public,
     save_instance_provider,
-    save_user_provider_key,
     test_provider_connection,
     validate_endpoint_url,
 )
@@ -55,59 +55,54 @@ def api_list_model_providers():
 
 
 @app.route("/api/model-providers/<provider_id>", methods=["POST"])
-@login_required
+@admin_required
 @csrf_protect
 def api_save_model_provider(provider_id: str):
-    if provider_id not in PRESET_BY_ID:
-        return jsonify({"status": "error", "message": f"Unknown provider '{provider_id}'."}), 400
+    canonical_id = PROVIDER_ALIASES.get(provider_id, provider_id)
+    if canonical_id not in PRESET_BY_ID:
+        return jsonify({
+            "status": "error",
+            "message": f"Unsupported provider '{provider_id}'. Supported providers: nvidia-nim, wolfram, ibm-cloud.",
+        }), 400
 
     db = get_db()
     uid = int(session["user_id"])
-    state = get_user_auth_state(db, uid)
     data = request.get_json(silent=True) or {}
-    scope = (data.get("scope") or ("instance" if state.get("is_admin") else "user")).strip().lower()
+    extra_config = {}
+    if "instance_crn" in data:
+        extra_config["instance_crn"] = data.get("instance_crn")
 
     try:
-        if scope == "instance":
-            if not state.get("is_admin"):
-                return jsonify({"status": "error", "message": "Administrator privileges required for instance-wide keys. Use scope='user' for personal BYOK keys."}), 403
-            save_instance_provider(
-                db,
-                provider_id,
-                api_key=data.get("api_key"),
-                base_url=data.get("base_url"),
-                clear_key=bool(data.get("clear_key")),
-                actor_id=uid,
-            )
-        else:
-            if state.get("system_role") == "viewer":
-                return jsonify({"status": "error", "message": "Viewer accounts are read-only."}), 403
-            save_user_provider_key(
-                db,
-                uid,
-                provider_id,
-                api_key=data.get("api_key"),
-                base_url_override=data.get("base_url"),
-                clear_key=bool(data.get("clear_key")),
-            )
+        save_instance_provider(
+            db,
+            canonical_id,
+            api_key=data.get("api_key"),
+            base_url=data.get("base_url"),
+            extra_config=extra_config or None,
+            clear_key=bool(data.get("clear_key")),
+            actor_id=uid,
+        )
     except ValueError as ve:
         return jsonify({"status": "error", "message": str(ve)}), 400
     except Exception as exc:
-        logger.error("Failed saving provider %s: %s", provider_id, exc, exc_info=True)
+        logger.error("Failed saving provider %s: %s", canonical_id, exc, exc_info=True)
         return jsonify({"status": "error", "message": "Could not store provider credentials."}), 500
 
     return jsonify({"status": "success", "providers": list_providers_public(db, user_id=uid)})
 
 
 @app.route("/api/model-providers/<provider_id>/test", methods=["POST"])
-@login_required
+@admin_required
 @csrf_protect
 def api_test_model_provider(provider_id: str):
+    canonical_id = PROVIDER_ALIASES.get(provider_id, provider_id)
+    if canonical_id not in PRESET_BY_ID:
+        return jsonify({"ok": False, "error": f"Unsupported provider '{provider_id}'."}), 400
     db = get_db()
     uid = int(session["user_id"])
     data = request.get_json(silent=True) or {}
     res = test_provider_connection(
-        provider_id,
+        canonical_id,
         user_id=uid,
         db=db,
         custom_url=data.get("base_url"),

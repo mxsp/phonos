@@ -4,7 +4,7 @@
     <script>(function(){document.documentElement.setAttribute("data-theme","dark");})();</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Models, API Keys &amp; Custom Endpoints - Phonos</title>
+    <title>Custom Models &amp; Endpoints - Phonos</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='fonts/inter.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
@@ -276,8 +276,8 @@
         <nav class="cm-nav">
             <a href="/dashboard" class="btn btn-secondary btn-sm">Workbench</a>
             <a href="/notebook" class="btn btn-secondary btn-sm">Notebook IDE</a>
-            <a href="/agent" class="btn btn-secondary btn-sm">Discovery Copilot</a>
             {% if session.get('is_admin') %}
+            <a href="/admin/accounts#api-keys" class="btn btn-secondary btn-sm">Admin API Keys</a>
             <a href="/admin/accounts" class="btn btn-secondary btn-sm">Accounts &amp; Updates</a>
             {% endif %}
         </nav>
@@ -286,16 +286,15 @@
     <main class="cm-shell">
         <div class="cm-console-header">
             <div>
-                <h1>Models, API Keys &amp; Custom Endpoints</h1>
-                <p>Register local or remote inference servers, manage encrypted provider credentials, and override built-in NIM URLs.</p>
+                <h1>Custom Models &amp; Endpoint Overrides</h1>
+                <p>Register local or remote inference servers and override built-in NVIDIA NIM container URLs. Platform API keys (NVIDIA, Wolfram, IBM Cloud) are managed in Admin Account Settings.</p>
             </div>
-            <div class="status-pill completed">AES-GCM VAULT ACTIVE</div>
+            <div class="status-pill completed">BYOM RUNTIME ACTIVE</div>
         </div>
 
         <div class="tabs-v2 cm-tabs" role="tablist">
             <button type="button" class="tab-v2 active" data-pane="byom" onclick="switchPane('byom', this)">01 // BYOM Endpoints</button>
-            <button type="button" class="tab-v2" data-pane="providers" onclick="switchPane('providers', this)">02 // Provider Vault &amp; API Keys</button>
-            <button type="button" class="tab-v2" data-pane="overrides" onclick="switchPane('overrides', this)">03 // Built-In NIM Overrides</button>
+            <button type="button" class="tab-v2" data-pane="overrides" onclick="switchPane('overrides', this)">02 // Built-In NIM Overrides</button>
         </div>
 
         <!-- PANE 1: BYOM CUSTOM ENDPOINTS -->
@@ -407,7 +406,7 @@
                     </div>
                     <div class="card-body">
                         <p class="text-muted" style="margin-top:0; margin-bottom:12px; font-size:13px;">
-                            Execute registered models into any project, open outputs in the Mol* 3D Viewer, or invoke them from Discovery Copilot and Python Notebooks. Reference server: <code>python3 examples/custom_model_server.py</code>.
+                            Execute registered models into any project, open outputs in the Mol* 3D Viewer, or invoke them from Python Notebooks. Reference server: <code>python3 examples/custom_model_server.py</code>.
                         </p>
                         <div id="custom-models-container" style="overflow-x:auto;">Loading models...</div>
 
@@ -438,31 +437,7 @@
             </div>
         </section>
 
-        <!-- PANE 2: UNIFIED API KEYS & PROVIDERS -->
-        <section class="cm-pane" id="pane-providers">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Encrypted Provider Vault &amp; API Keys</h2>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted" style="margin-top:0; margin-bottom:12px; font-size:13px;">
-                        Credentials saved here are sealed at rest with AES-GCM and resolved dynamically by Bio-AI workers, quick prediction endpoints, and Discovery Copilot. Process environment variables take precedence when defined.
-                    </p>
-                    <div class="cm-scope-bar">
-                        <label class="form-label" for="key-scope" style="margin:0;">Save Scope:</label>
-                        <select id="key-scope" class="form-select">
-                            {% if session.get('is_admin') %}
-                            <option value="instance" selected>Instance-Wide Default (All Lab Users)</option>
-                            {% endif %}
-                            <option value="user">Personal BYOK Override (My Account Only)</option>
-                        </select>
-                    </div>
-                    <div class="cm-prov-grid" id="providers-grid">Loading providers...</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- PANE 3: BUILT-IN MODEL URL OVERRIDES -->
+        <!-- PANE 2: BUILT-IN MODEL URL OVERRIDES -->
         <section class="cm-pane" id="pane-overrides">
             <div class="card">
                 <div class="card-header">
@@ -799,44 +774,11 @@
             } catch (e) { toast('Error: ' + e.message); }
         }
 
-        async function loadProviders() {
+        async function loadOverrides() {
             try {
                 const res = await api('/api/model-providers');
-                const g = document.getElementById('providers-grid');
-                g.innerHTML = (res.providers || []).map(p => {
-                    const srcBadge = p.key_source === 'environment'
-                        ? `<span class="status-pill running">ENV // ${escHtml(p.env_var)}</span>`
-                        : (p.has_key
-                            ? `<span class="status-pill completed">${p.keyless ? 'KEYLESS LOCAL' : ('SEALED // ' + escHtml(p.key_source))}</span>`
-                            : `<span class="status-pill queued">NO KEY</span>`);
-                    const safeId = escHtml(p.id);
-                    return `
-                    <div class="cm-prov-card">
-                        <div class="cm-prov-top">
-                            <div>
-                                <div class="cm-prov-title">${escHtml(p.label)}</div>
-                                <div class="cm-prov-desc">${escHtml(p.description)}</div>
-                            </div>
-                            ${srcBadge}
-                        </div>
-                        <div class="cm-field" style="margin-bottom:0;">
-                            <label class="form-label" for="pu-${safeId}">Base URL</label>
-                            <input type="text" class="form-input cm-mono" id="pu-${safeId}" value="${escHtml(p.base_url)}">
-                        </div>
-                        ${!p.keyless ? `
-                        <div class="cm-field" style="margin-bottom:0;">
-                            <label class="form-label" for="pk-${safeId}">API Key ${p.env_var ? '(or ' + escHtml(p.env_var) + ')' : ''}</label>
-                            <input type="password" class="form-input" id="pk-${safeId}" placeholder="${p.has_key ? 'Saved (enter new value to replace)' : 'Paste API key'}" autocomplete="new-password">
-                        </div>` : ''}
-                        <div class="cm-inline-actions" style="margin-top:auto; padding-top:4px;">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="saveProv('${safeId}')">Save</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="testProv('${safeId}')">Test Connection</button>
-                            ${(!p.keyless && p.has_key && p.key_source !== 'environment') ? `<button type="button" class="btn btn-danger btn-sm" onclick="clearProv('${safeId}')">Clear Key</button>` : ''}
-                        </div>
-                    </div>`;
-                }).join('');
-
                 const otb = document.getElementById('overrides-tbody');
+                if (!otb) return;
                 otb.innerHTML = (res.builtin_models || []).map(bm => {
                     const safeMid = escHtml(bm.id);
                     return `
@@ -853,51 +795,9 @@
                     </tr>`;
                 }).join('');
             } catch (e) {
-                document.getElementById('providers-grid').innerHTML = '<div class="cm-empty" style="color:#f87171;">Failed to load providers: ' + escHtml(e.message) + '</div>';
+                const otb = document.getElementById('overrides-tbody');
+                if (otb) otb.innerHTML = '<tr><td colspan="4" style="color:#f87171;">Failed to load overrides: ' + escHtml(e.message) + '</td></tr>';
             }
-        }
-
-        async function saveProv(pid) {
-            const scope = document.getElementById('key-scope').value;
-            const keyEl = document.getElementById('pk-' + pid);
-            const urlEl = document.getElementById('pu-' + pid);
-            try {
-                await api('/api/model-providers/' + encodeURIComponent(pid), {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        scope,
-                        api_key: keyEl ? keyEl.value : '',
-                        base_url: urlEl ? urlEl.value.trim() : ''
-                    })
-                });
-                toast('Saved credentials for ' + pid + '.');
-                loadProviders();
-            } catch (e) { toast('Error: ' + e.message); }
-        }
-
-        async function clearProv(pid) {
-            const scope = document.getElementById('key-scope').value;
-            try {
-                await api('/api/model-providers/' + encodeURIComponent(pid), { method: 'POST', body: JSON.stringify({ scope, clear_key: true }) });
-                toast('Cleared stored key for ' + pid + '.');
-                loadProviders();
-            } catch (e) { toast('Error: ' + e.message); }
-        }
-
-        async function testProv(pid) {
-            const keyEl = document.getElementById('pk-' + pid);
-            const urlEl = document.getElementById('pu-' + pid);
-            toast('Testing ' + pid + '...');
-            try {
-                const r = await api('/api/model-providers/' + encodeURIComponent(pid) + '/test', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        api_key: keyEl ? keyEl.value : '',
-                        base_url: urlEl ? urlEl.value.trim() : ''
-                    })
-                });
-                toast('Connected (' + (r.latency_ms || 0) + ' ms)');
-            } catch (e) { toast('Connection test failed: ' + e.message); }
         }
 
         async function saveOverride(mid) {
@@ -908,11 +808,11 @@
                     body: JSON.stringify({ model_id: mid, endpoint_url: url })
                 });
                 toast(url ? ('Override saved for ' + mid) : ('Reset ' + mid + ' to default URL'));
-                loadProviders();
+                loadOverrides();
             } catch (e) { toast('Error: ' + e.message); }
         }
 
-        loadCustomModels(); loadProjects(); loadProviders();
+        loadCustomModels(); loadProjects(); loadOverrides();
     </script>
 </body>
 </html>

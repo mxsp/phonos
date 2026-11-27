@@ -11687,7 +11687,7 @@ console.log(data);`
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </span>
                     <span class="settings-section-heading-text" data-i18n="settings.sections.account">Account</span>
-                    <span class="settings-section-heading-count">2</span>
+                    <span class="settings-section-heading-count">${(window.PHONOS_CONFIG?.isAdmin || userInfo.is_admin) ? '3' : '2'}</span>
                 </h2>
                 <div class="settings-section-cards">
                     <div class="card">
@@ -11794,6 +11794,25 @@ console.log(data);`
                             </button>
                         </div>
                     </div>
+                    ${(window.PHONOS_CONFIG?.isAdmin || userInfo.is_admin) ? `
+                    <div class="card card-span-2" id="admin-account-api-keys-card">
+                        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                            <h3 class="card-title">Admin API Keys // NVIDIA, Wolfram &amp; IBM Cloud</h3>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="status-pill completed">AES-GCM VAULT</span>
+                                <a href="/admin/accounts#api-keys" class="btn btn-secondary btn-sm">Lab Control Center</a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm text-muted" style="margin-top:0;margin-bottom:var(--space-4);">
+                                Manage instance-wide encrypted API keys for NVIDIA NIM / BioNeMo, Wolfram Engine / Cloud, and IBM Cloud Quantum. Environment variables take precedence when set.
+                            </p>
+                            <div id="admin-settings-api-keys-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">
+                                <div class="text-sm text-muted">Loading providers...</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
             </section>
 
@@ -12570,6 +12589,100 @@ console.log(data);`
         }
         if (typeof this.refreshDeveloperOptionsMeta === 'function') {
             this.refreshDeveloperOptionsMeta();
+        }
+        if (window.PHONOS_CONFIG?.isAdmin || userInfo.is_admin) {
+            this.loadAdminApiKeysPanel();
+        }
+    },
+
+    async loadAdminApiKeysPanel() {
+        const grid = document.getElementById('admin-settings-api-keys-grid');
+        if (!grid) return;
+        try {
+            const res = await API.get('/api/model-providers', { skipCache: true });
+            const providers = (res && res.providers) || [];
+            grid.innerHTML = providers.map((p) => {
+                const safeId = escapeHtml(p.id);
+                const badge = p.key_source === 'environment'
+                    ? `<span class="status-pill running">ENV // ${escapeHtml(p.env_var)}</span>`
+                    : (p.has_key
+                        ? `<span class="status-pill completed">SEALED</span>`
+                        : `<span class="status-pill queued">NOT SET</span>`);
+                const extraHtml = p.extra_field ? `
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label class="form-label" for="as-px-${safeId}">${escapeHtml(p.extra_label || p.extra_field)}</label>
+                        <input type="text" class="form-input" style="font-family:var(--font-mono);font-size:12px;" id="as-px-${safeId}" value="${escapeHtml((p.extra && p.extra[p.extra_field]) || '')}" placeholder="${escapeHtml(p.extra_placeholder || '')}">
+                    </div>` : '';
+                return `
+                    <div style="background:var(--bg-elevated,#394B59);border:1px solid var(--border-color);border-top:2px solid var(--border-strong);padding:14px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border-color);">
+                            <div>
+                                <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${escapeHtml(p.label)}</div>
+                                <div class="text-xs text-muted" style="margin-top:3px;line-height:1.4;">${escapeHtml(p.description)}</div>
+                            </div>
+                            ${badge}
+                        </div>
+                        <div class="form-group" style="margin-bottom:6px;">
+                            <label class="form-label" for="as-pu-${safeId}">${escapeHtml(p.url_label || 'Base URL')}</label>
+                            <input type="text" class="form-input" style="font-family:var(--font-mono);font-size:12px;" id="as-pu-${safeId}" value="${escapeHtml(p.base_url || '')}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:6px;">
+                            <label class="form-label" for="as-pk-${safeId}">${escapeHtml(p.key_label || 'API Key')} ${p.env_var ? '(' + escapeHtml(p.env_var) + ')' : ''}</label>
+                            <input type="password" class="form-input" id="as-pk-${safeId}" placeholder="${p.has_key ? 'Saved (enter new value to replace)' : escapeHtml(p.key_placeholder || 'Paste API key')}" autocomplete="new-password">
+                        </div>
+                        ${extraHtml}
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="Views.saveAdminApiKey('${safeId}')">Save</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="Views.testAdminApiKey('${safeId}')">Test</button>
+                            ${(p.has_key && p.key_source !== 'environment') ? `<button type="button" class="btn btn-danger btn-sm" onclick="Views.clearAdminApiKey('${safeId}')">Clear</button>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+        } catch (err) {
+            grid.innerHTML = `<div class="text-sm" style="color:var(--accent-danger-light,#f87171);">Failed to load API keys: ${escapeHtml(err.message || String(err))}</div>`;
+        }
+    },
+
+    async saveAdminApiKey(providerId) {
+        const keyEl = document.getElementById('as-pk-' + providerId);
+        const urlEl = document.getElementById('as-pu-' + providerId);
+        const crnEl = document.getElementById('as-px-' + providerId);
+        const payload = {
+            api_key: keyEl ? keyEl.value : '',
+            base_url: urlEl ? urlEl.value.trim() : '',
+        };
+        if (crnEl) payload.instance_crn = crnEl.value.trim();
+        try {
+            await API.post('/api/model-providers/' + encodeURIComponent(providerId), payload);
+            if (keyEl) keyEl.value = '';
+            Toast.success('Saved encrypted credentials for ' + providerId + '.');
+            this.loadAdminApiKeysPanel();
+        } catch (err) {
+            Toast.error(err.message || 'Failed to save API key');
+        }
+    },
+
+    async clearAdminApiKey(providerId) {
+        try {
+            await API.post('/api/model-providers/' + encodeURIComponent(providerId), { clear_key: true });
+            Toast.success('Cleared stored key for ' + providerId + '.');
+            this.loadAdminApiKeysPanel();
+        } catch (err) {
+            Toast.error(err.message || 'Failed to clear API key');
+        }
+    },
+
+    async testAdminApiKey(providerId) {
+        const keyEl = document.getElementById('as-pk-' + providerId);
+        const urlEl = document.getElementById('as-pu-' + providerId);
+        try {
+            const r = await API.post('/api/model-providers/' + encodeURIComponent(providerId) + '/test', {
+                api_key: keyEl ? keyEl.value : '',
+                base_url: urlEl ? urlEl.value.trim() : '',
+            });
+            Toast.success((r.detail || 'Connected') + ' (' + (r.latency_ms || 0) + ' ms)');
+        } catch (err) {
+            Toast.error('Connection test failed: ' + (err.message || String(err)));
         }
     },
 
@@ -21357,14 +21470,13 @@ if signature == expected:
                         </details>
                         </div>
 
-                        <div class="mol-vis-sidebar-command-center" aria-label="Viewer commands">
+                        <div class="mol-vis-sidebar-command-center" aria-label="Viewer commands" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
                             <button class="mol-vis-sidebar-command primary" data-act="reset" title="Reset camera">Reset</button>
                             <button class="mol-vis-sidebar-command" data-act="screenshot" title="Save image">Image</button>
                             <button class="mol-vis-sidebar-command" data-act="spin" title="Toggle spin">Spin</button>
                             <button class="mol-vis-sidebar-command" data-act="sequence" title="Toggle sequence panel">Sequence</button>
                             <button class="mol-vis-sidebar-command" data-act="ruler" title="Measure atom-to-atom distance (M)">Ruler</button>
                             <button class="mol-vis-sidebar-command" id="mol-vis-detach-all" data-act="detach" title="Open controls in a separate window"><span id="mol-vis-detach-label">Pop Out</span></button>
-                            <button class="mol-vis-sidebar-command primary" data-act="copilot" style="grid-column: span 2;" title="Ask Discovery Copilot about this 3D structure (A)">Ask Copilot (A)</button>
                         </div>
                     </aside>
                 </div>
@@ -22866,12 +22978,6 @@ if signature == expected:
                     } else if (act === 'ruler') {
                         const on = typeof v.toggleDistanceRuler === 'function' ? v.toggleDistanceRuler() : false;
                         document.querySelectorAll('.mol-vis-shell [data-act="ruler"]').forEach((b) => b.classList.toggle('active', !!on));
-                    } else if (act === 'copilot') {
-                        if (typeof v.askCopilotAboutStructure === 'function') {
-                            v.askCopilotAboutStructure();
-                        } else if (typeof window.PhonosCopilotAsk === 'function') {
-                            window.PhonosCopilotAsk('Analyze the currently loaded 3D molecular structure.');
-                        }
                     }
                 } catch (e) {
                     console.warn('[MolVis] viewer command failed:', act, e);

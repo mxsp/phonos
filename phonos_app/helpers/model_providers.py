@@ -29,107 +29,62 @@ SEAL_LABEL = "phonos.model_provider_key"
 BIO_PROVIDER_PRESETS: List[Dict[str, Any]] = [
     {
         "id": "nvidia-nim",
-        "label": "NVIDIA NIM / BioNeMo Cloud",
+        "label": "NVIDIA NIM / BioNeMo",
         "category": "bio_cloud",
         "base_url": "https://health.api.nvidia.com/v1",
         "test_url": "https://api.nvcf.nvidia.com/v2/nvcf/functions",
         "env_var": "NVIDIA_API_KEY",
+        "key_label": "NVIDIA API Key",
+        "key_placeholder": "nvapi-...",
+        "url_label": "NVIDIA NIM Base URL",
         "auth_type": "bearer",
         "keyless": False,
         "description": "Powers Boltz-2, OpenFold3, DiffDock, RFdiffusion, ProteinMPNN, Evo 2, GenMol & MolMIM.",
     },
     {
-        "id": "huggingface",
-        "label": "Hugging Face Inference / Endpoints",
-        "category": "bio_cloud",
-        "base_url": "https://api-inference.huggingface.co/models",
-        "test_url": "https://huggingface.co/api/whoami-v2",
-        "env_var": "HUGGINGFACE_API_KEY",
-        "auth_type": "bearer",
+        "id": "wolfram",
+        "label": "Wolfram Engine / Cloud",
+        "category": "compute",
+        "base_url": "http://localhost:5100",
+        "test_url": "http://localhost:5100/health",
+        "env_var": "WOLFRAM_LICENSE",
+        "key_label": "Wolfram License / API Key",
+        "key_placeholder": "Enter Wolfram license or API key",
+        "url_label": "Wolfram Service URL",
+        "auth_type": "wolfram",
         "keyless": False,
-        "description": "ESM-2, ProGen2, ChemBERTa, and dedicated Hugging Face GPU endpoints.",
+        "description": "Powers Wolfram Language notebook cells, symbolic algebra, and scientific evaluation.",
     },
     {
-        "id": "local-nim",
-        "label": "Self-Hosted NVIDIA NIM Container (LAN / Local GPU)",
-        "category": "local",
-        "base_url": "http://127.0.0.1:8000/v1",
-        "test_url": "http://127.0.0.1:8000/v1/health/ready",
-        "env_var": "LOCAL_NIM_API_KEY",
-        "auth_type": "none",
-        "keyless": True,
-        "description": "Local Docker/GPU NIM microservice for air-gapped structure prediction or docking.",
-    },
-    {
-        "id": "local-colabfold",
-        "label": "LocalColabFold / Custom FastAPI Bio Server",
-        "category": "local",
-        "base_url": "http://127.0.0.1:8090",
-        "test_url": "http://127.0.0.1:8090/health",
-        "env_var": "",
-        "auth_type": "none",
-        "keyless": True,
-        "description": "Connect examples/custom_model_server.py or any FastAPI/PyTorch molecular service.",
-    },
-    {
-        "id": "gemini",
-        "label": "Google Gemini (Copilot & Multimodal Bio Analysis)",
-        "category": "llm",
-        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
-        "test_url": "https://generativelanguage.googleapis.com/v1beta/openai/models",
-        "env_var": "GEMINI_API_KEY",
-        "auth_type": "bearer",
+        "id": "ibm-cloud",
+        "label": "IBM Cloud / IBM Quantum",
+        "category": "quantum",
+        "base_url": "https://quantum.cloud.ibm.com",
+        "test_url": "https://iam.cloud.ibm.com/identity/token",
+        "env_var": "IBM_QUANTUM_API_KEY",
+        "key_label": "IBM Cloud API Key",
+        "key_placeholder": "Enter IBM Cloud API key",
+        "url_label": "IBM Cloud Endpoint URL",
+        "extra_field": "instance_crn",
+        "extra_label": "IBM Instance CRN (Optional)",
+        "extra_placeholder": "crn:v1:bluemix:public:quantum-computing:...",
+        "auth_type": "ibm_iam",
         "keyless": False,
-        "description": "Default OpenAI-compatible reasoning engine for Phonos Copilot.",
-    },
-    {
-        "id": "openai",
-        "label": "OpenAI API",
-        "category": "llm",
-        "base_url": "https://api.openai.com/v1",
-        "test_url": "https://api.openai.com/v1/models",
-        "env_var": "OPENAI_API_KEY",
-        "auth_type": "bearer",
-        "keyless": False,
-        "description": "GPT-4.1 / o-series for Copilot and OpenAI-compatible custom bio endpoints.",
-    },
-    {
-        "id": "anthropic",
-        "label": "Anthropic Claude",
-        "category": "llm",
-        "base_url": "https://api.anthropic.com/v1",
-        "test_url": "https://api.anthropic.com/v1/models",
-        "env_var": "ANTHROPIC_API_KEY",
-        "auth_type": "x-api-key",
-        "keyless": False,
-        "description": "Claude Sonnet / Opus native streaming protocol for Discovery Copilot.",
-    },
-    {
-        "id": "openrouter",
-        "label": "OpenRouter",
-        "category": "llm",
-        "base_url": "https://openrouter.ai/api/v1",
-        "test_url": "https://openrouter.ai/api/v1/models",
-        "env_var": "OPENROUTER_API_KEY",
-        "auth_type": "bearer",
-        "keyless": False,
-        "description": "Unified gateway to 200+ open and frontier models.",
-    },
-    {
-        "id": "ollama",
-        "label": "Ollama / vLLM / LM Studio (Local Keyless)",
-        "category": "local",
-        "base_url": "http://127.0.0.1:11434/v1",
-        "test_url": "http://127.0.0.1:11434/api/tags",
-        "env_var": "",
-        "auth_type": "none",
-        "keyless": True,
-        "description": "100% offline local LLM & scientific inference on your own workstation.",
+        "description": "Powers IBM Quantum Runtime hardware execution and platform-managed quantum sessions.",
     },
 ]
 
 PRESET_BY_ID = {p["id"]: p for p in BIO_PROVIDER_PRESETS}
+PROVIDER_ALIASES = {
+    "nvidia": "nvidia-nim",
+    "nvidia-nim": "nvidia-nim",
+    "wolfram": "wolfram",
+    "ibm": "ibm-cloud",
+    "ibm-cloud": "ibm-cloud",
+    "ibm-quantum": "ibm-cloud",
+}
 _SCHEMA_DONE_CONNS: set[int] = set()
+_SYNCED_ENV_KEYS: set[str] = set()
 
 
 def _rdict(row: Any) -> Dict[str, Any]:
@@ -161,12 +116,20 @@ def ensure_provider_schema(db) -> None:
                 provider_id TEXT PRIMARY KEY,
                 base_url TEXT NOT NULL DEFAULT '',
                 api_key_enc TEXT NOT NULL DEFAULT '',
+                extra_json TEXT NOT NULL DEFAULT '{}',
                 enabled INTEGER NOT NULL DEFAULT 1,
                 updated_by INTEGER,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
+        try:
+            db.execute("ALTER TABLE phonos_model_providers ADD COLUMN extra_json TEXT NOT NULL DEFAULT '{}'")
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
         db.execute(
             """
             CREATE TABLE IF NOT EXISTS phonos_user_provider_keys (
@@ -274,30 +237,61 @@ def resolve_provider_credentials(provider_id: str = "nvidia-nim", user_id: Optio
                 pass
         try:
             prow = own_db.execute(
-                "SELECT base_url, api_key_enc FROM phonos_model_providers WHERE provider_id = %s",
+                "SELECT base_url, api_key_enc, extra_json FROM phonos_model_providers WHERE provider_id = %s",
                 (provider_id,),
             ).fetchone()
             if prow:
                 pd = _rdict(prow)
                 inst_key = open_secret(pd.get("api_key_enc") or "")
                 inst_url = (pd.get("base_url") or "").strip()
+                try:
+                    inst_extra = json.loads(pd.get("extra_json") or "{}")
+                    if not isinstance(inst_extra, dict):
+                        inst_extra = {}
+                except Exception:
+                    inst_extra = {}
+            else:
+                inst_extra = {}
         except Exception:
-            pass
+            inst_extra = {}
+    else:
+        inst_extra = {}
 
     effective_url = user_url or inst_url or base_url
+    env_is_external = bool(env_val) and (env_name not in _SYNCED_ENV_KEYS)
     if user_key:
-        return {"api_key": user_key, "key_source": "user", "has_key": True, "base_url": effective_url}
-    if env_val:
-        return {"api_key": env_val, "key_source": "environment", "has_key": True, "base_url": effective_url}
+        return {"api_key": user_key, "key_source": "user", "has_key": True, "base_url": effective_url, "extra": inst_extra}
+    if env_is_external:
+        return {"api_key": env_val, "key_source": "environment", "has_key": True, "base_url": effective_url, "extra": inst_extra}
     if inst_key:
-        return {"api_key": inst_key, "key_source": "instance", "has_key": True, "base_url": effective_url}
-    return {"api_key": "", "key_source": "none", "has_key": bool(preset.get("keyless")), "base_url": effective_url}
+        return {"api_key": inst_key, "key_source": "instance", "has_key": True, "base_url": effective_url, "extra": inst_extra}
+    if env_val:
+        return {"api_key": env_val, "key_source": "environment", "has_key": True, "base_url": effective_url, "extra": inst_extra}
+    return {"api_key": "", "key_source": "none", "has_key": bool(preset.get("keyless")), "base_url": effective_url, "extra": inst_extra}
 
 
 def resolve_nvidia_api_key(user_id: Optional[int] = None, db=None) -> str:
     """Drop-in runtime helper for all NVIDIA NIM routes & workers."""
     creds = resolve_provider_credentials("nvidia-nim", user_id=user_id, db=db)
     return creds["api_key"]
+
+
+def resolve_wolfram_api_key(db=None) -> str:
+    """Drop-in runtime helper for Wolfram license / API key."""
+    creds = resolve_provider_credentials("wolfram", db=db)
+    return creds["api_key"]
+
+
+def resolve_ibm_cloud_credentials(db=None) -> Dict[str, Any]:
+    """Drop-in runtime helper for IBM Cloud / IBM Quantum platform credentials."""
+    creds = resolve_provider_credentials("ibm-cloud", db=db)
+    extra = creds.get("extra") or {}
+    return {
+        "api_key": creds["api_key"],
+        "instance_crn": (extra.get("instance_crn") or os.environ.get("IBM_QUANTUM_INSTANCE") or "").strip() or None,
+        "base_url": creds["base_url"],
+        "key_source": creds["key_source"],
+    }
 
 
 def resolve_builtin_model_endpoint(model_id: str, default_url: str, db=None) -> str:
@@ -337,6 +331,13 @@ def list_providers_public(db, user_id: Optional[int] = None) -> List[Dict[str, A
             "base_url": resolved["base_url"],
             "default_base_url": preset["base_url"],
             "env_var": preset["env_var"],
+            "key_label": preset.get("key_label", "API Key"),
+            "key_placeholder": preset.get("key_placeholder", "Paste API key"),
+            "url_label": preset.get("url_label", "Base URL"),
+            "extra_field": preset.get("extra_field", ""),
+            "extra_label": preset.get("extra_label", ""),
+            "extra_placeholder": preset.get("extra_placeholder", ""),
+            "extra": resolved.get("extra") or {},
             "keyless": bool(preset.get("keyless")),
             "has_key": bool(resolved["api_key"]) or bool(preset.get("keyless")),
             "key_source": resolved["key_source"],
@@ -345,9 +346,18 @@ def list_providers_public(db, user_id: Optional[int] = None) -> List[Dict[str, A
     return out
 
 
-def save_instance_provider(db, provider_id: str, *, api_key: Optional[str] = None, base_url: Optional[str] = None, clear_key: bool = False, actor_id: Optional[int] = None) -> None:
+def save_instance_provider(
+    db,
+    provider_id: str,
+    *,
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+    extra_config: Optional[Dict[str, Any]] = None,
+    clear_key: bool = False,
+    actor_id: Optional[int] = None,
+) -> None:
     ensure_provider_schema(db)
-    existing = db.execute("SELECT base_url, api_key_enc FROM phonos_model_providers WHERE provider_id = %s", (provider_id,)).fetchone()
+    existing = db.execute("SELECT base_url, api_key_enc, extra_json FROM phonos_model_providers WHERE provider_id = %s", (provider_id,)).fetchone()
     ed = _rdict(existing)
     preset = PRESET_BY_ID.get(provider_id, {})
 
@@ -361,23 +371,51 @@ def save_instance_provider(db, provider_id: str, *, api_key: Optional[str] = Non
     elif api_key is not None and str(api_key).strip():
         new_enc = seal_secret(api_key)
 
+    try:
+        cur_extra = json.loads(ed.get("extra_json") or "{}")
+        if not isinstance(cur_extra, dict):
+            cur_extra = {}
+    except Exception:
+        cur_extra = {}
+    if isinstance(extra_config, dict):
+        for k, v in extra_config.items():
+            if v is None:
+                continue
+            cur_extra[str(k)] = str(v).strip()
+    new_extra_json = json.dumps(cur_extra)
+
     if existing:
         db.execute(
-            "UPDATE phonos_model_providers SET base_url = %s, api_key_enc = %s, updated_by = %s, updated_at = CURRENT_TIMESTAMP WHERE provider_id = %s",
-            (new_url, new_enc, actor_id, provider_id),
+            "UPDATE phonos_model_providers SET base_url = %s, api_key_enc = %s, extra_json = %s, updated_by = %s, updated_at = CURRENT_TIMESTAMP WHERE provider_id = %s",
+            (new_url, new_enc, new_extra_json, actor_id, provider_id),
         )
     else:
         db.execute(
-            "INSERT INTO phonos_model_providers (provider_id, base_url, api_key_enc, updated_by) VALUES (%s, %s, %s, %s)",
-            (provider_id, new_url, new_enc, actor_id),
+            "INSERT INTO phonos_model_providers (provider_id, base_url, api_key_enc, extra_json, updated_by) VALUES (%s, %s, %s, %s, %s)",
+            (provider_id, new_url, new_enc, new_extra_json, actor_id),
         )
-    # Sync NVIDIA key into process env so background worker subprocesses also pick it up immediately
+    # Sync key into process env so background workers & services pick it up immediately
+    # without shadowing the DB "instance" source badge or preventing Clear from working.
+    def _sync_env(env_name: str, value: str, *, clearing: bool) -> None:
+        if value:
+            if not os.environ.get(env_name) or env_name in _SYNCED_ENV_KEYS:
+                os.environ[env_name] = value
+                _SYNCED_ENV_KEYS.add(env_name)
+        elif clearing and env_name in _SYNCED_ENV_KEYS:
+            os.environ.pop(env_name, None)
+            _SYNCED_ENV_KEYS.discard(env_name)
+
+    plain = open_secret(new_enc)
     if provider_id == "nvidia-nim":
-        plain = open_secret(new_enc)
-        if plain:
-            os.environ["NVIDIA_API_KEY"] = plain
-        elif clear_key and os.environ.get("NVIDIA_API_KEY") and not os.path.exists(".env"):
-            os.environ.pop("NVIDIA_API_KEY", None)
+        _sync_env("NVIDIA_API_KEY", plain, clearing=clear_key)
+    elif provider_id == "wolfram":
+        _sync_env("WOLFRAM_LICENSE", plain, clearing=clear_key)
+        if new_url:
+            _sync_env("WOLFRAM_SERVICE_URL", new_url, clearing=False)
+    elif provider_id == "ibm-cloud":
+        _sync_env("IBM_QUANTUM_API_KEY", plain, clearing=clear_key)
+        crn = (cur_extra.get("instance_crn") or "").strip()
+        _sync_env("IBM_QUANTUM_INSTANCE", crn, clearing=("instance_crn" in cur_extra and not crn))
     db.commit()
 
 
@@ -418,9 +456,58 @@ def save_user_provider_key(db, user_id: int, provider_id: str, *, api_key: Optio
 
 
 def test_provider_connection(provider_id: str, user_id: Optional[int] = None, db=None, custom_url: Optional[str] = None, raw_key: Optional[str] = None) -> Dict[str, Any]:
+    provider_id = PROVIDER_ALIASES.get(provider_id, provider_id)
     preset = PRESET_BY_ID.get(provider_id, {})
     creds = resolve_provider_credentials(provider_id, user_id=user_id, db=db)
     api_key = (raw_key or "").strip() or creds["api_key"]
+    auth_type = preset.get("auth_type", "bearer")
+
+    if not api_key and not preset.get("keyless"):
+        return {"ok": False, "error": "No API key configured for this provider."}
+
+    t0 = time.monotonic()
+    if auth_type == "ibm_iam":
+        # Validate IBM Cloud API key via IBM Cloud IAM OAuth token exchange
+        iam_url = "https://iam.cloud.ibm.com/identity/token"
+        body = urllib.parse.urlencode({
+            "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+            "apikey": api_key,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            iam_url,
+            data=body,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+                "User-Agent": "phonos-provider-probe/1.0",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
+                ms = int((time.monotonic() - t0) * 1000)
+                return {"ok": True, "status_code": resp.status, "latency_ms": ms, "key_source": creds["key_source"], "detail": "IBM Cloud IAM token verified."}
+        except urllib.error.HTTPError as he:
+            ms = int((time.monotonic() - t0) * 1000)
+            return {"ok": False, "status_code": he.code, "latency_ms": ms, "error": f"IBM Cloud IAM rejected key (HTTP {he.code})."}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    if auth_type == "wolfram":
+        base = (custom_url or "").strip() or creds["base_url"] or preset.get("base_url") or "http://localhost:5100"
+        target_url = base.rstrip("/") + "/health"
+        try:
+            validate_endpoint_url(target_url)
+        except ValueError as ve:
+            return {"ok": False, "error": str(ve)}
+        req = urllib.request.Request(target_url, headers={"Accept": "application/json", "User-Agent": "phonos-provider-probe/1.0"}, method="GET")
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:  # nosec B310
+                ms = int((time.monotonic() - t0) * 1000)
+                return {"ok": True, "status_code": resp.status, "latency_ms": ms, "key_source": creds["key_source"], "detail": "Wolfram service reachable."}
+        except Exception as exc:
+            return {"ok": False, "error": f"Wolfram service at {target_url} unreachable: {exc}"}
+
     target_url = (custom_url or "").strip() or preset.get("test_url") or creds["base_url"]
     if not target_url:
         return {"ok": False, "error": "No test URL configured for this provider."}
@@ -430,17 +517,9 @@ def test_provider_connection(provider_id: str, user_id: Optional[int] = None, db
         return {"ok": False, "error": str(ve)}
 
     headers = {"Accept": "application/json", "User-Agent": "phonos-provider-probe/1.0"}
-    auth_type = preset.get("auth_type", "bearer")
     if api_key:
-        if auth_type == "x-api-key":
-            headers["x-api-key"] = api_key
-            headers["anthropic-version"] = "2023-06-01"
-        else:
-            headers["Authorization"] = f"Bearer {api_key}"
-    elif not preset.get("keyless"):
-        return {"ok": False, "error": "No API key configured (set an Instance key, Personal BYOK key, or environment variable)."}
+        headers["Authorization"] = f"Bearer {api_key}"
 
-    t0 = time.monotonic()
     req = urllib.request.Request(target_url, headers=headers, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
@@ -448,7 +527,6 @@ def test_provider_connection(provider_id: str, user_id: Optional[int] = None, db
             return {"ok": True, "status_code": resp.status, "latency_ms": ms, "key_source": creds["key_source"]}
     except urllib.error.HTTPError as he:
         ms = int((time.monotonic() - t0) * 1000)
-        # Some POST-only inference endpoints return 405 on GET when reachable & authenticated
         if he.code == 405:
             return {"ok": True, "status_code": 405, "latency_ms": ms, "detail": "Endpoint reachable (POST-only)."}
         return {"ok": False, "status_code": he.code, "latency_ms": ms, "error": f"HTTP {he.code}: {he.reason}"}

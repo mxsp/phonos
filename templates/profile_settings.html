@@ -109,6 +109,24 @@
                 </div>
             </div>
         </div>
+
+        {% if session.get('is_admin') %}
+        <div class="card" style="margin-top: var(--space-4);" id="profile-admin-api-keys-card">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <h3 class="card-title">Admin API Keys // NVIDIA, Wolfram &amp; IBM Cloud</h3>
+                <span class="status-pill completed">AES-GCM VAULT</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-sm" style="margin-top:0;margin-bottom:var(--space-3);">
+                    Instance-wide encrypted credentials for NVIDIA NIM / BioNeMo, Wolfram Engine / Cloud, and IBM Cloud Quantum. Environment variables take precedence when defined.
+                </p>
+                <div id="profile-admin-api-keys-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+                    <div class="text-muted text-sm">Loading providers...</div>
+                </div>
+                <div id="profile-admin-api-keys-msg" class="text-sm" style="margin-top:10px;font-family:var(--font-mono);"></div>
+            </div>
+        </div>
+        {% endif %}
         </section>
 
         <section class="settings-section" id="settings-integrations">
@@ -889,6 +907,92 @@
         }
         if (window.i18n) syncLang();
         else window.addEventListener('i18n:ready', syncLang);
+
+        (function initProfileAdminApiKeys() {
+            var grid = document.getElementById('profile-admin-api-keys-grid');
+            if (!grid) return;
+            var msgEl = document.getElementById('profile-admin-api-keys-msg');
+            function esc(v) {
+                return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+            }
+            function csrf() {
+                var m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+                return m ? decodeURIComponent(m[1]) : '';
+            }
+            function setMsg(text, err) {
+                if (!msgEl) return;
+                msgEl.style.color = err ? '#f87171' : '#34d399';
+                msgEl.textContent = text;
+            }
+            async function req(url, opts) {
+                var headers = Object.assign({ 'Content-Type': 'application/json', 'X-CSRF-Token': csrf() }, (opts && opts.headers) || {});
+                var r = await fetch(url, Object.assign({ credentials: 'same-origin' }, opts || {}, { headers: headers }));
+                var d = await r.json().catch(function() { return {}; });
+                if (!r.ok) throw new Error(d.message || d.error || ('HTTP ' + r.status));
+                return d;
+            }
+            async function load() {
+                try {
+                    var res = await req('/api/model-providers');
+                    grid.innerHTML = (res.providers || []).map(function(p) {
+                        var id = esc(p.id);
+                        var badge = p.key_source === 'environment'
+                            ? '<span class="status-pill running">ENV // ' + esc(p.env_var) + '</span>'
+                            : (p.has_key ? '<span class="status-pill completed">SEALED</span>' : '<span class="status-pill queued">NOT SET</span>');
+                        var extra = p.extra_field
+                            ? '<div class="form-group" style="margin-bottom:8px;"><label class="form-label">' + esc(p.extra_label || p.extra_field) + '</label><input type="text" class="form-input" id="ps-px-' + id + '" value="' + esc((p.extra && p.extra[p.extra_field]) || '') + '" placeholder="' + esc(p.extra_placeholder || '') + '"></div>'
+                            : '';
+                        return '<div style="background:var(--bg-elevated,#394B59);border:1px solid var(--border-color);border-top:2px solid var(--border-strong);padding:12px;display:flex;flex-direction:column;gap:8px;">'
+                            + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border-color);">'
+                            + '<div><strong style="font-size:13px;">' + esc(p.label) + '</strong><div class="text-xs text-muted" style="margin-top:2px;">' + esc(p.description) + '</div></div>'
+                            + badge + '</div>'
+                            + '<div class="form-group" style="margin-bottom:6px;"><label class="form-label">' + esc(p.url_label || 'Base URL') + '</label><input type="text" class="form-input" id="ps-pu-' + id + '" value="' + esc(p.base_url || '') + '"></div>'
+                            + '<div class="form-group" style="margin-bottom:6px;"><label class="form-label">' + esc(p.key_label || 'API Key') + (p.env_var ? ' (' + esc(p.env_var) + ')' : '') + '</label><input type="password" class="form-input" id="ps-pk-' + id + '" placeholder="' + (p.has_key ? 'Saved (enter new to replace)' : esc(p.key_placeholder || 'Paste API key')) + '" autocomplete="new-password"></div>'
+                            + extra
+                            + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;">'
+                            + '<button type="button" class="btn btn-primary btn-sm" data-ps-act="save" data-ps-id="' + id + '">Save</button>'
+                            + '<button type="button" class="btn btn-secondary btn-sm" data-ps-act="test" data-ps-id="' + id + '">Test</button>'
+                            + (p.has_key && p.key_source !== 'environment' ? '<button type="button" class="btn btn-danger btn-sm" data-ps-act="clear" data-ps-id="' + id + '">Clear</button>' : '')
+                            + '</div></div>';
+                    }).join('');
+                } catch (e) {
+                    grid.innerHTML = '<div style="color:#f87171;">Failed to load providers: ' + esc(e.message) + '</div>';
+                }
+            }
+            grid.addEventListener('click', async function(ev) {
+                var btn = ev.target.closest('[data-ps-act]');
+                if (!btn) return;
+                var act = btn.getAttribute('data-ps-act');
+                var pid = btn.getAttribute('data-ps-id');
+                var keyEl = document.getElementById('ps-pk-' + pid);
+                var urlEl = document.getElementById('ps-pu-' + pid);
+                var crnEl = document.getElementById('ps-px-' + pid);
+                try {
+                    if (act === 'save') {
+                        var body = { api_key: keyEl ? keyEl.value : '', base_url: urlEl ? urlEl.value.trim() : '' };
+                        if (crnEl) body.instance_crn = crnEl.value.trim();
+                        await req('/api/model-providers/' + encodeURIComponent(pid), { method: 'POST', body: JSON.stringify(body) });
+                        if (keyEl) keyEl.value = '';
+                        setMsg('Saved encrypted credentials for ' + pid + '.', false);
+                        load();
+                    } else if (act === 'clear') {
+                        await req('/api/model-providers/' + encodeURIComponent(pid), { method: 'POST', body: JSON.stringify({ clear_key: true }) });
+                        setMsg('Cleared stored key for ' + pid + '.', false);
+                        load();
+                    } else if (act === 'test') {
+                        setMsg('Testing ' + pid + '...', false);
+                        var r = await req('/api/model-providers/' + encodeURIComponent(pid) + '/test', {
+                            method: 'POST',
+                            body: JSON.stringify({ api_key: keyEl ? keyEl.value : '', base_url: urlEl ? urlEl.value.trim() : '' })
+                        });
+                        setMsg((r.detail || 'Connected') + ' (' + (r.latency_ms || 0) + ' ms)', false);
+                    }
+                } catch (e) {
+                    setMsg('Error: ' + e.message, true);
+                }
+            });
+            load();
+        })();
     </script>
 </body>
 </html>

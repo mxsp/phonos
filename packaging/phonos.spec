@@ -10,6 +10,26 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = Path(SPECPATH).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+if str(ROOT / "production") not in sys.path:
+    sys.path.insert(0, str(ROOT / "production"))
+
+def _walk_pkg_modules(pkg_name: str) -> list[str]:
+    pkg_dir = ROOT / pkg_name
+    mods: list[str] = []
+    if not pkg_dir.is_dir():
+        return mods
+    for py_file in sorted(pkg_dir.rglob("*.py")):
+        if "__pycache__" in py_file.parts:
+            continue
+        rel = py_file.relative_to(ROOT).with_suffix("")
+        parts = list(rel.parts)
+        if parts[-1] == "__init__":
+            parts = parts[:-1]
+        if parts:
+            mods.append(".".join(parts))
+    return mods
 
 datas = []
 binaries = []
@@ -44,10 +64,9 @@ for pkg in ("certifi", "rdkit", "Bio"):
     except Exception:
         pass
 
-hiddenimports = [
-    *collect_submodules("phonos_app"),
-    *collect_submodules("production"),
-    *collect_submodules("phonos_lib"),
+hiddenimports = sorted(set([
+    *_walk_pkg_modules("phonos_app"),
+    *_walk_pkg_modules("phonos_lib"),
     *collect_submodules("flask_socketio"),
     *collect_submodules("engineio"),
     *collect_submodules("socketio"),
@@ -62,7 +81,7 @@ hiddenimports = [
     "Crypto",
     "sqlite3",
     "psycopg2",
-]
+]))
 
 USE_ONEDIR = sys.platform == "win32" or os.environ.get("PHONOS_PYINSTALLER_ONEDIR") == "1"
 
